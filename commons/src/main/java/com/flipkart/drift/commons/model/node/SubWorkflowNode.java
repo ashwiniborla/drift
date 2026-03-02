@@ -31,6 +31,9 @@ public class SubWorkflowNode extends NodeDefinition {
 
     @Override
     public void mergeRequestToEntity(NodeDefinition sourceNode) {
+        if (sourceNode == null) {
+            throw new IllegalArgumentException("sourceNode must not be null for SubWorkflowNode merge");
+        }
         SubWorkflowNode source = (SubWorkflowNode) sourceNode;
         if (source.getSubWorkflowId() != null) {
             this.setSubWorkflowId(source.getSubWorkflowId());

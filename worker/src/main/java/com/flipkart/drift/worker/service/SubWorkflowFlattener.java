@@ -115,7 +115,20 @@ public class SubWorkflowFlattener {
         boolean mergingIntoRoot = (parent == root);
 
         if (scope.nodesToInclude.isEmpty()) {
-            replaceAllReferences(parent, subNodeName, subNode.getNextNode());
+            if (Objects.equals(parent.getStartNode(), subNodeName)) {
+                parent.setStartNode(subNode.getNextNode());
+            }
+            if (subNode.isEnd() && subNode.getNextNode() == null) {
+                for (WorkflowNode node : parent.getStates().values()) {
+                    if (Objects.equals(node.getNextNode(), subNodeName)) {
+                        node.setNextNode(null);
+                        node.setEnd(true);
+                    }
+                    replaceRefInNodeDefinition(node.getNodeDefinition(), subNodeName, null);
+                }
+            } else {
+                replaceAllReferences(parent, subNodeName, subNode.getNextNode());
+            }
             removeSubWorkflowNode(parent, subNodeName, subNode, mergingIntoRoot, usedInstanceNames, usedContextKeys);
             return;
         }

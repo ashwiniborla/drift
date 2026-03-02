@@ -48,17 +48,8 @@ public class WorkflowNodeExecutor {
     }
 
     public ActivityThinResponse executeNode(WorkflowNode currentNode, Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
-        /**
-         Failing node execution if Node is of type SUB_WORKFLOW, as it will get resolved via {@link com.flipkart.drift.worker.helper.WorkflowFetchHelper}
-         */
-        if (currentNode.getNodeDefinition().getType() == NodeType.SUB_WORKFLOW) {
-            throw ApplicationFailure.newNonRetryableFailure(
-                    "SubWorkflowNode '" + currentNode.getInstanceName() +
-                            "' must not reach executor; it should have been flattened during DSL fetch.",
-                    "SUB_WORKFLOW_EXECUTION_FORBIDDEN"
-            );
-        }
-        if (currentNode.getNodeDefinition().getType() == NodeType.CHILD) {
+        validateNodeForExecution(currentNode);
+        if (currentNode.getNodeDefinition() != null && currentNode.getNodeDefinition().getType() == NodeType.CHILD) {
             if (workflowStartRequest.getParentWorkflowId() != null) {
                 throw ApplicationFailure.newNonRetryableFailure("Child node cannot be nested inside another child workflow: " + currentNode.getInstanceName(), "INVALID_CHILD_NODE");
             }
@@ -69,7 +60,19 @@ public class WorkflowNodeExecutor {
     }
 
     public void executeNodeWithoutStatusUpdate(WorkflowNode currentNode, Map<String, String> threadContext) {
+        validateNodeForExecution(currentNode);
         executeNode(currentNode, threadContext, false);
+    }
+
+    private void validateNodeForExecution(WorkflowNode currentNode) {
+        if (currentNode.getNodeDefinition() != null
+                && currentNode.getNodeDefinition().getType() == NodeType.SUB_WORKFLOW) {
+            throw ApplicationFailure.newNonRetryableFailure(
+                    "SubWorkflowNode '" + currentNode.getInstanceName() +
+                            "' must not reach executor; it should have been flattened during DSL fetch.",
+                    "SUB_WORKFLOW_EXECUTION_FORBIDDEN"
+            );
+        }
     }
 
     private ActivityThinResponse executeNode(WorkflowNode currentNode, Map<String, String> threadContext, boolean updateState) {

@@ -180,7 +180,7 @@ Used to **inline** another workflow into the current workflow at fetch time. The
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `includeFirstNode` | Boolean | true | If false, the sub-workflow’s start node is not inlined; the chain starts at the second node. |
+| `includeFirstNode` | Boolean | true | If false, the sub-workflow’s start node is not inlined and the chain starts at the second node — **unless** the start node is a BRANCH, in which case it is always kept (the chain still begins at the BRANCH). |
 | `includeLastNode` | Boolean | true | If false, the sub-workflow’s terminal node is not inlined; the chain ends at the predecessor of the terminal. |
 | `errorHandlingStrategy` | Enum | PROPAGATE | How failures inside the inlined sub-workflow are handled. See **Error handling** below. |
 

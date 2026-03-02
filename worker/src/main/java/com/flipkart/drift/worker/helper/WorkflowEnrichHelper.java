@@ -30,7 +30,9 @@ public class WorkflowEnrichHelper {
      * Does not flatten sub-workflows.
      */
     public Workflow fetchEnrichedCopy(String workflowId, String version, String tenant) {
-        Workflow cached = workflowCache.get(workflowId, version, tenant).get();
+        Workflow cached = workflowCache.get(workflowId, version, tenant)
+                .orElseThrow(() -> Activity.wrap(new RuntimeException(
+                        "Workflow not found in cache: id=" + workflowId + ", version=" + version + ", tenant=" + tenant)));
         Workflow workflow = deepCopy(cached);
         enrichWithNodeDefinitions(workflow, tenant);
         return workflow;
@@ -38,7 +40,10 @@ public class WorkflowEnrichHelper {
 
     private void enrichWithNodeDefinitions(Workflow workflow, String tenant) {
         for (WorkflowNode node : workflow.getStates().values()) {
-            NodeDefinition def = nodeDefinitionCache.get(node.getResourceId(), node.getResourceVersion(), tenant).get();
+            NodeDefinition def = nodeDefinitionCache.get(node.getResourceId(), node.getResourceVersion(), tenant)
+                    .orElseThrow(() -> Activity.wrap(new RuntimeException(
+                            "NodeDefinition not found in cache: resourceId=" + node.getResourceId()
+                                    + ", resourceVersion=" + node.getResourceVersion() + ", tenant=" + tenant)));
             node.setNodeDefinition(deepCopyNodeDefinition(def));
         }
     }
