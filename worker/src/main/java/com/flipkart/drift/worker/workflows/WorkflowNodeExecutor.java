@@ -264,7 +264,7 @@ public class WorkflowNodeExecutor {
 
     private void updateWorkflowState(ActivityThinResponse response, WorkflowNode currentNode) {
         this.workflowState.setStatus(response.getWorkflowStatus());
-        this.workflowState.setCurrentNodeRef(generateNodeIdentifier(currentNode));
+        this.workflowState.setCurrentNodeRef(currentNode.getNodeIdentifier());
         if (Optional.ofNullable(response.getNextNode()).isPresent()) {
             currentNode.setNextNode(response.getNextNode());
         }
@@ -272,13 +272,6 @@ public class WorkflowNodeExecutor {
 
     private String getActivityType(NodeType type) {
         return type.name().toLowerCase() + "Execute";
-    }
-
-    private String generateNodeIdentifier(WorkflowNode currentNode) {
-        if (currentNode.getContextOverrideKey() != null) {
-            return currentNode.getContextOverrideKey();
-        }
-        return currentNode.getInstanceName();
     }
 
     private WorkflowUtilityResponse buildResponse(WorkflowUtilityRequest request, WorkflowUtilityStatus status, ActivityResponse response) {

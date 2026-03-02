@@ -4,10 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.flipkart.drift.worker.Utility.NodeParameterEvaluator;
 import com.flipkart.drift.worker.model.activity.ActivityThinRequest;
 import com.flipkart.drift.worker.model.activity.ActivityThinResponse;
-import com.flipkart.drift.sdk.model.request.WorkflowUtilityRequest;
 import com.flipkart.drift.sdk.model.response.View;
 import com.flipkart.drift.commons.model.enums.NodeType;
-import com.flipkart.drift.commons.model.node.WorkflowNode;
 import com.flipkart.drift.worker.model.workflow.WorkflowContext;
 import com.flipkart.drift.persistence.entity.WorkflowContextHB;
 import com.flipkart.drift.commons.model.node.NodeDefinition;
@@ -84,7 +82,7 @@ public abstract class BaseNodeActivityImpl<T extends NodeDefinition> implements 
         // Step 3: Persist updated context
         workflowContextHBService.updateEntity(WorkflowContext.builder()
                 .workflowId(workflowId)
-                .context(context.getContext().putPOJO(generateNodeIdentifier(activityThinRequest.getWorkflowNode()), response.getNodeResponse()))
+                .context(context.getContext().putPOJO(activityThinRequest.getWorkflowNode().getNodeIdentifier(), response.getNodeResponse()))
                 .build(), activityThinRequest.getThreadContext());
 
         return response;
@@ -96,10 +94,4 @@ public abstract class BaseNodeActivityImpl<T extends NodeDefinition> implements 
         context.set("nodeParameters", nodeParameters);
     }
 
-    private String generateNodeIdentifier(WorkflowNode currentNode) {
-        if (currentNode.getContextOverrideKey() != null) {
-            return currentNode.getContextOverrideKey();
-        }
-        return currentNode.getInstanceName();
-    }
 }

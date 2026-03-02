@@ -35,7 +35,7 @@ public class SubWorkflowFlattener {
     public Workflow flattenWorkflow(Workflow workflow, String tenant) {
         Set<String> usedInstanceNames = new HashSet<>(workflow.getStates().keySet());
         Set<String> usedContextKeys = workflow.getStates().values().stream()
-                .map(this::contextKey)
+                .map(WorkflowNode::getNodeIdentifier)
                 .collect(Collectors.toSet());
 
         flattenRecursive(workflow, workflow, tenant, new HashSet<>(), 0, usedInstanceNames, usedContextKeys,
@@ -141,7 +141,7 @@ public class SubWorkflowFlattener {
 
     private void checkAndRegisterDuplicate(String instanceName, WorkflowNode node, List<String> path,
                                             Set<String> usedInstanceNames, Set<String> usedContextKeys) {
-        String ctxKey = contextKey(node);
+        String ctxKey = node.getNodeIdentifier();
         if (usedInstanceNames.contains(instanceName)) {
             fail("SUB_WORKFLOW_DUPLICATE_NODE_NAME",
                     "Duplicate node name: '" + instanceName + "' already exists. Path: " + pathStr(path) + " → node '" + instanceName + "'.");
@@ -206,12 +206,8 @@ public class SubWorkflowFlattener {
         parent.getStates().remove(subNodeName);
         if (mergingIntoRoot) {
             usedInstanceNames.remove(subNodeName);
-            usedContextKeys.remove(contextKey(subNode));
+            usedContextKeys.remove(subNode.getNodeIdentifier());
         }
-    }
-
-    private String contextKey(WorkflowNode node) {
-        return node.getContextOverrideKey() != null ? node.getContextOverrideKey() : node.getInstanceName();
     }
 
     private static String pathStr(List<String> path) {

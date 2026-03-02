@@ -22,4 +22,12 @@ public class WorkflowNode {
     private String nextNode;
     private boolean end;
     NodeDefinition nodeDefinition; // This is populated while fetching WorkflowDefinition in FetchWorkflowActivity
+
+    /**
+     * Returns the key used to store this node's result in workflow context.
+     * Uses {@link #contextOverrideKey} when set (e.g. for inlined sub-workflow nodes), otherwise {@link #instanceName}.
+     */
+    public String getNodeIdentifier() {
+        return contextOverrideKey != null ? contextOverrideKey : instanceName;
+    }
 }
