@@ -32,6 +32,8 @@ public class WorkflowGraphNode {
                 return Shape.DIAMOND;
             case PROCESSOR:
                 return Shape.RECTANGLE;
+            case SUB_WORKFLOW:
+                return Shape.DOUBLE_OCTAGON;
             default:
                 return Shape.ELLIPSE;
         }
@@ -51,6 +53,8 @@ public class WorkflowGraphNode {
                 return Color.MEDIUMSPRINGGREEN;
             case PROCESSOR:
                 return Color.GREY;
+            case SUB_WORKFLOW:
+                return Color.DARKORANGE;
             default:
                 return Color.LIGHTPINK;
         }

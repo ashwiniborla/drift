@@ -27,6 +27,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = DelegateNode.class, name = "DELEGATE"),
         @JsonSubTypes.Type(value = ChildNode.class, name = "CHILD"),
         @JsonSubTypes.Type(value = WaitNode.class, name = "WAIT"),
+        @JsonSubTypes.Type(value = SubWorkflowNode.class, name = "SUB_WORKFLOW"),
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class NodeDefinition {

@@ -1,10 +1,8 @@
 package com.flipkart.drift.worker.activities;
 
-import com.flipkart.drift.persistence.cache.NodeDefinitionCache;
-import com.flipkart.drift.persistence.cache.WorkflowCache;
+import com.flipkart.drift.worker.helper.WorkflowFetchHelper;
 import com.flipkart.drift.worker.model.IssueWorkflowMapping;
 import com.flipkart.drift.sdk.model.request.WorkflowStartRequest;
-import com.flipkart.drift.commons.model.node.NodeDefinition;
 import com.flipkart.drift.commons.model.node.Workflow;
 import com.flipkart.drift.commons.model.node.WorkflowNode;
 import com.flipkart.drift.worker.service.IssueWorkflowMappingService;
@@ -19,32 +17,19 @@ import static com.flipkart.drift.worker.util.Constants.WORKFLOW_ID;
 
 @Slf4j
 public class FetchWorkflowActivityImpl implements FetchWorkflowActivity {
-    private final WorkflowCache workflowCache;
-    private final NodeDefinitionCache nodeDefinitionCache;
+    private final WorkflowFetchHelper workflowFetchHelper;
     private final IssueWorkflowMappingService issueWorkflowMappingService;
 
     @Inject
-    public FetchWorkflowActivityImpl(WorkflowCache workflowCache,
-                                     NodeDefinitionCache nodeDefinitionCache,
+    public FetchWorkflowActivityImpl(WorkflowFetchHelper workflowFetchHelper,
                                      IssueWorkflowMappingService issueWorkflowMappingService) {
-        this.workflowCache = workflowCache;
-        this.nodeDefinitionCache = nodeDefinitionCache;
+        this.workflowFetchHelper = workflowFetchHelper;
         this.issueWorkflowMappingService = issueWorkflowMappingService;
     }
 
     @Override
-    public Workflow fetchWorkflow(String workflowId,
-                                  String version, String tenant) {
-        Workflow workflow =  workflowCache.get(workflowId, version,
-                tenant).get();
-
-        // enrich workflow with NodeDefinition data in states
-        workflow.getStates().forEach((k, v) -> {
-            NodeDefinition nodeDefinition = nodeDefinitionCache.get(v.getResourceId(), v.getResourceVersion(),
-                    tenant).get();
-            v.setNodeDefinition(nodeDefinition);
-        });
-        return workflow;
+    public Workflow fetchWorkflow(String workflowId, String version, String tenant) {
+        return workflowFetchHelper.fetchAndPrepareWorkflow(workflowId, version, tenant);
     }
 
 

@@ -155,6 +155,73 @@ Notes:
 - Nesting Child inside another child workflow is not supported.
 - In ASYNC mode, parent proceeds without waiting for child completion.
 
+### SUB_WORKFLOW Node
+Used to **inline** another workflow into the current workflow at fetch time. The referenced workflow’s nodes are merged into the parent’s execution graph (one run, synchronous). Use this when you want a single workflow run that logically includes steps from another workflow definition.
+
+**Node Definition (reference):**
+
+```json
+{
+  "id": "sub_validation_step",
+  "name": "Run validation sub-workflow",
+  "type": "SUB_WORKFLOW",
+  "version": "1",
+  "subWorkflowId": "validation_workflow",
+  "subWorkflowVersion": "SNAPSHOT",
+  "config": {
+    "includeFirstNode": true,
+    "includeLastNode": false,
+    "errorHandlingStrategy": "PROPAGATE"
+  }
+}
+```
+
+**Config:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `includeFirstNode` | Boolean | true | If false, the sub-workflow’s start node is not inlined; the chain starts at the second node. |
+| `includeLastNode` | Boolean | true | If false, the sub-workflow’s terminal node is not inlined; the chain ends at the predecessor of the terminal. |
+| `errorHandlingStrategy` | Enum | PROPAGATE | How failures inside the inlined sub-workflow are handled. See **Error handling** below. |
+
+
+**Error handling**
+
+- **PROPAGATE** (default): Any failure in the inlined sub-workflow is handled by the **parent workflow's** `defaultFailureNode`. One failure domain for the whole run. *Currently implemented.*
+- **ISOLATE**: Intended to use the **sub-workflow's own** `defaultFailureNode` for failures within its scope before falling back to the parent. *Not yet implemented; setting ISOLATE is accepted but runtime behaviour is the same as PROPAGATE.*
+
+**Workflow state (instance):**
+
+```json
+"states": {
+  "do_validation": {
+    "instanceName": "do_validation",
+    "resourceId": "sub_validation_step",
+    "resourceVersion": "1",
+    "type": "SUBWORKFLOW",
+    "nextNode": "after_validation",
+    "end": false,
+    "nodeDefinition": {
+      "id": "sub_validation_step",
+      "name": "Run validation sub-workflow",
+      "type": "SUB_WORKFLOW",
+      "version": "1",
+      "subWorkflowId": "validation_workflow",
+      "subWorkflowVersion": "SNAPSHOT",
+      "config": {
+        "includeFirstNode": true,
+        "includeLastNode": false
+      }
+    }
+  }
+}
+```
+
+**Notes:**
+- The referenced workflow (`subWorkflowId` / `subWorkflowVersion`) must exist and be fetchable; it is flattened recursively (nested SUB_WORKFLOW nodes are supported).
+- Circular references (e.g. A → B → A) and exceeding max nesting depth are rejected at fetch time.
+- If both `includeFirstNode` and `includeLastNode` are false, ensure the sub-workflow has at least one “middle” node to inline; otherwise the sub is effectively skipped (references are rewired to the sub’s successor).
+
 ### Referencing Groovy Scripts
 Instead of embedding scripts directly in the JSON, you can reference external script files. This promotes better version control, code reviews, and auditability.
 

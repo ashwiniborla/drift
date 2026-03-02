@@ -12,5 +12,6 @@ public enum NodeType {
     UPDATE_INCIDENT,
     DELEGATE,
     CHILD,
-    WAIT
+    WAIT,
+    SUB_WORKFLOW
 }

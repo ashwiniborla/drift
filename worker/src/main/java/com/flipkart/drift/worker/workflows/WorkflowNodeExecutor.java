@@ -40,7 +40,7 @@ import static com.flipkart.drift.worker.util.Constants.WORKFLOW_ID;
 public class WorkflowNodeExecutor {
     private final Logger logger = io.temporal.workflow.Workflow.getLogger(WorkflowNodeExecutor.class);
     private final WorkflowState workflowState;
-    private final Set<NodeType> localActivityTypes = Sets.newHashSet(NodeType.INSTRUCTION, NodeType. BRANCH,
+    private final Set<NodeType> localActivityTypes = Sets.newHashSet(NodeType.INSTRUCTION, NodeType.BRANCH,
             NodeType.GROOVY, NodeType.SUCCESS, NodeType.FAILURE);
 
     public WorkflowNodeExecutor(WorkflowState workflowState) {
@@ -48,6 +48,16 @@ public class WorkflowNodeExecutor {
     }
 
     public ActivityThinResponse executeNode(WorkflowNode currentNode, Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
+        /**
+         Failing node execution if Node is of type SUB_WORKFLOW, as it will get resolved via {@link com.flipkart.drift.worker.helper.WorkflowFetchHelper}
+         */
+        if (currentNode.getNodeDefinition().getType() == NodeType.SUB_WORKFLOW) {
+            throw ApplicationFailure.newNonRetryableFailure(
+                    "SubWorkflowNode '" + currentNode.getInstanceName() +
+                            "' must not reach executor; it should have been flattened during DSL fetch.",
+                    "SUB_WORKFLOW_EXECUTION_FORBIDDEN"
+            );
+        }
         if (currentNode.getNodeDefinition().getType() == NodeType.CHILD) {
             if (workflowStartRequest.getParentWorkflowId() != null) {
                 throw ApplicationFailure.newNonRetryableFailure("Child node cannot be nested inside another child workflow: " + currentNode.getInstanceName(), "INVALID_CHILD_NODE");

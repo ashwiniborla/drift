@@ -83,7 +83,8 @@ public class GroovyTranslator {
             });
             Script script = (Script) groovyClass.newInstance();
             Binding binding = new Binding(dataMap);
-            
+            binding.setVariable("logger", log);
+
             // Add customEvaluate method that uses caching to avoid compilation in runtime
             binding.setVariable("customEvaluate", new groovy.lang.Closure(script) {
                 @Override

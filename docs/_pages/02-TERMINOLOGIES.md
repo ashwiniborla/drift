@@ -26,6 +26,12 @@ A single node instance (or sub-workflow composed of nodes) can be integrated acr
 | **INSTRUCTION**       | Handles UI interactions and necessary I/O (human-in-the-loop).                     |
 | **SUCCESS / FAILURE** | Terminal nodes that explicitly mark the conclusion or failure state of the workflow. |
 | **CHILD**             | Invokes a single sub-workflow (currently async; parent continues).                    |
+| **SUB_WORKFLOW**      | Inlines a referenced workflow into the parent at fetch time; nodes are merged into one execution graph (sync, single workflow). |
+
+#### **SUB_WORKFLOW vs CHILD**
+
+- **CHILD**: Starts a *separate* Temporal child workflow; the parent may continue without waiting. Two workflow runs.
+- **SUB_WORKFLOW**: The referenced workflow is *flattened* into the parent at DSL fetch time. One workflow run; the sub-workflow’s nodes execute as part of the parent. Supports `includeFirstNode` / `includeLastNode` to include or skip the sub-workflow’s start and terminal nodes.
 
 ---
 
