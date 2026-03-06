@@ -39,6 +39,9 @@ coverage.xml
 logs/
 *.log.*
 
+# ----- Personal / local config (keep .example committed) -----
+scripts/sync_workflow_nodes.config.json
+
 # ----- Environment/Secrets -----
 .env
 .env.*
@@ -50,6 +53,8 @@ logs/
 *.key
 *.pem
 .cursor/*
+!.cursor/skills/
+!.cursor/skills/**
 # ----- Internal implementation -----
 /scripts
 # ----- Internal implementation and documentation -----
@@ -60,3 +65,5 @@ logs/
 # ----- Maven -----
 settings.xml
 .flattened-pom.xml
+src/main/resources/scripts/*
+

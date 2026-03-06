@@ -1,0 +1,198 @@
+{
+  "fake_forward_rfr": {
+    "title": {
+      "iris": {
+        "key": "help_us_schedule_your_next_delivery_attempt",
+        "default": "Help us schedule your next delivery attempt"
+      }
+    },
+    "subTitle": {
+      "iris": {
+        "key": "order_ws_ofd_prtnr_no_deliver",
+        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+      }
+    },
+    "questions": [
+      {
+        "key": "prtnr_contacted_didnt_deliver",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_didnt_deliver",
+            "default": "Partner contacted, but did not deliver"
+          }
+        }
+      },
+      {
+        "key": "prtnr_contacted_but_i_was_away",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_but_i_was_away",
+            "default": "Partner contacted, but I was away"
+          }
+        }
+      },
+      {
+        "key": "no_one_has_contacted_me",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": true,
+        "displayName": {
+          "iris": {
+            "key": "no_one_has_contacted_me",
+            "default": "No one has contacted me"
+          }
+        }
+      }
+    ]
+  },
+  "fake_forward_cnr": {
+    "title": {
+      "iris": {
+        "key": "quick_check_status_on_your_delivery",
+        "default": "Quick Check Status on your delivery"
+      }
+    },
+    "subTitle": {
+      "iris": {
+        "key": "order_ws_ofd_prtnr_no_deliver",
+        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+      }
+    },
+    "questions": [
+      {
+        "key": "prtnr_contacted_didnt_deliver",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_didnt_deliver",
+            "default": "Partner contacted, but did not deliver"
+          }
+        }
+      },
+      {
+        "key": "prtnr_contacted_but_i_was_away",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_but_i_was_away",
+            "default": "Partner contacted, but I was away"
+          }
+        }
+      },
+      {
+        "key": "no_one_has_contacted_me",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "no_one_has_contacted_me",
+            "default": "No one has contacted me"
+          }
+        }
+      }
+    ]
+  },
+  "fake_reverse_rfr": {
+    "title": {
+      "iris": {
+        "key": "help_us_schedule_your_next_delivery_attempt",
+        "default": "Help us schedule your next delivery attempt"
+      }
+    },
+    "subTitle": {
+      "iris": {
+        "key": "order_ws_ofd_prtnr_no_deliver",
+        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+      }
+    },
+    "questions": [
+      {
+        "key": "prtnr_contacted_didnt_deliver",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_didnt_deliver",
+            "default": "Partner contacted, but did not deliver"
+          }
+        }
+      },
+      {
+        "key": "prtnr_contacted_but_i_was_away",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_but_i_was_away",
+            "default": "Partner contacted, but I was away"
+          }
+        }
+      },
+      {
+        "key": "no_one_has_contacted_me",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "no_one_has_contacted_me",
+            "default": "No one has contacted me"
+          }
+        }
+      }
+    ]
+  },
+  "fake_reverse_cnr": {
+    "title": {
+      "iris": {
+        "key": "quick_check_status_on_your_delivery",
+        "default": "Quick Check Status on your delivery"
+      }
+    },
+    "subTitle": {
+      "iris": {
+        "key": "order_ws_ofd_prtnr_no_deliver",
+        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+      }
+    },
+    "questions": [
+      {
+        "key": "prtnr_contacted_didnt_deliver",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_didnt_deliver",
+            "default": "Partner contacted, but did not deliver"
+          }
+        }
+      },
+      {
+        "key": "prtnr_contacted_but_i_was_away",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_but_i_was_away",
+            "default": "Partner contacted, but I was away"
+          }
+        }
+      },
+      {
+        "key": "no_one_has_contacted_me",
+        "nextWorkflow": null,
+        "isFakeWorkflowRequired": false,
+        "displayName": {
+          "iris": {
+            "key": "no_one_has_contacted_me",
+            "default": "No one has contacted me"
+          }
+        }
+      }
+    ]
+  }
+}
