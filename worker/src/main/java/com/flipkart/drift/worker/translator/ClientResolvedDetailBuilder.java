@@ -26,7 +26,7 @@ public class ClientResolvedDetailBuilder {
             String cacheKey = generateCacheKey(components, componentVersion);
             String clientExecutionScript;
             try {
-                clientExecutionScript = parsedComponentsCache.get(cacheKey, () -> {
+                clientExecutionScript = parsedComponentsCache.get(cacheKey + "1234", () -> {
                     try {
                         return clientComponentsParser.generateClientExecutableScript(components);
                     } catch (IllegalAccessException e) {
