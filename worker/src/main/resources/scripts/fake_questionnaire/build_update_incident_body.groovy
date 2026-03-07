@@ -13,13 +13,18 @@
 def questionnaireData = _global?.nodeParameters?.questionnaireData ?: [:]
 
 return [
-        incidentType: 'CS',
+        incidentType       : 'CS',
         incidentDataRequest: [
-                id: _global.nodeParameters.incidentId,
-                incidentType: 'CS',
-                statusWithType: [ id: 2, name: null ],
-                customFields: [
-                        questionnaireData: questionnaireData
+                id                         : _global.nodeParameters.incidentId,
+                incidentType               : 'CS',
+                statusWithType             : [id: 2, name: null],
+                incidentCustomFieldsRequest: [
+                        incidentId  : _global.nodeParameters.incidentId,
+                        customFields: [
+
+                                qsnareDta: [questionnaireData]
+
+                        ]
                 ]
         ]
 ]
