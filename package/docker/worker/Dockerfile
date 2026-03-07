@@ -1,5 +1,6 @@
 #BASE IMAGE
-FROM eclipse-temurin:17-jdk-slim-bullseye
+ARG BASE_IMAGE=eclipse-temurin:17-jdk-slim-bullseye
+FROM ${BASE_IMAGE}
 
 RUN mkdir -p /usr/share/drift-worker/service && \
     mkdir -p /var/log/drift-worker && \
@@ -13,7 +14,7 @@ RUN mkdir -p /usr/share/drift-worker/service && \
     echo Asia/Calcutta > /etc/timezones
 
 COPY worker/target/worker-*.jar /usr/share/drift-worker/service/worker.jar
-COPY Docker/worker/entrypoint.sh /entrypoint.sh
+COPY package/docker/worker/entrypoint.sh /entrypoint.sh
 
 # Default values for JVM settings
 ENV JVM_XMS="8g"

@@ -49,7 +49,17 @@
         <central.publishing.plugin.version>0.9.0</central.publishing.plugin.version>
         <flatten.plugin.version>1.6.0</flatten.plugin.version>
         <surefire.plugin.version>3.1.2</surefire.plugin.version>
+        <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.6.2</maven.javadoc.plugin.version>
+        <maven.gpg.plugin.version>3.2.1</maven.gpg.plugin.version>
+        <lombok.maven.plugin.version>1.18.20.0</lombok.maven.plugin.version>
+        <attach.sources.skip>false</attach.sources.skip>
+        <attach.javadoc.skip>false</attach.javadoc.skip>
     </properties>
+
+    <name>Drift Parent</name>
+    <description>A Temporal-powered, low-code workflow builder and execution platform that lets users design and run workflows with native nodes.</description>
+    <url>https://github.com/flipkart-incubator/drift</url>
 
     <licenses>
         <license>
@@ -58,6 +68,20 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/flipkart-incubator/drift.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/flipkart-incubator/drift.git</developerConnection>
+        <url>https://github.com/flipkart-incubator/drift</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <organization>Flipkart</organization>
+            <organizationUrl>https://github.com/flipkart-incubator</organizationUrl>
+        </developer>
+    </developers>
 
     <repositories>
         <repository>
@@ -105,6 +129,46 @@
             <modules>
                 <module>worker</module>
             </modules>
+        </profile>
+        <!-- Delombok + Javadoc sourcepath: only for modules with src/main/java (skip parent) -->
+        <profile>
+            <id>delombok-for-javadoc</id>
+            <activation>
+                <file>
+                    <exists>src/main/java</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok-maven-plugin</artifactId>
+                        <version>${lombok.maven.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>delombok</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>delombok</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDirectory>src/main/java</sourceDirectory>
+                                    <outputDirectory>${project.build.directory}/generated-sources/delombok</outputDirectory>
+                                    <addOutputDirectory>false</addOutputDirectory>
+                                    <encoding>${project.build.sourceEncoding}</encoding>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <sourcepath>${project.build.directory}/generated-sources/delombok</sourcepath>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -433,6 +497,62 @@
                         <include>**/*IT.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven.source.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                        <configuration>
+                            <skipSource>${attach.sources.skip}</skipSource>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+                <configuration>
+                    <doclint>none</doclint>
+                    <source>17</source>
+                    <skip>${attach.javadoc.skip}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${maven.gpg.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

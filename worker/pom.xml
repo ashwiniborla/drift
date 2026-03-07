@@ -12,6 +12,8 @@
 
     <artifactId>worker</artifactId>
     <version>${revision}</version>
+    <name>Drift Worker</name>
+    <description>Drift Worker runtime for executing workflow tasks.</description>
 
     <distributionManagement>
         <repository>
@@ -239,6 +241,14 @@
     </properties>
     <build>
         <plugins>
+            <!-- Do not publish this module to Maven Central; only java-sdk and api are published -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

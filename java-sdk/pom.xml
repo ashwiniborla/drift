@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>java-sdk</artifactId>
-    <description>Java SDK for Drift containing public models and SPIs</description>
+    <name>Drift Java SDK</name>
+    <description>Java SDK for Drift containing public models and SPIs.</description>
 
     <dependencies>
         <dependency>

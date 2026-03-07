@@ -10,6 +10,14 @@
     </parent>
     <build>
         <plugins>
+            <!-- Do not publish this module to Maven Central; only java-sdk and api are published -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -59,6 +67,8 @@
     <modelVersion>4.0.0</modelVersion>
     <version>${revision}</version>
     <artifactId>api</artifactId>
+    <name>Drift API</name>
+    <description>Drift API application and bootstrap for running workflow APIs.</description>
     <dependencies>
         <dependency>
             <groupId>com.google.inject</groupId>

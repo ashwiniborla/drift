@@ -13,6 +13,8 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>commons</artifactId>
     <version>${revision}</version>
+    <name>Drift Commons</name>
+    <description>Shared utilities and entities for Drift (HBase, serialization, validation).</description>
 
     <dependencies>
         <dependency>
@@ -123,6 +125,14 @@
     </properties>
     <build>
         <plugins>
+            <!-- Do not publish this module to Maven Central; only java-sdk and api are published -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <configuration>
+                    <skipPublishing>true</skipPublishing>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
