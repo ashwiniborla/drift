@@ -80,6 +80,7 @@ public class TemporalWorkerManaged implements Managed {
         worker.registerActivitiesImplementations(injector.getInstance(FetchNodeDefinitionActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(FetchWorkflowActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(WaitNodeNodeActivityImpl.class));
+        worker.registerActivitiesImplementations(injector.getInstance(ChildNodeNodeActivityImpl.class));
 
         return factory;
     }
