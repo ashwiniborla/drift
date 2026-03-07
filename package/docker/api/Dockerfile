@@ -1,5 +1,6 @@
 #BASE IMAGE
-FROM eclipse-temurin:17-jdk-slim-bullseye
+ARG BASE_IMAGE=eclipse-temurin:17-jdk-slim-bullseye
+FROM ${BASE_IMAGE}
 
 RUN mkdir -p /usr/share/drift-api/service && \
     mkdir -p /var/log/drift-api && \
