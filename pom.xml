@@ -83,6 +83,7 @@
         </developer>
     </developers>
 
+
     <repositories>
         <repository>
             <id>central</id>
@@ -99,6 +100,19 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <snapshots>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+            <id>fk-jfrog-snapshot</id>
+            <name>Flipkart-Artifactory</name>
+            <url>https://jfrog.fkinternal.com/artifactory/maven_virtual</url>
+        </repository>
+        <repository>
+            <id>fk-jfrog-release</id>
+            <name>Flipkart-Artifactory</name>
+            <url>https://jfrog.fkinternal.com/artifactory/maven_virtual</url>
         </repository>
     </repositories>
 

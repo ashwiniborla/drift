@@ -37,6 +37,8 @@ Generate a new node definition (JSON) while:
 | **Node model classes** (read-only reference) | `commons/src/main/java/com/flipkart/drift/commons/model/node/*.java` |
 | **Workflow context (optional)** | `worker/src/main/resources/scripts/<workflow_name>/context.json` — variable names and semantics; use **only when required** (e.g. parameter names, option keys). Do not force every node to depend on context. |
 
+**Enum store (_enum_store) key convention**: When accessing lookup/config values from `_enum_store` in scripts, **do not use the `global.` prefix**. The key in `lookup.properties` may be written as `global.elixir.issueConfig.2112.similarIssues`, but in code use `_enum_store.get('elixir.issueConfig.2112.similarIssues')` (omit `global.`). Example: key `global.postDeliveryIssues.eklPartners` → in script use `_enum_store.get('postDeliveryIssues.eklPartners')`.
+
 ## Always read these references first
 
 1. `.cursor/output/nodes/nodes_pattern.md`

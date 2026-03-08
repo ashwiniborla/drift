@@ -18,4 +18,5 @@ public class OrderDetail implements Serializable {
     private String orderId;
     private String orderItemId;
     private String orderItemUnitId;
+    private String trackingId;
 }

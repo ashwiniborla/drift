@@ -41,7 +41,7 @@ All scripts have access to these context variables:
 | `_global.<instanceName>` | Output of a previously executed node | `_global.fetch_order?.status` |
 | `_global['<instanceName>:viewResponse']` | User input from an instruction node | `_global['show_options:viewResponse']?.selectedOptions` |
 | `_global.threadContext` | Thread metadata (clientId, tenant, perfFlag) | `_global.threadContext?.clientId` |
-| `_enum_store` | Configuration/lookup store | `_enum_store.ims.vip` |
+| `_enum_store` | Configuration/lookup store (Map). **Do not use `global.` prefix**: if config key is `global.elixir.issueConfig.2112.similarIssues`, use `_enum_store.get('elixir.issueConfig.2112.similarIssues')` | `_enum_store.get('elixir.issueConfig.2112.similarIssues')` |
 | `_response` | HTTP response (only in HTTP node transformer) | `_response?.body`, `_response?.statusCode` |
 
 **Safe navigation**: Always use `?.` operator to avoid NullPointerException.

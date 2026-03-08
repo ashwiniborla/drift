@@ -24,8 +24,7 @@ public class WorkflowConfigStoreService {
     private static final String GLOBAL_PREFIX = "global.";
     private static final int MAX_CACHE_SIZE = 10000;
     
-    // Cache for all configuration using Guava Cache
-    private final Cache<String, String> configCache;
+    private final Cache<String, Object> configCache;
     
     // Track if cache has been initialized
     private volatile boolean initialized = false;
@@ -91,8 +90,7 @@ public class WorkflowConfigStoreService {
         AbstractConfiguration config = ConfigurationManager.getConfigInstance();
         Iterator<String> keys = config.getKeys();
         
-        // Build new cache entries
-        Map<String, String> newEntries = new HashMap<>();
+        Map<String, Object> newEntries = new HashMap<>();
         int count = 0;
         
         while (keys.hasNext()) {
@@ -101,7 +99,7 @@ public class WorkflowConfigStoreService {
             if (key.startsWith(GLOBAL_PREFIX)) {
                 Object value = config.getProperty(key);
                 if (value != null) {
-                    newEntries.put(key, value.toString());
+                    newEntries.put(key, value);
                     count++;
                 }
             }

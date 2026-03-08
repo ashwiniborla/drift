@@ -39,7 +39,7 @@ Interactively build a Drift workflow definition JSON by:
         "<state_key>": {
             "instanceName": "<state_key>",
             "resourceId": "<node_definition_id>",
-            "resourceVersion": "LATEST",
+            "resourceVersion": "SNAPSHOT",
             "type": "NODE",
             "parameters": {},
             "nextNode": "<next_state_key>",
@@ -66,7 +66,7 @@ Interactively build a Drift workflow definition JSON by:
 |-------|----------|-------------|
 | `instanceName` | yes | Same as the state key |
 | `resourceId` | yes | ID of the node definition this state uses |
-| `resourceVersion` | yes | Version of the node definition (`"LATEST"`, `"ACTIVE"`, or specific) |
+| `resourceVersion` | yes | Use **`"SNAPSHOT"`** when adding nodes to a workflow. Other values: `"LATEST"`, `"ACTIVE"`, or a specific version. |
 | `type` | yes | Always `"NODE"` |
 | `parameters` | no | Map of parameter bindings — keys are param names, values are JsonPath expressions (e.g., `"$.orderDetails[0].orderId"`) or JS-like expressions (e.g., `"_global.params?.client"`) |
 | `nextNode` | no | Key of the next state to execute (omit if branching is handled by the node itself) |
@@ -129,7 +129,7 @@ For each state the user wants to add, collect:
 
 1. **State key** — the key in the `states` map (typically same as node name, snake_case)
 2. **Resource ID** — which node definition does this state use? (same as state key if 1:1)
-3. **Resource version** — typically `"LATEST"`, but ask
+3. **Resource version** — use **`"SNAPSHOT"`** when adding a node to a workflow (so the workflow pins the node version). Ask only if a different version is required.
 4. **Parameters** — does this state need parameter bindings?
    - If yes, for each parameter:
      - Parameter name (key)
@@ -245,15 +245,16 @@ When called from the **node-generate-new** skill (or when the user says "add thi
 
 1. Ask **which workflow** to add the node to (by name). List existing workflows found under `.cursor/output/workflows/` if any.
 2. Read the workflow's `workflow.json`
-3. Ask for the state entry details:
+3. **Use `resourceVersion: "SNAPSHOT"`** for every new state entry (do not use `"LATEST"` when adding nodes to a workflow).
+4. Ask for the state entry details:
    - State key (suggest the node name)
    - Parameters (if the node has parameters, ask how to bind them)
    - Next node (where does flow go after this state?)
    - Is it terminal?
-4. Add the state entry to `states`
-5. Ask if `startNode`, `defaultFailureNode`, or any existing `nextNode` references should be updated to point to this new state
-6. **start_request.md**: If `.cursor/output/workflows/<workflow_name>/start_request.md` does not exist, generate it (ask for start request payload/params/sample, then write using the start_request.md template above).
-7. Show updated workflow JSON and confirm before writing
+5. Add the state entry to `states` with `resourceVersion: "SNAPSHOT"`
+6. Ask if `startNode`, `defaultFailureNode`, or any existing `nextNode` references should be updated to point to this new state
+7. **start_request.md**: If `.cursor/output/workflows/<workflow_name>/start_request.md` does not exist, generate it (ask for start request payload/params/sample, then write using the start_request.md template above).
+8. Show updated workflow JSON and confirm before writing
 
 ## Clarification rule
 
