@@ -9,6 +9,7 @@
  *   _global.nodeParameters.statusWithType     – optional; { id, name } e.g. from JsonPath
  *   _global.nodeParameters.statusId            – optional; when statusWithType is null, use this (string or number) as id, name = null
  *   _global.nodeParameters.questionnaireData  – optional; added as customFields.qsnareDta
+ *   _global.nodeParameters.elxrTkt            – optional; added as customFields.elxrTkt (elixir ticket details)
  *   _global.nodeParameters.threads            – optional; list of incidentThreadRequest maps
  *   _global.nodeParameters.notesText          – optional; when threads is null, builds one thread with this text (default queue/threadEntryType)
  *
@@ -41,6 +42,17 @@ if (questionnaireData != null) {
                     qsnareDta: questionnaireData instanceof List ? questionnaireData : [questionnaireData]
             ]
     ]
+}
+
+def elxrTkt = _global?.nodeParameters?.elxrTkt
+if (elxrTkt != null) {
+    if (incidentDataRequest['incidentCustomFieldsRequest'] == null) {
+        incidentDataRequest['incidentCustomFieldsRequest'] = [
+            incidentId   : incidentId,
+            customFields : [:]
+        ]
+    }
+    incidentDataRequest['incidentCustomFieldsRequest']['customFields']['elxrTkt'] = elxrTkt
 }
 
 def threads = _global?.nodeParameters?.threads
