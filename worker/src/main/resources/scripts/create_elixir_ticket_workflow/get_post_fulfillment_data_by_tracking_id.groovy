@@ -41,7 +41,7 @@ def getPostFulfillmentDataByTrackingId(response, String orderId, String dataVari
     def allowed = partnerList.contains(matchedUnit.postFulfillmentData.courierName);
 
     def result = [
-            itemType           : matchedUnit?.type,
+            itemType           : matchedUnit?.type?.toUpperCase(),
             postFulfillmentData: matchedUnit.postFulfillmentData,
             allowed: allowed,
     ]
