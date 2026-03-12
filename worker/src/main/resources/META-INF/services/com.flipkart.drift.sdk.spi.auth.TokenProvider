@@ -1,2 +1,2 @@
-com.flipkart.drift.sdk.spi.auth.NoOpTokenProvider
+com.flipkart.drift.sdk.spi.auth.FlipkartAuthTokenProvider
 
