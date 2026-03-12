@@ -10,10 +10,10 @@ import com.google.inject.Inject;
 
 import static com.flipkart.drift.commons.utils.Constants.MAPPER;
 
-public class ChildNodeNodeActivityImpl extends BaseNodeActivityImpl<ChildNode> implements ChildNodeNodeActivity {
+public class ChildNodeActivityImpl extends BaseNodeActivityImpl<ChildNode> implements ChildNodeActivity {
 
     @Inject
-    public ChildNodeNodeActivityImpl(WorkflowContextHBService workflowContextHBService) {
+    public ChildNodeActivityImpl(WorkflowContextHBService workflowContextHBService) {
         super(workflowContextHBService);
     }
 
