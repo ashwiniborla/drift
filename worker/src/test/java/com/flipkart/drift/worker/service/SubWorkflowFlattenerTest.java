@@ -507,6 +507,62 @@ class SubWorkflowFlattenerTest {
     // ========================== Group 9: Special Behavior ==========================
 
     @Test
+    public void branchIntermediateNode_notMistakenForTerminal_includeLastTrue() {
+        // fake_workflow: step1 → branchNode (choices→A,B; no nextNode on wrapper) → A(end), B(end)
+        // With includeLastNode=true: branchNode has nextNode=null but must NOT be treated as terminal.
+        // All four nodes must be inlined and the actual end-nodes (A, B) must remain reachable.
+        BranchNode branchDef = branchDef("branch_b", Arrays.asList(choice("b_A"), choice("b_B")), "b_A");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",      node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b", node("branch_b", branchDef, null, false),  // nextNode=null on wrapper
+                "b_A",     node("b_A", groovyDef("b_A"), null, true),
+                "b_B",     node("b_B", groovyDef("b_B"), null, true)));
+        Workflow a = parentWithOneSub("SubB", true, true);
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "branch_b", "b_A", "b_B", "a2");
+        assertEquals("b1", a.getStates().get("a1").getNextNode());
+        assertEquals("branch_b", a.getStates().get("b1").getNextNode());
+        BranchNode inlinedBranch = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
+        assertEquals("b_A", inlinedBranch.getChoices().get(0).getNextNode());
+        assertEquals("b_B", inlinedBranch.getChoices().get(1).getNextNode());
+    }
+
+    @Test
+    public void branchIntermediateNode_notMistakenForTerminal_includeLastFalse() {
+        // Convergent branch: b1 → branch_b (choices→b_A, b_B; no nextNode on wrapper)
+        //                    b_A → b_success(end), b_B → b_success(end)
+        // The single true terminal is b_success. With includeLastNode=false, b_success should be
+        // excluded and b_A should become the effectiveEnd (findPredecessor of b_success via nextNode).
+        // BEFORE FIX: findTerminal wrongly returned branch_b (nextNode=null) → excluded it →
+        //             only b1 executed (first node), branch was completely bypassed. BUG.
+        // AFTER FIX: findTerminal skips branch_b, finds b_success as the real terminal → b_success
+        //            excluded → b1→branch_b chain is preserved.
+        BranchNode bBranchDef = branchDef("branch_b", Arrays.asList(choice("b_A"), choice("b_B")), "b_A");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",        node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b",  node("branch_b", bBranchDef, null, false),
+                "b_A",       node("b_A", groovyDef("b_A"), "b_success", false),
+                "b_B",       node("b_B", groovyDef("b_B"), "b_success", false),
+                "b_success", node("b_success", groovyDef("b_success"), null, true)));
+        Workflow a = parentWithOneSub("SubB", true, false);
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        // b_success excluded (includeLastNode=false); branch_b must remain; b1 must NOT be rewired to skip branch
+        assertStateKeys(a, "a1", "b1", "branch_b", "b_A", "b_B", "a2");
+        assertEquals("b1", a.getStates().get("a1").getNextNode());
+        assertEquals("branch_b", a.getStates().get("b1").getNextNode());
+        assertTrue(a.getStates().containsKey("branch_b"));
+        // effectiveEnd = b_A (first predecessor of b_success via nextNode), rewired to continue to a2
+        assertEquals("a2", a.getStates().get("b_A").getNextNode());
+    }
+
+
+    @Test
     void branchStartNode_notExcludedByIncludeFirstFalse() {
         // B starts with BRANCH node. Config includeFirst=false. Branch should NOT be excluded.
         BranchNode bBranch = branchDef("branch_b", List.of(choice("b2")), "b2");
