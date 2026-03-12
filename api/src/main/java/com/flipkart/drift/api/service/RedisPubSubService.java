@@ -150,7 +150,7 @@ public class RedisPubSubService implements Managed {
 
     private void waitForRedisResponse(JedisPubSub pubSub, CompletableFuture<Void> redisFuture, String channelName) {
         try {
-            redisFuture.get(5, TimeUnit.SECONDS);
+            redisFuture.get(50, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             markMeter(this.getClass(), "subscribe", "timeout");
             log.warn("Timeout waiting for Redis event on channel: {}. Unsubscribing and cancelling task.", channelName);

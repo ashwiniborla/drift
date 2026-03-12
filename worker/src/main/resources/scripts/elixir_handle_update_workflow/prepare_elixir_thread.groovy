@@ -17,18 +17,18 @@
 def action = _global?.nodeParameters?.action?.toString()?.trim()
 def context = _global?.nodeParameters?.context
 
-def reasonCode    = context?.reasonCode?.toString()?.trim() ?: ''
+def reasonCode = context?.reasonCode?.toString()?.trim() ?: ''
 def subreasonCode = context?.subreasonCode?.toString()?.trim() ?: ''
-def reasonText    = context?.reasonText?.toString()?.trim() ?: ''
+def reasonText = context?.reasonText?.toString()?.trim() ?: ''
 def subReasonText = context?.subReasonText?.toString()?.trim() ?: ''
-def persona       = context?.persona?.toString()?.trim() ?: ''
+def persona = context?.persona?.toString()?.trim() ?: ''
 
 def defaultFallbackText = [
-    "Reason Code: ${reasonCode}",
-    "Reason Text: ${reasonText}",
-    "Sub Reason Code: ${subreasonCode}",
-    "Sub Reason Text: ${subReasonText}",
-    "Persona: ${persona}"
+        "Persona: ${persona}",
+        "Reason Code: ${reasonCode}",
+        "Reason Text: ${reasonText}",
+        "Sub Reason Code: ${subreasonCode}",
+        "Sub Reason Text: ${subReasonText}",
 ].join('\n')
 
 def threadText = null
@@ -44,11 +44,11 @@ if (action) {
 }
 
 def thread = [
-    text           : threadText,
-    contentType    : 'text/plain',
-    threadEntryType: [id: 30, name: null],
-    createdByUser  : persona,
-    action         : 'add'
+        text           : threadText,
+        contentType    : 'text/plain',
+        threadEntryType: [id: 30, name: null],
+        createdByUser  : persona,
+        action         : 'add'
 ]
 
 return [threads: [thread]]

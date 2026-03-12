@@ -67,18 +67,8 @@ try {
         "Persona: ${persona}"
     ].join('\n')
 
-    def threadText = null
-    def category = actionTypeMap.containsKey(action) ? actionTypeMap[action] : 'others'
-
-    if (category == 'action') {
-        def enumKey = 'elixir.action.threadText.' + action
-        def enumValue = _enum_store?.get(enumKey)?.toString()?.trim()
-        threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
-    } else {
-        def enumKey = 'elixir.updates.threadText.' + reasonCode + '.' + subreasonCode
-        def enumValue = _enum_store?.get(enumKey)?.toString()?.trim()
-        threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
-    }
+    // Use default thread text only (enum lookup for threadText removed)
+    def threadText = defaultFallbackText
 
     def thread = [
         text           : threadText,

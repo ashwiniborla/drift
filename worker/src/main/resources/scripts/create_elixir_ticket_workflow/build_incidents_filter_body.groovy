@@ -14,14 +14,11 @@ if (issueIdParam == null || issueIdParam.toString().trim().isEmpty()) {
     throw new Exception('issueId is required for incidents filter: missing from params or issueDetail')
 }
 
-def similarIssuesKey = 'elixir.issueConfig.' + issueIdParam + '.similarIssues'
-def issueIds = _enum_store?.get(similarIssuesKey) ?: []
-if (issueIds == null) {
-    throw new Exception("issueIds for filter not found in enum store for key: ${similarIssuesKey}")
-}
-
+def issueIdStr = issueIdParam?.toString()?.trim()
+def rawIssueIds = _enum_store?.elixir?.issueConfig?.get(issueIdStr)?.similarIssues
+def issueIds = (rawIssueIds == null) ? [] : (rawIssueIds instanceof List ? rawIssueIds : (rawIssueIds.toString().split(',').collect { it?.trim() }.findAll { it }))
 if (issueIds.isEmpty()) {
-    throw new Exception("issueIds for filter are empty after parsing enum store key: ${similarIssuesKey}")
+    throw new Exception("issueIds for filter not found or empty in enum store for elixir.issueConfig.${issueIdStr}.similarIssues")
 }
 
 return [

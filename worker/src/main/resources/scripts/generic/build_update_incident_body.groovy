@@ -92,11 +92,10 @@ if (addChildWorkflow) {
         throw new IllegalArgumentException("params.version is required when addChildWorkflow is true.")
     }
     def workflowNameStr = workflowName.toString().trim()
-    def isSmartKey = 'childWorkflow.' + workflowNameStr + '.isSmart'
-    def isSmartVal = _enum_store?.get(isSmartKey)
+    def workflowConfig = _enum_store?.childWorkflow?.get(workflowNameStr)
+    def isSmartVal = workflowConfig?.isSmart
     def isSmartWorkflow = (isSmartVal != null && isSmartVal.toString().trim().length() > 0) ? Boolean.valueOf(isSmartVal.toString().trim()) : false
-    def actionEligibilityKey = 'childWorkflow.' + workflowNameStr + '.actionEligibility'
-    def actionEligibilityVal = _enum_store?.get(actionEligibilityKey)
+    def actionEligibilityVal = workflowConfig?.actionEligibility
     def actionEligibility = (actionEligibilityVal != null && actionEligibilityVal.toString().trim().length() > 0) ? actionEligibilityVal.toString().trim() : ''
     incidentDataRequest['v3ChildWorkflowRequest'] = [
             workflowId        : workflowId.toString().trim(),

@@ -29,10 +29,9 @@ if (!entityType) {
     throw new IllegalArgumentException("elixirEntityType is required to build elxrTkt; got null or empty.")
 }
 
-def issueTypeKey = 'elixir.issueConfig.' + issueId + '.issue'
-def issueType = _enum_store?.get(issueTypeKey)
+def issueType = _enum_store?.elixir?.issueConfig?.get(issueId)?.issue
 if (issueType == null || issueType.toString().trim().isEmpty()) {
-    throw new IllegalArgumentException("issue type not found in enum store for key: " + issueTypeKey)
+    throw new IllegalArgumentException("issue type not found in enum store for key: elixir.issueConfig." + issueId + ".issue")
 }
 issueType = issueType.toString().trim()
 

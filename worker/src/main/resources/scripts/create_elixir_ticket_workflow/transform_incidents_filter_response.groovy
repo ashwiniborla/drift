@@ -6,8 +6,8 @@
  *
  * Expects _response (API body) and _enum_store (config). In code use keys without "global." prefix (e.g. config key global.elixir.incidentFilter.statusTypes -> elixir.incidentFilter.statusTypes).
  */
-def statusTypes = _enum_store?.get('elixir.incidentFilter.statusTypes') ?: []
-def allowedStatuses = _enum_store?.get('elixir.elixirTicketDetails.allowedStatuses') ?: []
+def statusTypes = _enum_store?.elixir?.get('elixirTicketDetails.allowedStatuses') ?: []
+def allowedStatuses = _enum_store?.elixir?.get('incidentFilter.statusTypes') ?: []
 
 def incidents = _response?.incidents ?: []
 def globalTrackingId = (_global?.orderDetails?.getAt(0)?.trackingId)?.toString()?.trim()

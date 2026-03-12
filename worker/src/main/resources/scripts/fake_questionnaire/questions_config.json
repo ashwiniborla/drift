@@ -1,9 +1,9 @@
 {
-  "fake_forward_rfr": {
+  "fake_forward_cnr": {
     "title": {
       "iris": {
-        "key": "help_us_schedule_your_next_delivery_attempt",
-        "default": "Help us schedule your next delivery attempt"
+        "key": "quick_check_on_status_of_delivery",
+        "default": "Quick check on status of your delivery"
       }
     },
     "subTitle": {
@@ -15,8 +15,11 @@
     "questions": [
       {
         "key": "prtnr_contacted_didnt_deliver",
-        "nextWorkflow": null,
         "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
         "displayName": {
           "iris": {
             "key": "prtnr_contacted_didnt_deliver",
@@ -26,8 +29,11 @@
       },
       {
         "key": "prtnr_contacted_but_i_was_away",
-        "nextWorkflow": null,
         "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
         "displayName": {
           "iris": {
             "key": "prtnr_contacted_but_i_was_away",
@@ -37,8 +43,11 @@
       },
       {
         "key": "no_one_has_contacted_me",
-        "nextWorkflow": null,
         "isFakeWorkflowRequired": true,
+        "postScreensRequired":  {
+          "phone": true,
+          "location": true
+        },
         "displayName": {
           "iris": {
             "key": "no_one_has_contacted_me",
@@ -48,35 +57,85 @@
       }
     ]
   },
-  "fake_forward_cnr": {
+  "fake_forward_rfr": {
     "title": {
       "iris": {
-        "key": "quick_check_status_on_your_delivery",
-        "default": "Quick Check Status on your delivery"
+        "key": "help_us_schedule_your_next_delivery_attempt",
+        "default": "Help us schedule your next delivery attempt"
       }
     },
     "subTitle": {
       "iris": {
-        "key": "order_ws_ofd_prtnr_no_deliver",
-        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+        "key": "to_help_us_let_us_know_preference",
+        "default": "To help us plan, could you let us know your preference for the recent reschedule request"
       }
     },
     "questions": [
       {
-        "key": "prtnr_contacted_didnt_deliver",
-        "nextWorkflow": null,
+        "key": "yes_i_requested_it",
         "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
         "displayName": {
           "iris": {
-            "key": "prtnr_contacted_didnt_deliver",
-            "default": "Partner contacted, but did not deliver"
+            "key": "yes_i_requested_it",
+            "default": "Yes I requested it"
+          }
+        }
+      },
+      {
+        "key": "no_i_didnt_reschedule",
+        "isFakeWorkflowRequired": true,
+        "postScreensRequired":  {
+          "phone": true,
+          "location": true
+        },
+        "displayName": {
+          "iris": {
+            "key": "no_i_didnt_reschedule",
+            "default": "No I didnt reschedule"
+          }
+        }
+      }
+    ]
+  },
+  "fake_reverse_cnr": {
+    "title": {
+      "iris": {
+        "key": "quick_check_on_status_of_pickup",
+        "default": "Quick check on status of your pickup"
+      }
+    },
+    "subTitle": {
+      "iris": {
+        "key": "order_ws_ofp_prtnr_no_pickup",
+        "default": "Your order was out for pickup, but our delivery partner was unable to pickup today"
+      }
+    },
+    "questions": [
+      {
+        "key": "prtnr_contacted_didnt_pickup",
+        "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
+        "displayName": {
+          "iris": {
+            "key": "prtnr_contacted_didnt_pickup",
+            "default": "Partner contacted, but did not pickup"
           }
         }
       },
       {
         "key": "prtnr_contacted_but_i_was_away",
-        "nextWorkflow": null,
         "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
         "displayName": {
           "iris": {
             "key": "prtnr_contacted_but_i_was_away",
@@ -86,8 +145,11 @@
       },
       {
         "key": "no_one_has_contacted_me",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
+        "isFakeWorkflowRequired": true,
+        "postScreensRequired":  {
+          "phone": true,
+          "location": true
+        },
         "displayName": {
           "iris": {
             "key": "no_one_has_contacted_me",
@@ -100,96 +162,42 @@
   "fake_reverse_rfr": {
     "title": {
       "iris": {
-        "key": "help_us_schedule_your_next_delivery_attempt",
-        "default": "Help us schedule your next delivery attempt"
+        "key": "help_us_schedule_your_next_pickup_attempt",
+        "default": "Help us schedule your next pickup attempt"
       }
     },
     "subTitle": {
       "iris": {
-        "key": "order_ws_ofd_prtnr_no_deliver",
-        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
+        "key": "to_help_us_let_us_know_preference",
+        "default": "To help us plan, could you let us know your preference for the recent reschedule request"
       }
     },
     "questions": [
       {
-        "key": "prtnr_contacted_didnt_deliver",
-        "nextWorkflow": null,
+        "key": "yes_i_requested_it",
         "isFakeWorkflowRequired": false,
+        "postScreensRequired":  {
+          "phone": false,
+          "location": true
+        },
         "displayName": {
           "iris": {
-            "key": "prtnr_contacted_didnt_deliver",
-            "default": "Partner contacted, but did not deliver"
+            "key": "yes_i_requested_it",
+            "default": "Yes I requested it"
           }
         }
       },
       {
-        "key": "prtnr_contacted_but_i_was_away",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
+        "key": "no_i_didnt_reschedule",
+        "isFakeWorkflowRequired": true,
+        "postScreensRequired":  {
+          "phone": true,
+          "location": true
+        },
         "displayName": {
           "iris": {
-            "key": "prtnr_contacted_but_i_was_away",
-            "default": "Partner contacted, but I was away"
-          }
-        }
-      },
-      {
-        "key": "no_one_has_contacted_me",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
-        "displayName": {
-          "iris": {
-            "key": "no_one_has_contacted_me",
-            "default": "No one has contacted me"
-          }
-        }
-      }
-    ]
-  },
-  "fake_reverse_cnr": {
-    "title": {
-      "iris": {
-        "key": "quick_check_status_on_your_delivery",
-        "default": "Quick Check Status on your delivery"
-      }
-    },
-    "subTitle": {
-      "iris": {
-        "key": "order_ws_ofd_prtnr_no_deliver",
-        "default": "Your order was out for delivery, but our delivery partner was unable to deliver it today"
-      }
-    },
-    "questions": [
-      {
-        "key": "prtnr_contacted_didnt_deliver",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
-        "displayName": {
-          "iris": {
-            "key": "prtnr_contacted_didnt_deliver",
-            "default": "Partner contacted, but did not deliver"
-          }
-        }
-      },
-      {
-        "key": "prtnr_contacted_but_i_was_away",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
-        "displayName": {
-          "iris": {
-            "key": "prtnr_contacted_but_i_was_away",
-            "default": "Partner contacted, but I was away"
-          }
-        }
-      },
-      {
-        "key": "no_one_has_contacted_me",
-        "nextWorkflow": null,
-        "isFakeWorkflowRequired": false,
-        "displayName": {
-          "iris": {
-            "key": "no_one_has_contacted_me",
-            "default": "No one has contacted me"
+            "key": "no_i_didnt_reschedule",
+            "default": "No I didnt reschedule"
           }
         }
       }

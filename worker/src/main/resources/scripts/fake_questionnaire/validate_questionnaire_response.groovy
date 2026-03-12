@@ -16,12 +16,9 @@
 def selectedOptions = _global['questionnaire_instructions:viewResponse']?.selectedOptions
 def questions = _global?.nodeParameters?.questions
 def flowDirection = _global?.nodeParameters?.flowDirection
+def questionnaireType = _global.nodeParameters?.questionnaireType
 
 def selectedOptionKey = selectedOptions?.fake_preference
-def raiseClicked = selectedOptions?.raise == 'submit'
-def closeClicked = selectedOptions?.close == 'close'
-
-def buttonAction = raiseClicked ? 'RAISE' : (closeClicked ? 'CLOSE' : 'UNKNOWN')
 
 def questionList = (questions instanceof Map && questions.containsKey('questions'))
         ? questions.questions
@@ -34,8 +31,6 @@ def isValid = (matchedConfig != null && selectedOptionKey != null)
 
 def isFakeWorkflowRequired = isValid ? (matchedConfig?.isFakeWorkflowRequired ?: false) : false
 def nextWorkflow = isValid ? matchedConfig?.nextWorkflow : null
-
-def questionnaireType = (flowDirection == 'FORWARD') ? 'FAKE_FORWARD' : 'FAKE_REVERSE'
 
 def questionnaireData = [
         questionnaireType: questionnaireType,
@@ -50,6 +45,5 @@ return [
         isFakeWorkflowRequired : isFakeWorkflowRequired,
         nextWorkflow           : nextWorkflow,
         questionnaireType      : questionnaireType,
-        questionnaireData      : questionnaireData,
-        buttonAction           : buttonAction
+        questionnaireData      : questionnaireData
 ]

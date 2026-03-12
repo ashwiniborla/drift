@@ -34,14 +34,13 @@ if (!entityFlow) {
     throw new IllegalArgumentException("elixirEntityFlow is required for create elixir ticket; got null or empty.")
 }
 
-def issueTypeKey = 'elixir.issueConfig.' + issueId + '.issue'
-def issueType = _enum_store?.get(issueTypeKey)
+def issueType = _enum_store?.elixir?.issueConfig?.get(issueId)?.issue
 if (issueType == null || issueType.toString().trim().isEmpty()) {
-    throw new IllegalArgumentException("issue_type not found in enum store for key: " + issueTypeKey)
+    throw new IllegalArgumentException("issue_type not found in enum store for key: elixir.issueConfig." + issueId + ".issue")
 }
 issueType = issueType.toString().trim()
 
-def callbackUrl = _enum_store?.get('elixir.callbackUrl')
+def callbackUrl = _enum_store?.elixir?.callbackUrl
 if (callbackUrl == null || callbackUrl.toString().trim().isEmpty()) {
     throw new IllegalArgumentException("elixir.callbackUrl not found in enum store or empty.")
 }

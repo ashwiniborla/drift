@@ -14,19 +14,9 @@ package scripts.fake_questionnaire
  * Returns: Map with flowDirection, undeliveredType, issueId, questions (config block from JSON or null)
  */
 def global = _global;
+
 def issueId = global?.nodeParameters?.issueId
-def issueConfig = [
-        "1111": [
-                flowDirection   : "FORWARD",
-                fakeIssueId     : 2111,
-                similarIssuesIds: [2111, 3267] // Fake Forward , DID
-        ],
-        "1112": [
-                flowDirection   : "REVERSE",
-                fakeIssueId     : 2112,
-                similarIssuesIds: [2112, 3234] // Fake Reverse , DIP
-        ]
-]
+def issueConfig = _enum_store?.questionnaire_config?.issue
 def undeliveredType = global?.nodeParameters?.undeliveredType != null ? global.nodeParameters.undeliveredType.toString().trim() : null
 if (undeliveredType == null || undeliveredType.isEmpty()) {
     throw new IllegalArgumentException("undeliveredType is required for the fake questionnaire workflow. Please provide a non-empty value (e.g. rfr, cnr).")
@@ -63,17 +53,18 @@ try {
 }
 
 def flowDirection = null
-def questionsKey = null;
+def questionnaireType = null;
 def config = issueConfig.get(issueId?.toString())
 if (issueId != null) {
     if (issueConfig.containsKey(issueId?.toString())) {
         flowDirection = config.flowDirection
-        questionsKey = "fake_" + flowDirection.toLowerCase() + "_" + undeliveredType.toLowerCase()
+        questionnaireType = "fake_" + flowDirection.toLowerCase() + "_" + undeliveredType.toLowerCase()
     }
 }
 
 return [
-        undeliveredType: undeliveredType,
-        questions      : questionsKey != null ? questionnaireConfig?.get(questionsKey) : null,
-        issueConfig    : config
+        undeliveredType  : undeliveredType,
+        questions        : questionnaireType != null ? questionnaireConfig?.get(questionnaireType) : null,
+        issueConfig      : config,
+        questionnaireType: questionnaireType
 ]
