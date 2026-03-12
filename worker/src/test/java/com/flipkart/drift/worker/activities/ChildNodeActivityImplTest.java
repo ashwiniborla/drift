@@ -21,15 +21,15 @@ import java.util.Map;
 import static com.flipkart.drift.commons.utils.Constants.MAPPER;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ChildNodeNodeActivityImplTest {
+class ChildNodeActivityImplTest {
 
     private WorkflowContextHBService workflowContextHBService;
-    private ChildNodeNodeActivityImpl childNodeActivity;
+    private ChildNodeActivityImpl childNodeActivity;
 
     @BeforeEach
     void setUp() {
         workflowContextHBService = Mockito.mock(WorkflowContextHBService.class);
-        childNodeActivity = new ChildNodeNodeActivityImpl(workflowContextHBService);
+        childNodeActivity = new ChildNodeActivityImpl(workflowContextHBService);
     }
 
     // ========================== executeNode: nodeParameters present ==========================
