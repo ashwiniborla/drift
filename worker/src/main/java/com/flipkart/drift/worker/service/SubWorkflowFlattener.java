@@ -300,10 +300,22 @@ public class SubWorkflowFlattener {
         private static String findTerminal(Map<String, WorkflowNode> states, Set<String> exclude) {
             return states.entrySet().stream()
                     .filter(e -> !exclude.contains(e.getKey())
-                            && (e.getValue().isEnd() || e.getValue().getNextNode() == null))
+                            && isTerminalNode(e.getValue()))
                     .map(Map.Entry::getKey)
                     .findFirst()
                     .orElse(null);
+        }
+
+        /**
+         * A node is terminal if it is marked as end, or has no nextNode and is not a BranchNode.
+         * BranchNodes route exclusively through choices/defaultNode; their WorkflowNode.nextNode is
+         * null by design and must not be mistaken for a workflow-ending terminal.
+         */
+        private static boolean isTerminalNode(WorkflowNode node) {
+            if (node.isEnd()) return true;
+            if (node.getNextNode() != null) return false;
+            return node.getNodeDefinition() == null
+                    || node.getNodeDefinition().getType() != NodeType.BRANCH;
         }
 
         private static String findPredecessor(Map<String, WorkflowNode> states, String target) {
