@@ -111,7 +111,7 @@ public class SubWorkflowFlattener {
     private void mergeSubWorkflow(Workflow root, Workflow parent, String subNodeName, WorkflowNode subNode, Workflow subWorkflow,
                                   SubWorkflowConfig config, Set<String> usedInstanceNames, Set<String> usedContextKeys,
                                   List<String> path) {
-        InlineScope scope = InlineScope.compute(subWorkflow, config);
+        InlineScope scope = InlineScope.compute(subWorkflow, config, root.getDefaultFailureNode());
         boolean mergingIntoRoot = (parent == root);
 
         if (scope.nodesToInclude.isEmpty()) {
@@ -140,6 +140,16 @@ public class SubWorkflowFlattener {
                 checkAndRegisterDuplicate(name, node, path, usedInstanceNames, usedContextKeys);
             }
             parent.getStates().put(name, node);
+        }
+
+        // Rewire any inlined nodes that reference the excluded sub-workflow defaultFailureNode.
+        // When the names differ, the sub's failure node was excluded but references to it still exist;
+        // redirect them to the root's failure node. When names are the same, this is a no-op since
+        // the root already owns a node with that name.
+        String subFailure = subWorkflow.getDefaultFailureNode();
+        if (subFailure != null && !scope.nodesToInclude.contains(subFailure)
+                && root.getDefaultFailureNode() != null) {
+            replaceAllReferences(parent, subFailure, root.getDefaultFailureNode());
         }
 
         rewireChainEnd(parent, scope.effectiveEnd, subNode.getNextNode(), subNode.isEnd());
@@ -245,7 +255,8 @@ public class SubWorkflowFlattener {
             this.effectiveEnd = effectiveEnd;
         }
 
-        static InlineScope compute(Workflow subWorkflow, SubWorkflowConfig config) {
+        static InlineScope compute(Workflow subWorkflow, SubWorkflowConfig config,
+                                   String parentDefaultFailureNode) {
             Map<String, WorkflowNode> states = subWorkflow.getStates();
             if (states == null || states.isEmpty()) {
                 return new InlineScope(Collections.emptySet(), null, null);
@@ -265,7 +276,16 @@ public class SubWorkflowFlattener {
                 effectiveStart = startNode.getNextNode();
             }
 
-            String terminal = findTerminal(states);
+            // Exclude the sub-workflow's defaultFailureNode when it matches the parent's.
+            // Under PROPAGATE (the only implemented strategy), all failures are handled by the
+            // root workflow's defaultFailureNode, so inlining the sub's failure node is redundant
+            // and causes SUB_WORKFLOW_DUPLICATE_NODE_NAME when both share the same conventional name.
+            String subFailureNode = subWorkflow.getDefaultFailureNode();
+            if (subFailureNode != null && subFailureNode.equals(parentDefaultFailureNode)) {
+                exclude.add(subFailureNode);
+            }
+
+            String terminal = findTerminal(states, exclude);
             String effectiveEnd = terminal;
             if (!config.isIncludeLastNode() && terminal != null) {
                 exclude.add(terminal);
@@ -277,9 +297,10 @@ public class SubWorkflowFlattener {
             return new InlineScope(toInclude, effectiveStart, effectiveEnd);
         }
 
-        private static String findTerminal(Map<String, WorkflowNode> states) {
+        private static String findTerminal(Map<String, WorkflowNode> states, Set<String> exclude) {
             return states.entrySet().stream()
-                    .filter(e -> e.getValue().isEnd() || e.getValue().getNextNode() == null)
+                    .filter(e -> !exclude.contains(e.getKey())
+                            && (e.getValue().isEnd() || e.getValue().getNextNode() == null))
                     .map(Map.Entry::getKey)
                     .findFirst()
                     .orElse(null);

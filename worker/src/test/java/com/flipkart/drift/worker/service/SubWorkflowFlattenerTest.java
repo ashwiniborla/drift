@@ -358,6 +358,92 @@ class SubWorkflowFlattenerTest {
         assertLinearChain(a, "a1", "b1", "d1", "a2");
     }
 
+    @Test
+    void defaultFailureNode_excluded_whenSameAsParent() {
+        // Both parent A and sub B share the same defaultFailureNode name "default_failure".
+        // After flattening, only one "default_failure" should exist (the parent's) and no error.
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1", node("b1", groovyDef("b1"), "b2", false),
+                "b2", node("b2", groovyDef("b2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        b.setDefaultFailureNode("default_failure");
+
+        Workflow a = workflow("A", "a1", linkedMap(
+                "a1", node("a1", groovyDef("a1"), "sub_b", false),
+                "sub_b", subNode("sub_b", subWfDef("sub_b", "SubB", true, true), "a2", false),
+                "a2", node("a2", groovyDef("a2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        a.setDefaultFailureNode("default_failure");
+
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "b2", "a2", "default_failure");
+        assertLinearChain(a, "a1", "b1", "b2", "a2");
+        assertTrue(a.getStates().containsKey("default_failure"), "parent default_failure must be retained");
+    }
+
+    @Test
+    void defaultFailureNode_kept_whenDifferentName() {
+        // Sub has a differently-named defaultFailureNode ("sub_default_failure") — it must be inlined
+        // as a regular node since it doesn't conflict with the parent's "default_failure".
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1", node("b1", groovyDef("b1"), "b2", false),
+                "b2", node("b2", groovyDef("b2"), null, true),
+                "sub_default_failure", node("sub_default_failure", groovyDef("sub_default_failure"), null, true)));
+        b.setDefaultFailureNode("sub_default_failure");
+
+        Workflow a = workflow("A", "a1", linkedMap(
+                "a1", node("a1", groovyDef("a1"), "sub_b", false),
+                "sub_b", subNode("sub_b", subWfDef("sub_b", "SubB", true, true), "a2", false),
+                "a2", node("a2", groovyDef("a2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        a.setDefaultFailureNode("default_failure");
+
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "b2", "a2", "default_failure", "sub_default_failure");
+        assertTrue(a.getStates().containsKey("sub_default_failure"),
+                "sub_default_failure must be inlined since it has a different name");
+    }
+
+    @Test
+    void nestedSub_defaultFailureNode_excludedAtAllLevels() {
+        // A → sub_b → sub_c; all three have "default_failure" as their defaultFailureNode.
+        // After flattening only the root's "default_failure" survives.
+        Workflow c = workflow("SubC", "c1", linkedMap(
+                "c1", node("c1", groovyDef("c1"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        c.setDefaultFailureNode("default_failure");
+
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1", node("b1", groovyDef("b1"), "sub_c", false),
+                "sub_c", subNode("sub_c", subWfDef("sub_c", "SubC", true, true), "b2", false),
+                "b2", node("b2", groovyDef("b2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        b.setDefaultFailureNode("default_failure");
+
+        Workflow a = workflow("A", "a1", linkedMap(
+                "a1", node("a1", groovyDef("a1"), "sub_b", false),
+                "sub_b", subNode("sub_b", subWfDef("sub_b", "SubB", true, true), "a2", false),
+                "a2", node("a2", groovyDef("a2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        a.setDefaultFailureNode("default_failure");
+
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+        when(enrichHelper.fetchEnrichedCopy("SubC", V, TENANT)).thenReturn(c);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "c1", "b2", "a2", "default_failure");
+        assertEquals(1, a.getStates().entrySet().stream()
+                .filter(e -> e.getKey().equals("default_failure")).count(),
+                "exactly one default_failure must exist after flattening");
+    }
+
     // ========================== Group 8: Circular / Max Depth ==========================
 
     @Test
