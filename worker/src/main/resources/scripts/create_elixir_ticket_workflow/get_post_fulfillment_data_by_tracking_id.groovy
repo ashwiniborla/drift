@@ -36,7 +36,7 @@ def getPostFulfillmentDataByTrackingId(response, String orderId, String dataVari
         throw new Exception("No unit found with tracking ID: ${targetTrackingId}")
     }
 
-    def partnerList = _enum_store?.postDeliveryIssues?.eklPartners ?: []
+    def partnerList = _enum_store?.get("postDeliveryIssues.eklPartners") ?: []
 
     def allowed = partnerList.contains(matchedUnit.postFulfillmentData.courierName);
 
