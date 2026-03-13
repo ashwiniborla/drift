@@ -309,7 +309,7 @@ public class WorkflowNodeExecutor {
 
     public void invokeChild(WorkflowStartRequest workflowStartRequest, WorkflowNode currentNode, JsonNode evaluatedParams) {
         ChildNode childNode = (ChildNode) currentNode.getNodeDefinition();
-        WorkflowStartRequest childStartRequest = buildChildWorkflowStartRequest(workflowStartRequest, childNode, evaluatedParams);
+        WorkflowStartRequest childStartRequest = buildChildWorkflowStartRequest(workflowStartRequest, childNode, evaluatedParams, currentNode.getInstanceName());
         if (childNode.getExecutionMode() == ExecutionMode.ASYNC) {
             invokeChildDontWaitForResults(childStartRequest);
         } else {
@@ -317,7 +317,7 @@ public class WorkflowNodeExecutor {
         }
     }
 
-    private WorkflowStartRequest buildChildWorkflowStartRequest(WorkflowStartRequest parentStartRequest, ChildNode childNode, JsonNode evaluatedParams) {
+    private WorkflowStartRequest buildChildWorkflowStartRequest(WorkflowStartRequest parentStartRequest, ChildNode childNode, JsonNode evaluatedParams, String instanceName) {
         WorkflowStartRequest childStartRequest = new WorkflowStartRequest();
 
         Map<String, Object> params = new HashMap<>();
@@ -330,7 +330,7 @@ public class WorkflowNodeExecutor {
             );
         }
 
-        childStartRequest.setWorkflowId(generateChildWfId(parentStartRequest));
+        childStartRequest.setWorkflowId(generateChildWfId(parentStartRequest, instanceName));
         childStartRequest.setParams(params);
         childStartRequest.setParentWorkflowId(parentStartRequest.getWorkflowId());
         childStartRequest.setIncidentId(parentStartRequest.getIncidentId());
