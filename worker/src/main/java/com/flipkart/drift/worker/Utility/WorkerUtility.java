@@ -21,7 +21,7 @@ public class WorkerUtility {
     }
 
 
-    public static String generateChildWfId(WorkflowStartRequest workflowStartRequest) {
-        return "CH-" + workflowStartRequest.getWorkflowId();
+    public static String generateChildWfId(WorkflowStartRequest workflowStartRequest, String instanceName) {
+        return "CH-" + workflowStartRequest.getWorkflowId() + "-" + instanceName;
     }
 }
