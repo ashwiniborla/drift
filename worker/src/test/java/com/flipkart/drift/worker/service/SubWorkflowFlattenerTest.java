@@ -319,28 +319,6 @@ class SubWorkflowFlattenerTest {
     }
 
     @Test
-    void duplicateContextKey_fails() {
-        // B has node with contextOverrideKey="shared". C has node with contextOverrideKey="shared".
-        WorkflowNode bNode = node("b_node", groovyDef("b_node"), null, true);
-        bNode.setContextOverrideKey("shared");
-        WorkflowNode cNode = node("c_node", groovyDef("c_node"), null, true);
-        cNode.setContextOverrideKey("shared");
-
-        Workflow a = workflow("A", "a1", linkedMap(
-                "a1", node("a1", groovyDef("a1"), "sub_b", false),
-                "sub_b", subNode("sub_b", subWfDef("sub_b", "SubB", true, true), "sub_c", false),
-                "sub_c", subNode("sub_c", subWfDef("sub_c", "SubC", true, true), "a4", false),
-                "a4", node("a4", groovyDef("a4"), null, true)));
-        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT))
-                .thenReturn(workflow("SubB", "b_node", linkedMap("b_node", bNode)));
-        when(enrichHelper.fetchEnrichedCopy("SubC", V, TENANT))
-                .thenReturn(workflow("SubC", "c_node", linkedMap("c_node", cNode)));
-
-        ApplicationFailure ex = assertThrows(ApplicationFailure.class, () -> flattener.flattenWorkflow(a, TENANT));
-        assertEquals("SUB_WORKFLOW_DUPLICATE_CONTEXT_KEY", ex.getType());
-    }
-
-    @Test
     void nestedInlining_noFalseDuplicate() {
         // A → sub_b. B → sub_c. C has "d1". After flatten d1 goes B→A. No false duplicate.
         Workflow c = singleNodeSub("SubC", "d1");

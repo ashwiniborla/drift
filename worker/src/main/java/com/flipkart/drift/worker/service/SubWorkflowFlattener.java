@@ -34,11 +34,8 @@ public class SubWorkflowFlattener {
 
     public Workflow flattenWorkflow(Workflow workflow, String tenant) {
         Set<String> usedInstanceNames = new HashSet<>(workflow.getStates().keySet());
-        Set<String> usedContextKeys = workflow.getStates().values().stream()
-                .map(WorkflowNode::getNodeIdentifier)
-                .collect(Collectors.toSet());
 
-        flattenRecursive(workflow, workflow, tenant, new HashSet<>(), 0, usedInstanceNames, usedContextKeys,
+        flattenRecursive(workflow, workflow, tenant, new HashSet<>(), 0, usedInstanceNames,
                 Collections.singletonList(workflow.getId()));
         return workflow;
     }
@@ -47,7 +44,7 @@ public class SubWorkflowFlattener {
     // root: the top-level workflow being flattened; duplicate checks are only applied when merging into root.
 
     private void flattenRecursive(Workflow root, Workflow parent, String tenant, Set<String> visited, int depth,
-                                  Set<String> usedInstanceNames, Set<String> usedContextKeys,
+                                  Set<String> usedInstanceNames,
                                   List<String> path) {
         if (depth > MAX_DEPTH) {
             fail("SUB_WORKFLOW_MAX_DEPTH_EXCEEDED",
@@ -79,10 +76,10 @@ public class SubWorkflowFlattener {
             childPath.add(subWorkflowId);
 
             Workflow subWorkflow = fetchAndEnrich(subWorkflowId, subWorkflowVersion, tenant, childPath);
-            flattenRecursive(root, subWorkflow, tenant, visited, depth + 1, usedInstanceNames, usedContextKeys, childPath);
+            flattenRecursive(root, subWorkflow, tenant, visited, depth + 1, usedInstanceNames, childPath);
 
             mergeSubWorkflow(root, parent, subNodeName, subNode, subWorkflow, config,
-                    usedInstanceNames, usedContextKeys, childPath);
+                    usedInstanceNames, childPath);
 
             visited.remove(subWorkflowId);
         }
@@ -105,11 +102,11 @@ public class SubWorkflowFlattener {
     /**
      * Merge one sub-workflow into the parent: decide what to include (scope), add nodes with duplicate check,
      * rewire chain, then replace all references to the SubWorkflowNode with the effective start.
-     * Duplicate checks (usedInstanceNames/usedContextKeys) are only applied when merging into the root workflow,
+     * Duplicate instance name check (usedInstanceNames) is only applied when merging into the root workflow,
      * so that nested inlining (e.g. D into C, then C into A) does not treat the same node name as duplicate.
      */
     private void mergeSubWorkflow(Workflow root, Workflow parent, String subNodeName, WorkflowNode subNode, Workflow subWorkflow,
-                                  SubWorkflowConfig config, Set<String> usedInstanceNames, Set<String> usedContextKeys,
+                                  SubWorkflowConfig config, Set<String> usedInstanceNames,
                                   List<String> path) {
         InlineScope scope = InlineScope.compute(subWorkflow, config, root.getDefaultFailureNode());
         boolean mergingIntoRoot = (parent == root);
@@ -129,7 +126,7 @@ public class SubWorkflowFlattener {
             } else {
                 replaceAllReferences(parent, subNodeName, subNode.getNextNode());
             }
-            removeSubWorkflowNode(parent, subNodeName, subNode, mergingIntoRoot, usedInstanceNames, usedContextKeys);
+            removeSubWorkflowNode(parent, subNodeName, mergingIntoRoot, usedInstanceNames);
             return;
         }
 
@@ -137,7 +134,7 @@ public class SubWorkflowFlattener {
         for (String name : scope.nodesToInclude) {
             WorkflowNode node = subStates.get(name);
             if (mergingIntoRoot) {
-                checkAndRegisterDuplicate(name, node, path, usedInstanceNames, usedContextKeys);
+                checkAndRegisterDuplicate(name, path, usedInstanceNames);
             }
             parent.getStates().put(name, node);
         }
@@ -159,22 +156,16 @@ public class SubWorkflowFlattener {
         if (Objects.equals(parent.getStartNode(), subNodeName)) {
             parent.setStartNode(scope.effectiveStart);
         }
-        removeSubWorkflowNode(parent, subNodeName, subNode, mergingIntoRoot, usedInstanceNames, usedContextKeys);
+        removeSubWorkflowNode(parent, subNodeName, mergingIntoRoot, usedInstanceNames);
     }
 
-    private void checkAndRegisterDuplicate(String instanceName, WorkflowNode node, List<String> path,
-                                            Set<String> usedInstanceNames, Set<String> usedContextKeys) {
-        String ctxKey = node.getNodeIdentifier();
+    private void checkAndRegisterDuplicate(String instanceName, List<String> path,
+                                            Set<String> usedInstanceNames) {
         if (usedInstanceNames.contains(instanceName)) {
             fail("SUB_WORKFLOW_DUPLICATE_NODE_NAME",
                     "Duplicate node name: '" + instanceName + "' already exists. Path: " + pathStr(path) + " → node '" + instanceName + "'.");
         }
-        if (usedContextKeys.contains(ctxKey)) {
-            fail("SUB_WORKFLOW_DUPLICATE_CONTEXT_KEY",
-                    "Duplicate context key: '" + ctxKey + "' already in use. Path: " + pathStr(path) + " → node '" + instanceName + "'.");
-        }
         usedInstanceNames.add(instanceName);
-        usedContextKeys.add(ctxKey);
     }
 
     private void rewireChainEnd(Workflow parent, String effectiveEnd, String nextNode, boolean end) {
@@ -224,12 +215,11 @@ public class SubWorkflowFlattener {
         }
     }
 
-    private void removeSubWorkflowNode(Workflow parent, String subNodeName, WorkflowNode subNode,
-                                       boolean mergingIntoRoot, Set<String> usedInstanceNames, Set<String> usedContextKeys) {
+    private void removeSubWorkflowNode(Workflow parent, String subNodeName,
+                                       boolean mergingIntoRoot, Set<String> usedInstanceNames) {
         parent.getStates().remove(subNodeName);
         if (mergingIntoRoot) {
             usedInstanceNames.remove(subNodeName);
-            usedContextKeys.remove(subNode.getNodeIdentifier());
         }
     }
 

@@ -136,10 +136,8 @@ public class WorkflowNodeExecutor {
     public void handleNodeResponseStatus(String workflowId, ActivityThinResponse activityThinResponse, Workflow workflow, Map<String, String> threadContext) {
         switch (this.workflowState.getStatus()) {
             case WAITING:
-                handleWaitingState(workflowId, activityThinResponse);
-                break;
             case SCHEDULER_WAITING:
-                handleSchedulerWaitingState(workflowId, activityThinResponse);
+                handleWaitingState(workflowId, activityThinResponse);
                 break;
             case FAILED:
                 handleFailedState(workflowId, activityThinResponse);
@@ -207,7 +205,7 @@ public class WorkflowNodeExecutor {
         io.temporal.workflow.Workflow.newActivityStub(ReturnControlActivity.class, OptionsStore.activityOptions).exec(workflowId);
         io.temporal.workflow.Workflow.await(() -> {
             WorkflowStatus status = this.workflowState.getStatus();
-            return !(status.equals(WorkflowStatus.WAITING) || status.equals(WorkflowStatus.TERMINATED));
+            return !(status.equals(WorkflowStatus.WAITING) || status.equals(WorkflowStatus.TERMINATED) || status.equals(WorkflowStatus.SCHEDULER_WAITING));
         });
     }
 
