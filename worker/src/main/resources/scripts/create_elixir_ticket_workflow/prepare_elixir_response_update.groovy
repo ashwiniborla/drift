@@ -11,18 +11,25 @@ if (base == null) {
 
 def viewResponse = _global.get('elixir_waiting_for_response:viewResponse')?.selectedOptions
 
-// Deep-copy entity so we return a full, self-contained object
-def entity = base?.entity
-def entityCopy = (entity != null && entity instanceof Map)
-    ? [referenceType: entity.referenceType, referenceId: entity.referenceId, type: entity.type]
-    : null
+base.id = viewResponse?.ticket_id
+base.status = viewResponse?.status
+base.updatedAt = viewResponse?.created_at
+
+def threadText = "Elixir Ticket: " + (viewResponse?.status ?: "") + "\n";
+if (viewResponse?.message) {
+    threadText += viewResponse.message
+}
+
+
+def threads = [[
+                       text           : threadText,
+                       contentType    : 'text/plain',
+                       threadEntryType: [id: 30, name: null],
+                       createdByUser  : "FF",
+                       action         : 'add'
+               ]]
 
 return [
-    id         : viewResponse?.ticket_id,
-    workflowId : base?.workflowId,
-    status     : viewResponse?.status,
-    type       : base?.type,
-    entity     : entityCopy,
-    createdAt  : base?.createdAt,
-    updatedAt  : viewResponse?.created_at
+        threads   : threads,
+        elxrTicket: base
 ]

@@ -93,9 +93,6 @@ if (childWorkflowAction != null && !childWorkflowAction.isEmpty()) {
     } else if (childWorkflowAction == 'add') {
         // Branch 2: build AddMeta from node params + enum store
         def workflowId = _global?.nodeParameters?.workflowId
-        if (workflowId == null || workflowId.toString().trim().isEmpty()) {
-            throw new IllegalArgumentException("nodeParameters.workflowId is required when childWorkflowAction is 'add'.")
-        }
         def childWorkflowName = _global?.nodeParameters?.childWorkflowName
         if (childWorkflowName == null || childWorkflowName.toString().trim().isEmpty()) {
             throw new IllegalArgumentException("nodeParameters.childWorkflowName is required when childWorkflowAction is 'add'.")
