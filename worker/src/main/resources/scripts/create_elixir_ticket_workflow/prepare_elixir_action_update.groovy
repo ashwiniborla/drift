@@ -4,34 +4,55 @@
  * Prepares the incident update body based on the elixir action callback.
  *
  * Actions are categorised into two types via actionTypeMap:
- *   - 'action'  (e.g. ALT_PH_NUMBER_REQUIRED) → enum key: elixir.action.threadText.<actionName>
- *   - 'others'  (default, e.g. OTHERS)         → enum key: elixir.updates.threadText.<reasonCode>.<subreasonCode>
+ *   - 'action'  (e.g. ALT_PH_NUMBER_REQUIRED) → triggers a child workflow add
+ *   - 'others'  (default, e.g. OTHERS)         → thread-only update
  *
  * CLOSED is handled separately: builds elxrTkt with status=CLOSED.
  *
- * Returns: [action, elxrTkt, threads, error]
+ * For ALT_PH_NUMBER_REQUIRED, a child workflow is registered:
+ *   childWfAction='add', childWorkflowName='forward_address_phone_change_smart', childWorkflowVersion='SNAPSHOT'
+ *
+ * Returns: a single Map { action, elxrTkt, threads, error, childWfAction, childWorkflowName, childWorkflowVersion }
  */
 
 def actionTypeMap = [
     'ALT_PH_NUMBER_REQUIRED': 'action'
 ]
 
-def action = null
+def childWorkflowMap = [
+    'ALT_PH_NUMBER_REQUIRED': [
+        childWfAction       : 'add',
+        childWorkflowName   : 'forward_address_phone_change_smart',
+        childWorkflowVersion: 'SNAPSHOT'
+    ]
+]
+
+def result = [
+    action              : null,
+    elxrTkt             : null,
+    threads             : null,
+    error               : false,
+    childWfAction       : null,
+    childWorkflowName   : null,
+    childWorkflowVersion: null
+]
 
 try {
     def viewResponse = _global.get('elixir_waiting_for_updates:viewResponse')?.selectedOptions
-    action = viewResponse?.action?.toString()?.trim()
-    def context = viewResponse?.context
+    def action = viewResponse?.action?.toString()?.trim()
+    result.action = action
 
     if (!action) {
-        return [action: null, elxrTkt: null, threads: null, error: true]
+        result.error = true
+        return result
     }
 
     // --- CLOSED: build elxrTkt with status=CLOSED ---
     if (action == 'CLOSED') {
         def base = _global?.elixir_create_ticket?.elxrTkt
         if (base == null) {
-            return [action: action, elxrTkt: null, threads: null, error: true]
+            result.error = true
+            return result
         }
 
         def entity = base?.entity
@@ -39,27 +60,27 @@ try {
             ? [referenceType: entity.referenceType, referenceId: entity.referenceId, type: entity.type]
             : null
 
-        def elxrTkt = [
-            id         : base?.id,
-            workflowId : base?.workflowId,
-            status     : 'CLOSED',
-            type       : base?.type,
-            entity     : entityCopy,
-            createdAt  : base?.createdAt,
-            updatedAt  : new Date()
+        result.elxrTkt = [
+            id        : base?.id,
+            workflowId: base?.workflowId,
+            status    : 'CLOSED',
+            type      : base?.type,
+            entity    : entityCopy,
+            createdAt : base?.createdAt,
+            updatedAt : new Date()
         ]
-
-        return [action: action, elxrTkt: elxrTkt, threads: null, error: false]
+        return result
     }
 
     // --- Non-CLOSED: build thread ---
+    def context       = viewResponse?.context
     def reasonCode    = context?.reasonCode?.toString()?.trim() ?: ''
     def subreasonCode = context?.subreasonCode?.toString()?.trim() ?: ''
     def reasonText    = context?.reasonText?.toString()?.trim() ?: ''
     def subReasonText = context?.subReasonText?.toString()?.trim() ?: ''
     def persona       = context?.persona?.toString()?.trim() ?: ''
 
-    def defaultFallbackText = [
+    def threadText = [
         "Reason Code: ${reasonCode}",
         "Reason Text: ${reasonText}",
         "Sub Reason Code: ${subreasonCode}",
@@ -67,19 +88,26 @@ try {
         "Persona: ${persona}"
     ].join('\n')
 
-    // Use default thread text only (enum lookup for threadText removed)
-    def threadText = defaultFallbackText
-
-    def thread = [
+    result.threads = [[
         text           : threadText,
         contentType    : 'text/plain',
         threadEntryType: [id: 30, name: null],
         createdByUser  : persona,
-        action         : 'add',
-    ]
+        action         : 'add'
+    ]]
 
-    return [action: action, elxrTkt: null, threads: [thread], error: false]
+    // --- Action-type actions: register a child workflow ---
+    if (actionTypeMap[action] == 'action') {
+        def childWf = childWorkflowMap[action]
+        if (childWf != null) {
+            result.childWfAction        = childWf.childWfAction
+            result.childWorkflowName    = childWf.childWorkflowName
+            result.childWorkflowVersion = childWf.childWorkflowVersion
+        }
+    }
 
 } catch (Exception e) {
-    return [action: action, elxrTkt: null, threads: null, error: true]
+    result.error = true
 }
+
+return result

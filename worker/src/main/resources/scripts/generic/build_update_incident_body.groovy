@@ -5,18 +5,26 @@
  * Reusable: only includes optional fields when the corresponding node parameter is non-null.
  *
  * Context (via nodeParameters):
- *   _global.nodeParameters.incidentId         – required
- *   _global.nodeParameters.statusWithType     – optional; { id, name } e.g. from JsonPath
- *   _global.nodeParameters.statusId            – optional; when statusWithType is null, use this (string or number) as id, name = null
- *   _global.nodeParameters.questionnaireData  – optional; added as customFields.qsnareDta
- *   _global.nodeParameters.elxrTkt            – optional; added as customFields.elxrTkt (elixir ticket details)
- *   _global.nodeParameters.threads            – optional; list of incidentThreadRequest maps
- *   _global.nodeParameters.notesText          – optional; when threads is null, builds one thread with this text (default queue/threadEntryType)
- *   addV3ChildWorkflow when _global.nodeParameters.addChildWorkflow is true: build from _global + _enum_store
- *     workflowId: _global.workflowId; workflowName: _global.params.workflowId (throw if null); workflowVersion: _global.params.version
- *     isSmartWorkflow: _enum_store.childWorkflow.<workflowName>.isSmart (false if not configured)
- *     actionEligibility: _enum_store.childWorkflow.<workflowName>.actionEligibility (blank if not configured)
- *   Or when _global.nodeParameters.childWorkflowDetails is present (single object with all fields).
+ *   _global.nodeParameters.incidentId             – required
+ *   _global.nodeParameters.statusWithType         – optional; { id, name } e.g. from JsonPath
+ *   _global.nodeParameters.statusId               – optional; when statusWithType is null, use this (string or number) as id, name = null
+ *   _global.nodeParameters.questionnaireData      – optional; added as customFields.qsnareDta
+ *   _global.nodeParameters.elxrTkt                – optional; added as customFields.elxrTkt (elixir ticket details)
+ *   _global.nodeParameters.threads                – optional; list of incidentThreadRequest maps
+ *   _global.nodeParameters.notesText              – optional; when threads is null, builds one thread with this text (default queue/threadEntryType)
+ *
+ *   v3ChildWorkflowRequest — triggered only when childWorkflowAction is present:
+ *     _global.nodeParameters.childWorkflowAction    – "add" or "update"; presence is the sole trigger for v3ChildWorkflowRequest
+ *     _global.nodeParameters.childWorkflowMeta      – optional; when present, used as the entire v3ChildWorkflowRequest object as-is
+ *     When childWorkflowMeta is NOT present:
+ *       _global.nodeParameters.workflowId           – required; maps to meta.workflowId
+ *       _global.nodeParameters.childWorkflowName    – required; maps to top-level workflowName
+ *       _global.nodeParameters.childWorkflowVersion – required; maps to top-level workflowVersion
+ *       For action "add":
+ *         isSmartWorkflow: _enum_store.childWorkflow.<childWorkflowName>.isSmart (false if not configured)
+ *         actionEligibility: _enum_store.childWorkflow.<childWorkflowName>.actionEligibility (null if not configured)
+ *       For action "update":
+ *         _global.nodeParameters.childWorkflowCompleted – optional boolean; maps to meta.isCompleted
  *
  * Returns: Map matching IncidentRequest structure
  */
@@ -74,62 +82,75 @@ if (threads != null && threads instanceof List && !threads.isEmpty()) {
     ]]
 }
 
-// addV3ChildWorkflow: when addChildWorkflow node param is true, build from _global + _enum_store; else when childWorkflowDetails object is present, use it
-def addChildWorkflow = _global?.nodeParameters?.addChildWorkflow == "true"
-def childWorkflowDetails = _global?.nodeParameters?.childWorkflowDetails
+// v3ChildWorkflowRequest: triggered only when childWorkflowAction is present
+def childWorkflowAction = _global?.nodeParameters?.childWorkflowAction?.toString()?.trim()
+def childWorkflowMeta = _global?.nodeParameters?.childWorkflowMeta
 
-if (addChildWorkflow) {
-    def workflowName = _global?.params?.workflowId
-    if (workflowName == null || workflowName.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("params.workflowId is required when addChildWorkflow is true (used as workflowName).")
+if (childWorkflowAction != null && !childWorkflowAction.isEmpty()) {
+    if (childWorkflowMeta != null) {
+        // Branch 1: full object supplied by caller — use as-is
+        incidentDataRequest['v3ChildWorkflowRequest'] = childWorkflowMeta
+    } else if (childWorkflowAction == 'add') {
+        // Branch 2: build AddMeta from node params + enum store
+        def workflowId = _global?.nodeParameters?.workflowId
+        if (workflowId == null || workflowId.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.workflowId is required when childWorkflowAction is 'add'.")
+        }
+        def childWorkflowName = _global?.nodeParameters?.childWorkflowName
+        if (childWorkflowName == null || childWorkflowName.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.childWorkflowName is required when childWorkflowAction is 'add'.")
+        }
+        def childWorkflowVersion = _global?.nodeParameters?.childWorkflowVersion
+        if (childWorkflowVersion == null || childWorkflowVersion.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.childWorkflowVersion is required when childWorkflowAction is 'add'.")
+        }
+        def workflowNameStr = childWorkflowName.toString().trim()
+        def workflowConfig = _enum_store?.childWorkflow?.get(workflowNameStr)
+        def isSmartVal = workflowConfig?.isSmart
+        def isSmartWorkflow = (isSmartVal != null && isSmartVal.toString().trim().length() > 0) ? Boolean.valueOf(isSmartVal.toString().trim()) : false
+        def actionEligibilityVal = workflowConfig?.actionEligibility
+        def actionEligibility = (actionEligibilityVal != null && actionEligibilityVal.toString().trim().length() > 0) ? actionEligibilityVal.toString().trim() : null
+        incidentDataRequest['v3ChildWorkflowRequest'] = [
+                meta            : [
+                        workflowId        : workflowId.toString().trim(),
+                        isSmartWorkflow   : isSmartWorkflow,
+                        actionEligibility : actionEligibility,
+                        action            : 'add'
+                ],
+                workflowName    : workflowNameStr,
+                workflowVersion : childWorkflowVersion.toString().trim()
+        ]
+    } else if (childWorkflowAction == 'update') {
+        // Branch 3: build UpdateMeta from node params
+        def workflowId = _global?.nodeParameters?.workflowId
+        if (workflowId == null || workflowId.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.workflowId is required when childWorkflowAction is 'update'.")
+        }
+        def childWorkflowName = _global?.nodeParameters?.childWorkflowName
+        if (childWorkflowName == null || childWorkflowName.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.childWorkflowName is required when childWorkflowAction is 'update'.")
+        }
+        def childWorkflowVersion = _global?.nodeParameters?.childWorkflowVersion
+        if (childWorkflowVersion == null || childWorkflowVersion.toString().trim().isEmpty()) {
+            throw new IllegalArgumentException("nodeParameters.childWorkflowVersion is required when childWorkflowAction is 'update'.")
+        }
+        def childWorkflowCompleted = _global?.nodeParameters?.childWorkflowCompleted
+        def isCompleted = (childWorkflowCompleted != null) ? (childWorkflowCompleted instanceof Boolean ? childWorkflowCompleted : Boolean.valueOf(childWorkflowCompleted.toString())) : null
+        def meta = [
+                workflowId : workflowId.toString().trim(),
+                action     : 'update'
+        ]
+        if (isCompleted != null) {
+            meta['isCompleted'] = isCompleted
+        }
+        incidentDataRequest['v3ChildWorkflowRequest'] = [
+                meta            : meta,
+                workflowName    : childWorkflowName.toString().trim(),
+                workflowVersion : childWorkflowVersion.toString().trim()
+        ]
+    } else {
+        throw new IllegalArgumentException("Unsupported childWorkflowAction: '${childWorkflowAction}'. Supported values: 'add', 'update'.")
     }
-    def workflowId = _global?.workflowId
-    if (workflowId == null || workflowId.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("workflowId is required when addChildWorkflow is true.")
-    }
-    def workflowVersion = _global?.params?.version
-    if (workflowVersion == null || workflowVersion.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("params.version is required when addChildWorkflow is true.")
-    }
-    def workflowNameStr = workflowName.toString().trim()
-    def workflowConfig = _enum_store?.childWorkflow?.get(workflowNameStr)
-    def isSmartVal = workflowConfig?.isSmart
-    def isSmartWorkflow = (isSmartVal != null && isSmartVal.toString().trim().length() > 0) ? Boolean.valueOf(isSmartVal.toString().trim()) : false
-    def actionEligibilityVal = workflowConfig?.actionEligibility
-    def actionEligibility = (actionEligibilityVal != null && actionEligibilityVal.toString().trim().length() > 0) ? actionEligibilityVal.toString().trim() : ''
-    incidentDataRequest['v3ChildWorkflowRequest'] = [
-            workflowId        : workflowId.toString().trim(),
-            isSmartWorkflow   : isSmartWorkflow,
-            actionEligibility : (actionEligibility != null && !actionEligibility.isEmpty()) ? actionEligibility : null,
-            workflowName      : workflowNameStr,
-            workflowVersion   : workflowVersion.toString().trim()
-    ]
-} else if (childWorkflowDetails != null) {
-    def workflowId = childWorkflowDetails?.workflowId
-    if (workflowId == null || workflowId.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("childWorkflowDetails.workflowId is required for v3ChildWorkflowRequest.")
-    }
-    def workflowName = childWorkflowDetails?.workflowName
-    if (workflowName == null || workflowName.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("childWorkflowDetails.workflowName is required for v3ChildWorkflowRequest.")
-    }
-    def workflowVersion = childWorkflowDetails?.workflowVersion
-    if (workflowVersion == null || workflowVersion.toString().trim().isEmpty()) {
-        throw new IllegalArgumentException("childWorkflowDetails.workflowVersion is required for v3ChildWorkflowRequest.")
-    }
-    def isSmartWorkflowParam = childWorkflowDetails?.isSmartWorkflow
-    if (isSmartWorkflowParam == null) {
-        throw new IllegalArgumentException("childWorkflowDetails.isSmartWorkflow is required for v3ChildWorkflowRequest and cannot be null.")
-    }
-    def isSmartWorkflow = (isSmartWorkflowParam instanceof Boolean) ? isSmartWorkflowParam : Boolean.valueOf(isSmartWorkflowParam?.toString())
-    def actionEligibility = childWorkflowDetails?.actionEligibility
-    incidentDataRequest['v3ChildWorkflowRequest'] = [
-            workflowId        : workflowId.toString().trim(),
-            isSmartWorkflow   : isSmartWorkflow,
-            actionEligibility : actionEligibility != null ? actionEligibility.toString().trim() : null,
-            workflowName      : workflowName.toString().trim(),
-            workflowVersion   : workflowVersion.toString().trim()
-    ]
 }
 
 return [
