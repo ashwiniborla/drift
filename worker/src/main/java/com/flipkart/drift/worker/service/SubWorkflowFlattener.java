@@ -13,16 +13,30 @@ import java.util.stream.Collectors;
 
 /**
  * Flattens SubWorkflowNodes by merging referenced workflows into the parent at fetch time.
- * Uses {@link WorkflowEnrichHelper} to fetch and enrich sub-workflows. Pipeline: find SUB_WORKFLOW nodes → fetch & recurse → merge (scope → add nodes → rewire).
+ * Uses {@link WorkflowEnrichHelper} to fetch and enrich sub-workflows.
+ * Pipeline: find SUB_WORKFLOW nodes → fetch & recurse → merge (classify → add nodes → rewire).
  *
- * <p><b>Error handling strategy:</b> {@link com.flipkart.drift.commons.model.node.SubWorkflowConfig#getErrorHandlingStrategy()}
- * (PROPAGATE vs ISOLATE) is <em>not</em> applied in this flattener. Flattening only merges the node graph; it does not
- * wire failure scopes or inline sub-workflow defaultFailureNodes. At runtime, failure handling currently always uses
- * the root workflow's {@code defaultFailureNode} (i.e. PROPAGATE behaviour). ISOLATE is not implemented: if a
- * sub-workflow is configured with ISOLATE, it is accepted but has no effect.
+ * <p><b>Node classification during merge:</b> every node in the sub-workflow is placed into exactly
+ * one of three buckets:
+ * <ol>
+ *   <li><b>Failure node</b> ({@code defaultFailureNode}): always excluded and all references to it
+ *       are redirected to the root workflow's {@code defaultFailureNode}.</li>
+ *   <li><b>Terminal nodes</b> (end=true, or nextNode=null and not a BranchNode): included or excluded
+ *       based on {@link SubWorkflowConfig#isIncludeLastNode()}. When included, each terminal is wired
+ *       directly to the parent's continuation. When excluded, all references to each terminal are swept
+ *       and redirected to the parent's continuation.</li>
+ *   <li><b>Regular nodes</b>: always included.</li>
+ * </ol>
+ *
+ * <p><b>Error handling strategy:</b> {@link SubWorkflowConfig#getErrorHandlingStrategy()}
+ * (PROPAGATE vs ISOLATE). Under PROPAGATE (default), the sub-workflow's {@code defaultFailureNode} is
+ * always excluded and references to it are redirected to the root's {@code defaultFailureNode}. This
+ * ensures a single failure domain for the entire flattened workflow.
+ * ISOLATE is not yet implemented — if configured, a warning is logged and behaviour falls back to PROPAGATE.
  */
 @Slf4j
 public class SubWorkflowFlattener {
+
     private static final int MAX_DEPTH = 10;
 
     private final WorkflowEnrichHelper workflowEnrichHelper;
@@ -33,210 +47,388 @@ public class SubWorkflowFlattener {
     }
 
     public Workflow flattenWorkflow(Workflow workflow, String tenant) {
-        Set<String> usedInstanceNames = new HashSet<>(workflow.getStates().keySet());
+        Set<String> rootNodeNames = new HashSet<>(workflow.getStates().keySet());
 
-        flattenRecursive(workflow, workflow, tenant, new HashSet<>(), 0, usedInstanceNames,
-                Collections.singletonList(workflow.getId()));
+        flattenRecursively(
+                workflow,
+                workflow,
+                tenant,
+                new HashSet<>(),
+                0,
+                rootNodeNames,
+                Collections.singletonList(workflow.getId())
+        );
+
         return workflow;
     }
 
-    // --- Recursion: find SUB_WORKFLOW nodes, fetch, recurse, then merge ---
-    // root: the top-level workflow being flattened; duplicate checks are only applied when merging into root.
+    // --- Recursion: find SUB_WORKFLOW nodes in currentWorkflow, fetch child, recurse, then merge ---
+    // rootWorkflow: the top-level workflow being flattened; duplicate checks are only applied when merging into root.
 
-    private void flattenRecursive(Workflow root, Workflow parent, String tenant, Set<String> visited, int depth,
-                                  Set<String> usedInstanceNames,
-                                  List<String> path) {
-        if (depth > MAX_DEPTH) {
-            fail("SUB_WORKFLOW_MAX_DEPTH_EXCEEDED",
-                    "SubWorkflow nesting depth exceeded maximum of " + MAX_DEPTH + ". Path: " + pathStr(path));
-        }
+    private void flattenRecursively(Workflow rootWorkflow,
+                                    Workflow currentWorkflow,
+                                    String tenant,
+                                    Set<String> visitedWorkflowIds,
+                                    int depth,
+                                    Set<String> rootNodeNames,
+                                    List<String> path) {
+        validateDepth(depth, path);
 
-        List<Map.Entry<String, WorkflowNode>> toExpand = parent.getStates().entrySet().stream()
-                .filter(e -> isSubWorkflow(e.getValue()))
-                .collect(Collectors.toList());
-
-        for (Map.Entry<String, WorkflowNode> e : toExpand) {
-            String subNodeName = e.getKey();
-            WorkflowNode subNode = e.getValue();
-            SubWorkflowNode subDef = (SubWorkflowNode) subNode.getNodeDefinition();
-            String subWorkflowId = subDef.getSubWorkflowId();
-            String subWorkflowVersion = subDef.getSubWorkflowVersion();
-            SubWorkflowConfig config = subDef.getEffectiveConfig();
-            if (config.getErrorHandlingStrategy() == ErrorHandlingStrategy.ISOLATE) {
-                log.warn("SubWorkflow '{}' has errorHandlingStrategy=ISOLATE which is not implemented; behaviour is PROPAGATE (root workflow's defaultFailureNode). Path: {} → {}", pathStr(path), subWorkflowId);
-            }
-            // No code path uses config.getErrorHandlingStrategy() for routing; see class Javadoc.
-
-            if (visited.contains(subWorkflowId)) {
-                fail("SUB_WORKFLOW_CIRCULAR_REFERENCE",
-                        "Circular sub-workflow reference: " + subWorkflowId + ". Path: " + pathStr(path));
-            }
-            visited.add(subWorkflowId);
-            List<String> childPath = new ArrayList<>(path);
-            childPath.add(subWorkflowId);
-
-            Workflow subWorkflow = fetchAndEnrich(subWorkflowId, subWorkflowVersion, tenant, childPath);
-            flattenRecursive(root, subWorkflow, tenant, visited, depth + 1, usedInstanceNames, childPath);
-
-            mergeSubWorkflow(root, parent, subNodeName, subNode, subWorkflow, config,
-                    usedInstanceNames, childPath);
-
-            visited.remove(subWorkflowId);
+        List<Map.Entry<String, WorkflowNode>> subWorkflowEntries = findSubWorkflowEntries(currentWorkflow);
+        for (Map.Entry<String, WorkflowNode> entry : subWorkflowEntries) {
+            processSubWorkflowEntry(rootWorkflow, currentWorkflow, tenant, entry, visitedWorkflowIds, depth, rootNodeNames, path);
         }
     }
 
-    private boolean isSubWorkflow(WorkflowNode n) {
-        return n.getNodeDefinition() != null && n.getNodeDefinition().getType() == NodeType.SUB_WORKFLOW;
+    private List<Map.Entry<String, WorkflowNode>> findSubWorkflowEntries(Workflow workflow) {
+        return workflow.getStates().entrySet().stream()
+                .filter(entry -> isSubWorkflow(entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private void processSubWorkflowEntry(Workflow rootWorkflow,
+                                         Workflow currentWorkflow,
+                                         String tenant,
+                                         Map.Entry<String, WorkflowNode> entry,
+                                         Set<String> visitedWorkflowIds,
+                                         int depth,
+                                         Set<String> rootNodeNames,
+                                         List<String> path) {
+        String subWorkflowNodeName = entry.getKey();
+        WorkflowNode subWorkflowNode = entry.getValue();
+
+        SubWorkflowNode subWorkflowDefinition = (SubWorkflowNode) subWorkflowNode.getNodeDefinition();
+        SubWorkflowConfig config = subWorkflowDefinition.getEffectiveConfig();
+
+        warnIfIsolationNotImplemented(subWorkflowNodeName, subWorkflowDefinition, config, path);
+
+        String childWorkflowId = subWorkflowDefinition.getSubWorkflowId();
+        String childWorkflowVersion = subWorkflowDefinition.getSubWorkflowVersion();
+
+        validateNoCircularReference(childWorkflowId, visitedWorkflowIds, path);
+
+        // DFS backtracking: add before recursion, remove after merge, so sibling sub-workflows
+        // referencing the same child are allowed but cycles within a single branch are not.
+        visitedWorkflowIds.add(childWorkflowId);
+        List<String> childPath = extendPath(path, childWorkflowId);
+
+        Workflow childWorkflow = fetchAndEnrich(childWorkflowId, childWorkflowVersion, tenant, childPath);
+
+        flattenRecursively(
+                rootWorkflow,
+                childWorkflow,
+                tenant,
+                visitedWorkflowIds,
+                depth + 1,
+                rootNodeNames,
+                childPath
+        );
+
+        mergeSubWorkflowIntoParent(
+                rootWorkflow,
+                currentWorkflow,
+                subWorkflowNodeName,
+                subWorkflowNode,
+                childWorkflow,
+                config,
+                rootNodeNames,
+                childPath
+        );
+
+        visitedWorkflowIds.remove(childWorkflowId);
+    }
+
+    private void validateDepth(int depth, List<String> path) {
+        if (depth > MAX_DEPTH) {
+            fail(
+                    "SUB_WORKFLOW_MAX_DEPTH_EXCEEDED",
+                    "SubWorkflow nesting depth exceeded maximum of " + MAX_DEPTH + ". Path: " + pathStr(path)
+            );
+        }
+    }
+
+    private void validateNoCircularReference(String workflowId, Set<String> visitedWorkflowIds, List<String> path) {
+        if (visitedWorkflowIds.contains(workflowId)) {
+            fail(
+                    "SUB_WORKFLOW_CIRCULAR_REFERENCE",
+                    "Circular sub-workflow reference: " + workflowId + ". Path: " + pathStr(path)
+            );
+        }
+    }
+
+    // No code path uses config.getErrorHandlingStrategy() for routing; ISOLATE is not implemented.
+    private void warnIfIsolationNotImplemented(String subWorkflowNodeName,
+                                               SubWorkflowNode subWorkflowDefinition,
+                                               SubWorkflowConfig config,
+                                               List<String> path) {
+        if (config.getErrorHandlingStrategy() == ErrorHandlingStrategy.ISOLATE) {
+            log.warn(
+                    "SubWorkflow '{}' has errorHandlingStrategy=ISOLATE which is not implemented; " +
+                            "behaviour is PROPAGATE (root workflow's defaultFailureNode). Path: {} → {}",
+                    subWorkflowNodeName,
+                    pathStr(path),
+                    subWorkflowDefinition.getSubWorkflowId()
+            );
+        }
     }
 
     private Workflow fetchAndEnrich(String workflowId, String version, String tenant, List<String> path) {
         try {
             return workflowEnrichHelper.fetchEnrichedCopy(workflowId, version, tenant);
         } catch (Exception ex) {
-            fail("SUB_WORKFLOW_FETCH_FAILED",
-                    "Failed to fetch sub-workflow " + workflowId + "@" + version + ". Path: " + pathStr(path) + ". " + ex.getMessage());
+            fail(
+                    "SUB_WORKFLOW_FETCH_FAILED",
+                    "Failed to fetch sub-workflow " + workflowId + "@" + version + ". Path: " + pathStr(path) + ". " + ex.getMessage()
+            );
+            return null; // unreachable
         }
-        return null; // unreachable
     }
 
     /**
-     * Merge one sub-workflow into the parent: decide what to include (scope), add nodes with duplicate check,
-     * rewire chain, then replace all references to the SubWorkflowNode with the effective start.
-     * Duplicate instance name check (usedInstanceNames) is only applied when merging into the root workflow,
+     * Merge one sub-workflow into the parent: classify nodes (failure/terminal/regular), inline nodes
+     * with duplicate check, rewire failure and exit references, then replace all references to the
+     * SubWorkflowNode placeholder with the effective start.
+     * Duplicate instance name check (rootNodeNames) is only applied when merging into the root workflow,
      * so that nested inlining (e.g. D into C, then C into A) does not treat the same node name as duplicate.
      */
-    private void mergeSubWorkflow(Workflow root, Workflow parent, String subNodeName, WorkflowNode subNode, Workflow subWorkflow,
-                                  SubWorkflowConfig config, Set<String> usedInstanceNames,
-                                  List<String> path) {
-        InlineScope scope = InlineScope.compute(subWorkflow, config, root.getDefaultFailureNode());
-        boolean mergingIntoRoot = (parent == root);
+    private void mergeSubWorkflowIntoParent(Workflow rootWorkflow,
+                                            Workflow parentWorkflow,
+                                            String subWorkflowNodeName,
+                                            WorkflowNode subWorkflowNode,
+                                            Workflow childWorkflow,
+                                            SubWorkflowConfig config,
+                                            Set<String> rootNodeNames,
+                                            List<String> path) {
+        InliningPlan plan = InliningPlan.compute(childWorkflow, config);
 
-        if (scope.nodesToInclude.isEmpty()) {
-            if (Objects.equals(parent.getStartNode(), subNodeName)) {
-                parent.setStartNode(subNode.getNextNode());
-            }
-            String replacement = subNode.getNextNode();
-            boolean becomeTerminal = subNode.isEnd() && replacement == null;
-            for (WorkflowNode node : parent.getStates().values()) {
-                if (Objects.equals(node.getNextNode(), subNodeName)) {
-                    node.setNextNode(replacement);
-                    if (becomeTerminal) node.setEnd(true);
-                }
-                replaceRefInNodeDefinition(node.getNodeDefinition(), subNodeName, replacement);
-            }
-            removeSubWorkflowNode(parent, subNodeName, mergingIntoRoot, usedInstanceNames);
+        boolean mergingIntoRoot = parentWorkflow == rootWorkflow;
+
+        if (plan.isEmpty()) {
+            removeSubWorkflowAndReconnectParent(parentWorkflow, subWorkflowNodeName, subWorkflowNode, mergingIntoRoot, rootNodeNames);
             return;
         }
 
-        Map<String, WorkflowNode> subStates = subWorkflow.getStates();
-        for (String name : scope.nodesToInclude) {
-            WorkflowNode node = subStates.get(name);
-            if (mergingIntoRoot) {
-                checkAndRegisterDuplicate(name, path, usedInstanceNames);
-            }
-            parent.getStates().put(name, node);
+        inlineNodes(parentWorkflow, childWorkflow, plan, mergingIntoRoot, rootNodeNames, path);
+        rewireFailureReferences(parentWorkflow, plan, rootWorkflow);
+        rewireExit(parentWorkflow, subWorkflowNode, plan);
+        mergePostCompletionNodes(parentWorkflow, childWorkflow, plan.nodesToInclude);
+        replaceSubWorkflowNodeReferences(parentWorkflow, subWorkflowNodeName, plan.effectiveStart);
+
+        if (Objects.equals(parentWorkflow.getStartNode(), subWorkflowNodeName)) {
+            parentWorkflow.setStartNode(plan.effectiveStart);
         }
 
-        // Rewire any inlined nodes that reference the excluded sub-workflow defaultFailureNode.
-        // When the names differ, the sub's failure node was excluded but references to it still exist;
-        // redirect them to the root's failure node. When names are the same, this is a no-op since
-        // the root already owns a node with that name.
-        String subFailure = subWorkflow.getDefaultFailureNode();
-        if (subFailure != null && !scope.nodesToInclude.contains(subFailure)
-                && root.getDefaultFailureNode() != null) {
-            replaceAllReferences(parent, subFailure, root.getDefaultFailureNode());
+        removeSubWorkflowNode(parentWorkflow, subWorkflowNodeName, mergingIntoRoot, rootNodeNames);
+    }
+
+    /**
+     * Handles the empty-scope case: the sub-workflow contributed no nodes to inline.
+     * Reconnects all parent references that pointed to the SubWorkflowNode to its nextNode instead.
+     */
+    private void removeSubWorkflowAndReconnectParent(Workflow parentWorkflow,
+                                                     String subWorkflowNodeName,
+                                                     WorkflowNode subWorkflowNode,
+                                                     boolean mergingIntoRoot,
+                                                     Set<String> rootNodeNames) {
+        if (Objects.equals(parentWorkflow.getStartNode(), subWorkflowNodeName)) {
+            parentWorkflow.setStartNode(subWorkflowNode.getNextNode());
         }
 
-        // Wire the sub-workflow's exit point to the parent's continuation.
-        // Two strategies depending on whether the terminal node was excluded:
-        //   included (excludedTerminal==null): set the included terminal's nextNode/end directly.
-        //   excluded (excludedTerminal!=null): sweep every inlined node that still references it —
-        //     this covers both linear predecessors and BranchNode choices/defaults in one pass.
-        if (scope.excludedTerminal != null) {
-            String replacement = subNode.getNextNode();
-            boolean endFlag = subNode.isEnd();
-            for (WorkflowNode node : parent.getStates().values()) {
-                if (Objects.equals(node.getNextNode(), scope.excludedTerminal)) {
-                    node.setNextNode(replacement);
-                    node.setEnd(endFlag);
+        String replacement = subWorkflowNode.getNextNode();
+        boolean becomesTerminal = subWorkflowNode.isEnd() && replacement == null;
+
+        for (WorkflowNode node : parentWorkflow.getStates().values()) {
+            if (Objects.equals(node.getNextNode(), subWorkflowNodeName)) {
+                node.setNextNode(replacement);
+                if (becomesTerminal) {
+                    node.setEnd(true);
                 }
-                replaceRefInNodeDefinition(node.getNodeDefinition(), scope.excludedTerminal, replacement);
             }
-        } else {
-            rewireChainEnd(parent, scope.effectiveEnd, subNode.getNextNode(), subNode.isEnd());
+            replaceReferenceInDefinition(node.getNodeDefinition(), subWorkflowNodeName, replacement);
         }
 
-        mergePostCompletionNodes(parent, subWorkflow, scope.nodesToInclude);
-
-        replaceAllReferences(parent, subNodeName, scope.effectiveStart);
-        if (Objects.equals(parent.getStartNode(), subNodeName)) {
-            parent.setStartNode(scope.effectiveStart);
-        }
-        removeSubWorkflowNode(parent, subNodeName, mergingIntoRoot, usedInstanceNames);
+        removeSubWorkflowNode(parentWorkflow, subWorkflowNodeName, mergingIntoRoot, rootNodeNames);
     }
 
-    private void checkAndRegisterDuplicate(String instanceName, List<String> path,
-                                            Set<String> usedInstanceNames) {
-        if (usedInstanceNames.contains(instanceName)) {
-            fail("SUB_WORKFLOW_DUPLICATE_NODE_NAME",
-                    "Duplicate node name: '" + instanceName + "' already exists. Path: " + pathStr(path) + " → node '" + instanceName + "'.");
+    private void inlineNodes(Workflow parentWorkflow,
+                             Workflow childWorkflow,
+                             InliningPlan plan,
+                             boolean mergingIntoRoot,
+                             Set<String> rootNodeNames,
+                             List<String> path) {
+        Map<String, WorkflowNode> childStates = childWorkflow.getStates();
+
+        for (String nodeName : plan.nodesToInclude) {
+            if (mergingIntoRoot) {
+                validateAndRegisterRootNodeName(nodeName, path, rootNodeNames);
+            }
+            parentWorkflow.getStates().put(nodeName, childStates.get(nodeName));
         }
-        usedInstanceNames.add(instanceName);
     }
 
-    private void rewireChainEnd(Workflow parent, String effectiveEnd, String nextNode, boolean end) {
-        if (effectiveEnd == null) return;
-        WorkflowNode endNode = parent.getStates().get(effectiveEnd);
+    /**
+     * Redirect all references to the excluded sub-workflow defaultFailureNode to the root's
+     * defaultFailureNode. Under PROPAGATE, the sub's failure handler is always excluded so that
+     * the entire flattened workflow has a single failure domain. When both names are the same,
+     * replaceAllReferences is a no-op (from == to), which is correct.
+     */
+    private void rewireFailureReferences(Workflow parentWorkflow,
+                                         InliningPlan plan,
+                                         Workflow rootWorkflow) {
+        if (plan.excludedFailureNode != null) {
+            replaceAllReferences(parentWorkflow, plan.excludedFailureNode, rootWorkflow.getDefaultFailureNode());
+        }
+    }
+
+    /**
+     * Wire every terminal node's exit to the parent's continuation. Two strategies per terminal:
+     * <ul>
+     *   <li><b>Included terminals</b> (includeLastNode=true): set each terminal's nextNode/end directly.</li>
+     *   <li><b>Excluded terminals</b> (includeLastNode=false): sweep every node that references the
+     *       excluded terminal (nextNode and BranchNode choices/defaults) and redirect to parent continuation.</li>
+     * </ul>
+     * Multiple terminals are handled uniformly via loops — no single-terminal assumption.
+     */
+    private void rewireExit(Workflow parentWorkflow,
+                            WorkflowNode subWorkflowNode,
+                            InliningPlan plan) {
+        for (String terminal : plan.includedTerminals) {
+            connectEffectiveEnd(parentWorkflow, terminal, subWorkflowNode.getNextNode(), subWorkflowNode.isEnd());
+        }
+        for (String terminal : plan.excludedTerminals) {
+            replaceTerminalReferences(parentWorkflow, terminal, subWorkflowNode.getNextNode(), subWorkflowNode.isEnd());
+        }
+    }
+
+    private void replaceTerminalReferences(Workflow workflow,
+                                           String terminalNodeName,
+                                           String replacement,
+                                           boolean endFlag) {
+        for (WorkflowNode node : workflow.getStates().values()) {
+            if (Objects.equals(node.getNextNode(), terminalNodeName)) {
+                node.setNextNode(replacement);
+                node.setEnd(endFlag);
+            }
+            replaceReferenceInDefinition(node.getNodeDefinition(), terminalNodeName, replacement);
+        }
+    }
+
+    private void connectEffectiveEnd(Workflow workflow,
+                                     String effectiveEnd,
+                                     String nextNode,
+                                     boolean end) {
+        if (effectiveEnd == null) {
+            return;
+        }
+
+        WorkflowNode endNode = workflow.getStates().get(effectiveEnd);
         if (endNode != null) {
             endNode.setNextNode(nextNode);
             endNode.setEnd(end);
         }
     }
 
-    private void mergePostCompletionNodes(Workflow parent, Workflow subWorkflow, Set<String> inlinedNames) {
-        if (subWorkflow.getPostWorkflowCompletionNodes() == null) return;
-        if (parent.getPostWorkflowCompletionNodes() == null) {
-            parent.setPostWorkflowCompletionNodes(new ArrayList<>());
+    private void replaceSubWorkflowNodeReferences(Workflow workflow,
+                                                  String subWorkflowNodeName,
+                                                  String replacementStartNode) {
+        replaceAllReferences(workflow, subWorkflowNodeName, replacementStartNode);
+    }
+
+    private void validateAndRegisterRootNodeName(String nodeName,
+                                                 List<String> path,
+                                                 Set<String> rootNodeNames) {
+        if (rootNodeNames.contains(nodeName)) {
+            fail(
+                    "SUB_WORKFLOW_DUPLICATE_NODE_NAME",
+                    "Duplicate node name: '" + nodeName + "' already exists. Path: " +
+                            pathStr(path) + " → node '" + nodeName + "'."
+            );
         }
-        for (String name : subWorkflow.getPostWorkflowCompletionNodes()) {
-            if (inlinedNames.contains(name) && !parent.getPostWorkflowCompletionNodes().contains(name)) {
-                parent.getPostWorkflowCompletionNodes().add(name);
+        rootNodeNames.add(nodeName);
+    }
+
+    private boolean isSubWorkflow(WorkflowNode node) {
+        return node.getNodeDefinition() != null
+                && node.getNodeDefinition().getType() == NodeType.SUB_WORKFLOW;
+    }
+
+    private void mergePostCompletionNodes(Workflow parentWorkflow,
+                                          Workflow childWorkflow,
+                                          Set<String> inlinedNodeNames) {
+        if (childWorkflow.getPostWorkflowCompletionNodes() == null) {
+            return;
+        }
+
+        if (parentWorkflow.getPostWorkflowCompletionNodes() == null) {
+            parentWorkflow.setPostWorkflowCompletionNodes(new ArrayList<>());
+        }
+
+        for (String nodeName : childWorkflow.getPostWorkflowCompletionNodes()) {
+            if (inlinedNodeNames.contains(nodeName)
+                    && !parentWorkflow.getPostWorkflowCompletionNodes().contains(nodeName)) {
+                parentWorkflow.getPostWorkflowCompletionNodes().add(nodeName);
             }
         }
     }
 
     /**
-     * Replace every reference to fromNodeName with toNodeName (nextNode, BranchNode choices/defaultNode, ProcessorNode instructionNodeRef).
+     * Replace every reference to fromNodeName with toNodeName across all node types:
+     * nextNode, BranchNode choices/defaultNode, ProcessorNode instructionNodeRef.
      */
     private void replaceAllReferences(Workflow workflow, String fromNodeName, String toNodeName) {
         for (WorkflowNode node : workflow.getStates().values()) {
             if (Objects.equals(node.getNextNode(), fromNodeName)) {
                 node.setNextNode(toNodeName);
             }
-            replaceRefInNodeDefinition(node.getNodeDefinition(), fromNodeName, toNodeName);
+            replaceReferenceInDefinition(node.getNodeDefinition(), fromNodeName, toNodeName);
         }
     }
 
-    private void replaceRefInNodeDefinition(NodeDefinition def, String from, String to) {
-        if (def == null) return;
-        if (def instanceof BranchNode) {
-            BranchNode b = (BranchNode) def;
-            if (b.getChoices() != null) {
-                b.getChoices().forEach(c -> { if (Objects.equals(c.getNextNode(), from)) c.setNextNode(to); });
+    private void replaceReferenceInDefinition(NodeDefinition definition, String from, String to) {
+        if (definition == null) {
+            return;
+        }
+
+        if (definition instanceof BranchNode) {
+            BranchNode branchNode = (BranchNode) definition;
+
+            if (branchNode.getChoices() != null) {
+                branchNode.getChoices().forEach(choice -> {
+                    if (Objects.equals(choice.getNextNode(), from)) {
+                        choice.setNextNode(to);
+                    }
+                });
             }
-            if (Objects.equals(b.getDefaultNode(), from)) b.setDefaultNode(to);
-        } else if (def instanceof ProcessorNode) {
-            ProcessorNode p = (ProcessorNode) def;
-            if (Objects.equals(p.getInstructionNodeRef(), from)) p.setInstructionNodeRef(to);
+
+            if (Objects.equals(branchNode.getDefaultNode(), from)) {
+                branchNode.setDefaultNode(to);
+            }
+            return;
+        }
+
+        if (definition instanceof ProcessorNode) {
+            ProcessorNode processorNode = (ProcessorNode) definition;
+            if (Objects.equals(processorNode.getInstructionNodeRef(), from)) {
+                processorNode.setInstructionNodeRef(to);
+            }
         }
     }
 
-    private void removeSubWorkflowNode(Workflow parent, String subNodeName,
-                                       boolean mergingIntoRoot, Set<String> usedInstanceNames) {
-        parent.getStates().remove(subNodeName);
+    private void removeSubWorkflowNode(Workflow parentWorkflow,
+                                       String subWorkflowNodeName,
+                                       boolean mergingIntoRoot,
+                                       Set<String> rootNodeNames) {
+        parentWorkflow.getStates().remove(subWorkflowNodeName);
+
         if (mergingIntoRoot) {
-            usedInstanceNames.remove(subNodeName);
+            rootNodeNames.remove(subWorkflowNodeName);
         }
+    }
+
+    private List<String> extendPath(List<String> path, String workflowId) {
+        List<String> childPath = new ArrayList<>(path);
+        childPath.add(workflowId);
+        return childPath;
     }
 
     private static String pathStr(List<String> path) {
@@ -248,82 +440,113 @@ public class SubWorkflowFlattener {
     }
 
     /**
-     * What to inline from a sub-workflow: which node names to add, and the effective start/end for chaining.
-     * {@code excludedTerminal} is non-null when includeLastNode=false and a terminal was found; it names the
-     * terminal node that was excluded so callers can replace all remaining references to it.
+     * Classifies every node in a sub-workflow into three buckets:
+     * <ol>
+     *   <li>{@code excludedFailureNode}: the sub's defaultFailureNode (always excluded).</li>
+     *   <li>{@code includedTerminals} or {@code excludedTerminals}: all terminal nodes
+     *       (end=true, or nextNode=null and not a BranchNode), split by includeLastNode config.</li>
+     *   <li>{@code nodesToInclude}: everything else (regular nodes + terminals when included).</li>
+     * </ol>
      */
-    private static class InlineScope {
+    private static class InliningPlan {
         final Set<String> nodesToInclude;
         final String effectiveStart;
-        final String effectiveEnd;
-        final String excludedTerminal;
+        final String excludedFailureNode;     // sub's defaultFailureNode, always excluded (null if none)
+        final Set<String> includedTerminals;  // terminals kept in graph (includeLastNode=true)
+        final Set<String> excludedTerminals;  // terminals removed from graph (includeLastNode=false)
 
-        InlineScope(Set<String> nodesToInclude, String effectiveStart, String effectiveEnd, String excludedTerminal) {
+        InliningPlan(Set<String> nodesToInclude,
+                     String effectiveStart,
+                     String excludedFailureNode,
+                     Set<String> includedTerminals,
+                     Set<String> excludedTerminals) {
             this.nodesToInclude = nodesToInclude;
             this.effectiveStart = effectiveStart;
-            this.effectiveEnd = effectiveEnd;
-            this.excludedTerminal = excludedTerminal;
+            this.excludedFailureNode = excludedFailureNode;
+            this.includedTerminals = includedTerminals;
+            this.excludedTerminals = excludedTerminals;
         }
 
-        static InlineScope compute(Workflow subWorkflow, SubWorkflowConfig config,
-                                   String parentDefaultFailureNode) {
-            Map<String, WorkflowNode> states = subWorkflow.getStates();
+        boolean isEmpty() {
+            return nodesToInclude == null || nodesToInclude.isEmpty();
+        }
+
+        static InliningPlan compute(Workflow childWorkflow, SubWorkflowConfig config) {
+            Map<String, WorkflowNode> states = childWorkflow.getStates();
             if (states == null || states.isEmpty()) {
-                return new InlineScope(Collections.emptySet(), null, null, null);
+                return empty();
             }
 
-            String startName = subWorkflow.getStartNode();
-            WorkflowNode startNode = states.get(startName);
+            String startNodeName = childWorkflow.getStartNode();
+            WorkflowNode startNode = states.get(startNodeName);
             if (startNode == null) {
-                return new InlineScope(Collections.emptySet(), null, null, null);
+                return empty();
             }
 
-            Set<String> exclude = new HashSet<>();
-            String effectiveStart = startName;
-            if (!config.isIncludeFirstNode() && (startNode.getNodeDefinition() == null
-                    || startNode.getNodeDefinition().getType() != NodeType.BRANCH)) {
-                exclude.add(startName);
+            // A BranchNode cannot be excluded as the first node — it carries routing logic
+            // (choices/defaultNode) with no single next-node successor to forward to.
+            if (!config.isIncludeFirstNode()
+                    && startNode.getNodeDefinition() != null
+                    && startNode.getNodeDefinition().getType() == NodeType.BRANCH) {
+                fail("SUB_WORKFLOW_INVALID_CONFIG",
+                        "Sub-workflow '" + childWorkflow.getId() + "' has a BranchNode as its startNode ('"
+                                + startNodeName + "') and includeFirstNode=false. "
+                                + "A BranchNode cannot be excluded as the first node.");
+            }
+
+            Set<String> excludedNodes = new HashSet<>();
+            String effectiveStart = startNodeName;
+
+            if (!config.isIncludeFirstNode()) {
+                excludedNodes.add(startNodeName);
                 effectiveStart = startNode.getNextNode();
             }
 
-            // Exclude the sub-workflow's defaultFailureNode when it matches the parent's.
-            // Under PROPAGATE (the only implemented strategy), all failures are handled by the
-            // root workflow's defaultFailureNode, so inlining the sub's failure node is redundant
-            // and causes SUB_WORKFLOW_DUPLICATE_NODE_NAME when both share the same conventional name.
-            String subFailureNode = subWorkflow.getDefaultFailureNode();
-            if (subFailureNode != null && subFailureNode.equals(parentDefaultFailureNode)) {
-                exclude.add(subFailureNode);
+            // Always exclude the sub-workflow's defaultFailureNode under PROPAGATE.
+            // The executor uses the root workflow's single defaultFailureNode at runtime;
+            // inlining the sub's failure node is redundant and causes duplicate-name errors
+            // when both share the same conventional name.
+            String childFailureNode = childWorkflow.getDefaultFailureNode();
+            if (childFailureNode != null) {
+                excludedNodes.add(childFailureNode);
             }
 
-            String terminal = findTerminal(states, exclude);
-            // When includeLastNode=true  → include the terminal; effectiveEnd names it so rewireChainEnd
-            //   can wire it to the parent's continuation.
-            // When includeLastNode=false → exclude the terminal; the sweep loop in mergeSubWorkflow
-            //   replaces every reference to it (nextNode and branch choices/defaults) in one pass,
-            //   so we don't need to pre-compute a single predecessor here.
-            String effectiveEnd = null;
-            String excludedTerminal = null;
-            if (terminal != null) {
+            // Find ALL terminal nodes (not already excluded).
+            // A node is terminal if: end=true, OR nextNode=null and it is not a BranchNode.
+            // BranchNodes have nextNode=null by design and must not be mistaken for terminals.
+            Set<String> allTerminals = findAllTerminalNodes(states, excludedNodes);
+
+            Set<String> includedTerminals = Collections.emptySet();
+            Set<String> excludedTerminals = Collections.emptySet();
+
+            if (!allTerminals.isEmpty()) {
                 if (config.isIncludeLastNode()) {
-                    effectiveEnd = terminal;
+                    // Keep terminals in graph; each will be wired to the parent's continuation.
+                    includedTerminals = allTerminals;
                 } else {
-                    exclude.add(terminal);
-                    excludedTerminal = terminal;
+                    // Remove terminals; all references to them are swept and redirected.
+                    excludedNodes.addAll(allTerminals);
+                    excludedTerminals = allTerminals;
                 }
             }
 
-            Set<String> toInclude = states.keySet().stream().filter(n -> !exclude.contains(n)).collect(Collectors.toSet());
+            Set<String> nodesToInclude = states.keySet().stream()
+                    .filter(nodeName -> !excludedNodes.contains(nodeName))
+                    .collect(Collectors.toSet());
 
-            return new InlineScope(toInclude, effectiveStart, effectiveEnd, excludedTerminal);
+            return new InliningPlan(nodesToInclude, effectiveStart, childFailureNode, includedTerminals, excludedTerminals);
         }
 
-        private static String findTerminal(Map<String, WorkflowNode> states, Set<String> exclude) {
+        private static InliningPlan empty() {
+            return new InliningPlan(Collections.emptySet(), null, null, Collections.emptySet(), Collections.emptySet());
+        }
+
+        private static Set<String> findAllTerminalNodes(Map<String, WorkflowNode> states, Set<String> excludedNodes) {
             return states.entrySet().stream()
-                    .filter(e -> !exclude.contains(e.getKey())
-                            && isTerminalNode(e.getValue()))
+                    .filter(entry -> !excludedNodes.contains(entry.getKey()))
+                    .filter(entry -> isTerminalNode(entry.getValue()))
                     .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null);
+                    .collect(Collectors.toSet());
         }
 
         /**
@@ -332,8 +555,14 @@ public class SubWorkflowFlattener {
          * null by design and must not be mistaken for a workflow-ending terminal.
          */
         private static boolean isTerminalNode(WorkflowNode node) {
-            if (node.isEnd()) return true;
-            if (node.getNextNode() != null) return false;
+            if (node.isEnd()) {
+                return true;
+            }
+
+            if (node.getNextNode() != null) {
+                return false;
+            }
+
             return node.getNodeDefinition() == null
                     || node.getNodeDefinition().getType() != NodeType.BRANCH;
         }
