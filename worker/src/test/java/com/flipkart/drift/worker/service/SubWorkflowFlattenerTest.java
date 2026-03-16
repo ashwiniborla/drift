@@ -535,8 +535,9 @@ class SubWorkflowFlattenerTest {
         assertEquals("b1", a.getStates().get("a1").getNextNode());
         assertEquals("branch_b", a.getStates().get("b1").getNextNode());
         assertTrue(a.getStates().containsKey("branch_b"));
-        // effectiveEnd = b_A (first predecessor of b_success via nextNode), rewired to continue to a2
+        // Both b_A and b_B referenced excluded terminal b_success; both must be rewired to a2
         assertEquals("a2", a.getStates().get("b_A").getNextNode());
+        assertEquals("a2", a.getStates().get("b_B").getNextNode());
     }
 
 
@@ -555,6 +556,64 @@ class SubWorkflowFlattenerTest {
         assertStateKeys(a, "a1", "branch_b", "b2", "a2");
         assertEquals("branch_b", a.getStates().get("a1").getNextNode());
         assertTrue(a.getStates().containsKey("branch_b"), "branch start node must not be excluded");
+    }
+
+    @Test
+    void branchDefault_pointsDirectlyToExcludedTerminal_rewired() {
+        // Sub B (includeLastNode=false): b1 → branch_b; branch choice → b_process → b_end(end);
+        // branch default → b_end DIRECTLY (skips b_process).
+        // After flatten: b_end excluded; b_process.nextNode rewired to a2 by rewireChainEnd;
+        // branch_b.defaultNode must also be rewired to a2 (not left dangling as "b_end").
+        BranchNode bBranchDef = branchDef("branch_b",
+                Arrays.asList(choice("b_process")), "b_end");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",        node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b",  node("branch_b", bBranchDef, null, false),
+                "b_process", node("b_process", groovyDef("b_process"), "b_end", false),
+                "b_end",     node("b_end", groovyDef("b_end"), null, true)));
+        Workflow a = parentWithOneSub("SubB", true, false);
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "branch_b", "b_process", "a2");
+        assertEquals("branch_b", a.getStates().get("b1").getNextNode());
+        BranchNode inlined = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
+        assertEquals("b_process", inlined.getChoices().get(0).getNextNode(),
+                "choice still routes to b_process");
+        assertEquals("a2", inlined.getDefaultNode(),
+                "default must be rewired from excluded b_end to a2");
+        assertEquals("a2", a.getStates().get("b_process").getNextNode(),
+                "b_process.nextNode rewired by rewireChainEnd");
+    }
+
+    @Test
+    void branchChoice_pointsDirectlyToExcludedTerminal_rewired() {
+        // Sub B (includeLastNode=false): b1 → branch_b; branch choice[0] → b_end DIRECTLY;
+        // branch default → b_process → b_end.
+        // After flatten: b_end excluded; branch_b.choices[0].nextNode must be rewired to a2.
+        BranchNode bBranchDef = branchDef("branch_b",
+                Arrays.asList(choice("b_end"), choice("b_process")), "b_process");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",        node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b",  node("branch_b", bBranchDef, null, false),
+                "b_process", node("b_process", groovyDef("b_process"), "b_end", false),
+                "b_end",     node("b_end", groovyDef("b_end"), null, true)));
+        Workflow a = parentWithOneSub("SubB", true, false);
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        assertStateKeys(a, "a1", "b1", "branch_b", "b_process", "a2");
+        BranchNode inlined = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
+        assertEquals("a2", inlined.getChoices().get(0).getNextNode(),
+                "choice[0] must be rewired from excluded b_end to a2");
+        assertEquals("b_process", inlined.getChoices().get(1).getNextNode(),
+                "choice[1] routes to b_process (unaffected)");
+        assertEquals("b_process", inlined.getDefaultNode(),
+                "default routes to b_process (unaffected)");
+        assertEquals("a2", a.getStates().get("b_process").getNextNode(),
+                "b_process.nextNode rewired by rewireChainEnd");
     }
 
     @Test

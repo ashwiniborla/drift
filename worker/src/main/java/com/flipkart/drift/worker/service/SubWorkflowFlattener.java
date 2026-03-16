@@ -115,16 +115,14 @@ public class SubWorkflowFlattener {
             if (Objects.equals(parent.getStartNode(), subNodeName)) {
                 parent.setStartNode(subNode.getNextNode());
             }
-            if (subNode.isEnd() && subNode.getNextNode() == null) {
-                for (WorkflowNode node : parent.getStates().values()) {
-                    if (Objects.equals(node.getNextNode(), subNodeName)) {
-                        node.setNextNode(null);
-                        node.setEnd(true);
-                    }
-                    replaceRefInNodeDefinition(node.getNodeDefinition(), subNodeName, null);
+            String replacement = subNode.getNextNode();
+            boolean becomeTerminal = subNode.isEnd() && replacement == null;
+            for (WorkflowNode node : parent.getStates().values()) {
+                if (Objects.equals(node.getNextNode(), subNodeName)) {
+                    node.setNextNode(replacement);
+                    if (becomeTerminal) node.setEnd(true);
                 }
-            } else {
-                replaceAllReferences(parent, subNodeName, subNode.getNextNode());
+                replaceRefInNodeDefinition(node.getNodeDefinition(), subNodeName, replacement);
             }
             removeSubWorkflowNode(parent, subNodeName, mergingIntoRoot, usedInstanceNames);
             return;
@@ -149,7 +147,25 @@ public class SubWorkflowFlattener {
             replaceAllReferences(parent, subFailure, root.getDefaultFailureNode());
         }
 
-        rewireChainEnd(parent, scope.effectiveEnd, subNode.getNextNode(), subNode.isEnd());
+        // Wire the sub-workflow's exit point to the parent's continuation.
+        // Two strategies depending on whether the terminal node was excluded:
+        //   included (excludedTerminal==null): set the included terminal's nextNode/end directly.
+        //   excluded (excludedTerminal!=null): sweep every inlined node that still references it —
+        //     this covers both linear predecessors and BranchNode choices/defaults in one pass.
+        if (scope.excludedTerminal != null) {
+            String replacement = subNode.getNextNode();
+            boolean endFlag = subNode.isEnd();
+            for (WorkflowNode node : parent.getStates().values()) {
+                if (Objects.equals(node.getNextNode(), scope.excludedTerminal)) {
+                    node.setNextNode(replacement);
+                    node.setEnd(endFlag);
+                }
+                replaceRefInNodeDefinition(node.getNodeDefinition(), scope.excludedTerminal, replacement);
+            }
+        } else {
+            rewireChainEnd(parent, scope.effectiveEnd, subNode.getNextNode(), subNode.isEnd());
+        }
+
         mergePostCompletionNodes(parent, subWorkflow, scope.nodesToInclude);
 
         replaceAllReferences(parent, subNodeName, scope.effectiveStart);
@@ -233,29 +249,33 @@ public class SubWorkflowFlattener {
 
     /**
      * What to inline from a sub-workflow: which node names to add, and the effective start/end for chaining.
+     * {@code excludedTerminal} is non-null when includeLastNode=false and a terminal was found; it names the
+     * terminal node that was excluded so callers can replace all remaining references to it.
      */
     private static class InlineScope {
         final Set<String> nodesToInclude;
         final String effectiveStart;
         final String effectiveEnd;
+        final String excludedTerminal;
 
-        InlineScope(Set<String> nodesToInclude, String effectiveStart, String effectiveEnd) {
+        InlineScope(Set<String> nodesToInclude, String effectiveStart, String effectiveEnd, String excludedTerminal) {
             this.nodesToInclude = nodesToInclude;
             this.effectiveStart = effectiveStart;
             this.effectiveEnd = effectiveEnd;
+            this.excludedTerminal = excludedTerminal;
         }
 
         static InlineScope compute(Workflow subWorkflow, SubWorkflowConfig config,
                                    String parentDefaultFailureNode) {
             Map<String, WorkflowNode> states = subWorkflow.getStates();
             if (states == null || states.isEmpty()) {
-                return new InlineScope(Collections.emptySet(), null, null);
+                return new InlineScope(Collections.emptySet(), null, null, null);
             }
 
             String startName = subWorkflow.getStartNode();
             WorkflowNode startNode = states.get(startName);
             if (startNode == null) {
-                return new InlineScope(Collections.emptySet(), null, null);
+                return new InlineScope(Collections.emptySet(), null, null, null);
             }
 
             Set<String> exclude = new HashSet<>();
@@ -276,15 +296,25 @@ public class SubWorkflowFlattener {
             }
 
             String terminal = findTerminal(states, exclude);
-            String effectiveEnd = terminal;
-            if (!config.isIncludeLastNode() && terminal != null) {
-                exclude.add(terminal);
-                effectiveEnd = findPredecessor(states, terminal);
+            // When includeLastNode=true  → include the terminal; effectiveEnd names it so rewireChainEnd
+            //   can wire it to the parent's continuation.
+            // When includeLastNode=false → exclude the terminal; the sweep loop in mergeSubWorkflow
+            //   replaces every reference to it (nextNode and branch choices/defaults) in one pass,
+            //   so we don't need to pre-compute a single predecessor here.
+            String effectiveEnd = null;
+            String excludedTerminal = null;
+            if (terminal != null) {
+                if (config.isIncludeLastNode()) {
+                    effectiveEnd = terminal;
+                } else {
+                    exclude.add(terminal);
+                    excludedTerminal = terminal;
+                }
             }
 
             Set<String> toInclude = states.keySet().stream().filter(n -> !exclude.contains(n)).collect(Collectors.toSet());
 
-            return new InlineScope(toInclude, effectiveStart, effectiveEnd);
+            return new InlineScope(toInclude, effectiveStart, effectiveEnd, excludedTerminal);
         }
 
         private static String findTerminal(Map<String, WorkflowNode> states, Set<String> exclude) {
@@ -306,14 +336,6 @@ public class SubWorkflowFlattener {
             if (node.getNextNode() != null) return false;
             return node.getNodeDefinition() == null
                     || node.getNodeDefinition().getType() != NodeType.BRANCH;
-        }
-
-        private static String findPredecessor(Map<String, WorkflowNode> states, String target) {
-            return states.entrySet().stream()
-                    .filter(e -> Objects.equals(e.getValue().getNextNode(), target))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null);
         }
     }
 }
