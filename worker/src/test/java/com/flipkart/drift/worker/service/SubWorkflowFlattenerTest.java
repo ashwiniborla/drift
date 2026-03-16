@@ -363,9 +363,10 @@ class SubWorkflowFlattenerTest {
     }
 
     @Test
-    void defaultFailureNode_kept_whenDifferentName() {
-        // Sub has a differently-named defaultFailureNode ("sub_default_failure") — it must be inlined
-        // as a regular node since it doesn't conflict with the parent's "default_failure".
+    void defaultFailureNode_alwaysExcluded_evenWhenDifferentName() {
+        // Sub has a differently-named defaultFailureNode ("sub_default_failure").
+        // New behavior: the sub's defaultFailureNode is ALWAYS excluded (regardless of name match)
+        // and all references to it are redirected to the parent's "default_failure".
         Workflow b = workflow("SubB", "b1", linkedMap(
                 "b1", node("b1", groovyDef("b1"), "b2", false),
                 "b2", node("b2", groovyDef("b2"), null, true),
@@ -383,9 +384,11 @@ class SubWorkflowFlattenerTest {
 
         flattener.flattenWorkflow(a, TENANT);
 
-        assertStateKeys(a, "a1", "b1", "b2", "a2", "default_failure", "sub_default_failure");
-        assertTrue(a.getStates().containsKey("sub_default_failure"),
-                "sub_default_failure must be inlined since it has a different name");
+        // sub_default_failure is excluded (not inlined); inlined nodes have no dangling reference to it
+        assertStateKeys(a, "a1", "b1", "b2", "a2", "default_failure");
+        assertFalse(a.getStates().containsKey("sub_default_failure"),
+                "sub_default_failure must NOT be inlined (always excluded as failure node)");
+        assertLinearChain(a, "a1", "b1", "b2", "a2");
     }
 
     @Test
@@ -485,16 +488,17 @@ class SubWorkflowFlattenerTest {
     // ========================== Group 9: Special Behavior ==========================
 
     @Test
-    public void branchIntermediateNode_notMistakenForTerminal_includeLastTrue() {
-        // fake_workflow: step1 → branchNode (choices→A,B; no nextNode on wrapper) → A(end), B(end)
-        // With includeLastNode=true: branchNode has nextNode=null but must NOT be treated as terminal.
-        // All four nodes must be inlined and the actual end-nodes (A, B) must remain reachable.
+    void branchIntermediateNode_notMistakenForTerminal_includeLastTrue() {
+        // Sub B: b1 → branch_b (choices→b_A, b_B; nextNode=null on wrapper) → b_A(end), b_B(end)
+        // With includeLastNode=true: branch_b has nextNode=null but must NOT be treated as terminal.
+        // All four nodes must be inlined. Both b_A and b_B are terminals and must each be wired
+        // to the parent's continuation (a2) — multi-terminal handling.
         BranchNode branchDef = branchDef("branch_b", Arrays.asList(choice("b_A"), choice("b_B")), "b_A");
         Workflow b = workflow("SubB", "b1", linkedMap(
-                "b1",      node("b1", groovyDef("b1"), "branch_b", false),
+                "b1",       node("b1", groovyDef("b1"), "branch_b", false),
                 "branch_b", node("branch_b", branchDef, null, false),  // nextNode=null on wrapper
-                "b_A",     node("b_A", groovyDef("b_A"), null, true),
-                "b_B",     node("b_B", groovyDef("b_B"), null, true)));
+                "b_A",      node("b_A", groovyDef("b_A"), null, true),
+                "b_B",      node("b_B", groovyDef("b_B"), null, true)));
         Workflow a = parentWithOneSub("SubB", true, true);
         when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
 
@@ -506,6 +510,11 @@ class SubWorkflowFlattenerTest {
         BranchNode inlinedBranch = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
         assertEquals("b_A", inlinedBranch.getChoices().get(0).getNextNode());
         assertEquals("b_B", inlinedBranch.getChoices().get(1).getNextNode());
+        // Both terminals must be wired to the parent's continuation
+        assertEquals("a2", a.getStates().get("b_A").getNextNode());
+        assertEquals( "a2", a.getStates().get("b_B").getNextNode());
+        assertFalse(a.getStates().get("b_A").isEnd(), "b_A must not be end after wiring");
+        assertFalse(a.getStates().get("b_B").isEnd(), "b_B must not be end after wiring");
     }
 
     @Test
@@ -542,8 +551,9 @@ class SubWorkflowFlattenerTest {
 
 
     @Test
-    void branchStartNode_notExcludedByIncludeFirstFalse() {
-        // B starts with BRANCH node. Config includeFirst=false. Branch should NOT be excluded.
+    void branchStartNode_withIncludeFirstFalse_throwsError() {
+        // A BranchNode cannot be excluded as the first node because it carries routing logic
+        // (choices/defaultNode) with no single next-node successor. This is now a config error.
         BranchNode bBranch = branchDef("branch_b", List.of(choice("b2")), "b2");
         Workflow b = workflow("SubB", "branch_b", linkedMap(
                 "branch_b", node("branch_b", bBranch, "b2", false),
@@ -551,11 +561,10 @@ class SubWorkflowFlattenerTest {
         Workflow a = parentWithOneSub("SubB", false, true);
         when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
 
-        flattener.flattenWorkflow(a, TENANT);
-
-        assertStateKeys(a, "a1", "branch_b", "b2", "a2");
-        assertEquals("branch_b", a.getStates().get("a1").getNextNode());
-        assertTrue(a.getStates().containsKey("branch_b"), "branch start node must not be excluded");
+        ApplicationFailure ex = assertThrows(ApplicationFailure.class,
+                () -> flattener.flattenWorkflow(a, TENANT),
+                "Expected ApplicationFailure for BranchNode as first node with includeFirstNode=false");
+        assertEquals("SUB_WORKFLOW_INVALID_CONFIG", ex.getType());
     }
 
     @Test
@@ -614,6 +623,75 @@ class SubWorkflowFlattenerTest {
                 "default routes to b_process (unaffected)");
         assertEquals("a2", a.getStates().get("b_process").getNextNode(),
                 "b_process.nextNode rewired by rewireChainEnd");
+    }
+
+    @Test
+    void multiTerminal_excludeLastFalse_allTerminalsSweepedToParent() {
+        // Sub B (includeLastNode=false): b1 → branch_b (choices=[b_handler_A, b_handler_B], default=b_handler_A)
+        //                                b_handler_A(end=true), b_handler_B(end=true)
+        // Both terminals are excluded. All branch references to them must be swept and redirected to a2.
+        BranchNode bBranchDef = branchDef("branch_b",
+                Arrays.asList(choice("b_handler_A"), choice("b_handler_B")), "b_handler_A");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",          node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b",    node("branch_b", bBranchDef, null, false),
+                "b_handler_A", node("b_handler_A", groovyDef("b_handler_A"), null, true),
+                "b_handler_B", node("b_handler_B", groovyDef("b_handler_B"), null, true)));
+        Workflow a = parentWithOneSub("SubB", true, false);
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        // Both terminals excluded; only b1 and branch_b remain
+        assertStateKeys(a, "a1", "b1", "branch_b", "a2");
+        assertEquals("b1", a.getStates().get("a1").getNextNode());
+        assertEquals("branch_b", a.getStates().get("b1").getNextNode());
+        BranchNode inlined = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
+        assertEquals("a2", inlined.getChoices().get(0).getNextNode(),
+                "choice[0] must be swept from b_handler_A to a2");
+        assertEquals("a2", inlined.getChoices().get(1).getNextNode(),
+                "choice[1] must be swept from b_handler_B to a2");
+        assertEquals("a2", inlined.getDefaultNode(),
+                "default must be swept from b_handler_A to a2");
+    }
+
+    @Test
+    void branchDefaultPointsToFailureNode_failureNodeRedirectedToParent() {
+        // Sub B (defaultFailureNode="sub_fail"): b1 → branch_b (choices=[b_success], default=sub_fail)
+        //                                        b_success(end=true), sub_fail(end=true)
+        // sub_fail is excluded (it's the defaultFailureNode). References to it are redirected to
+        // the parent's "default_failure". b_success is the only terminal and is wired to a2.
+        BranchNode bBranchDef = branchDef("branch_b", Arrays.asList(choice("b_success")), "sub_fail");
+        Workflow b = workflow("SubB", "b1", linkedMap(
+                "b1",        node("b1", groovyDef("b1"), "branch_b", false),
+                "branch_b",  node("branch_b", bBranchDef, null, false),
+                "b_success", node("b_success", groovyDef("b_success"), null, true),
+                "sub_fail",  node("sub_fail", groovyDef("sub_fail"), null, true)));
+        b.setDefaultFailureNode("sub_fail");
+
+        Workflow a = workflow("A", "a1", linkedMap(
+                "a1",              node("a1", groovyDef("a1"), "sub_b", false),
+                "sub_b",           subNode("sub_b", subWfDef("sub_b", "SubB", true, true), "a2", false),
+                "a2",              node("a2", groovyDef("a2"), null, true),
+                "default_failure", node("default_failure", groovyDef("default_failure"), null, true)));
+        a.setDefaultFailureNode("default_failure");
+
+        when(enrichHelper.fetchEnrichedCopy("SubB", V, TENANT)).thenReturn(b);
+
+        flattener.flattenWorkflow(a, TENANT);
+
+        // sub_fail excluded, b1/branch_b/b_success inlined
+        assertStateKeys(a, "a1", "b1", "branch_b", "b_success", "a2", "default_failure");
+        assertFalse(a.getStates().containsKey("sub_fail"), "sub_fail must not be inlined");
+        BranchNode inlined = (BranchNode) a.getStates().get("branch_b").getNodeDefinition();
+        assertEquals("b_success", inlined.getChoices().get(0).getNextNode(),
+                "choice[0] still routes to b_success");
+        assertEquals("default_failure", inlined.getDefaultNode(),
+                "default must be redirected from sub_fail to default_failure");
+        // b_success (the only success terminal) wired to parent continuation
+        assertEquals("a2", a.getStates().get("b_success").getNextNode(),
+                "b_success must be wired to a2");
+        assertFalse(a.getStates().get("b_success").isEnd(), "b_success must not be end after wiring");
     }
 
     @Test
