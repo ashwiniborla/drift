@@ -14,21 +14,24 @@
 
 def selectedOptions = _global['questionnaire_instructions:viewResponse']?.selectedOptions
 def questions = _global?.nodeParameters?.questions
-def questionnaireType = _global.nodeParameters?.questionnaireType
+def questionnaireType = questions?.type
 
 def selectedOptionKey = selectedOptions?.fake_preference
 
-def questionList = (questions instanceof Map && questions.containsKey('questions'))
-        ? questions.questions
-        : []
+def questionList = questions?.questions ?: []
 
-if (!(questionList instanceof List)) questionList = []
+if(questionList.isEmpty()) {
+    throw new IllegalArgumentException("Questions not found")
+}
 
 def matchedConfig = questionList.find { it?.key == selectedOptionKey }
 def isValid = (matchedConfig != null && selectedOptionKey != null)
 
+if(!isValid) {
+    throw new IllegalArgumentException("In valid Option selected")
+}
+
 def isFakeWorkflowRequired = isValid ? (matchedConfig?.isFakeWorkflowRequired ?: false) : false
-def nextWorkflow = isValid ? matchedConfig?.nextWorkflow : null
 
 def questionnaireData = [
         questionnaireType: questionnaireType,
@@ -41,7 +44,5 @@ return [
         selectedOptionKey      : selectedOptionKey,
         selectedQuestionConfig : matchedConfig,
         isFakeWorkflowRequired : isFakeWorkflowRequired,
-        nextWorkflow           : nextWorkflow,
-        questionnaireType      : questionnaireType,
         questionnaireData      : questionnaireData
 ]

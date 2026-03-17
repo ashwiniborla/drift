@@ -34,15 +34,16 @@ try {
     def action = viewResponse?.action?.toString()?.trim()
     def threadText;
     def persona;
+    def status = viewResponse?.status
     result.action = action
 
-    if (!action) {
+    if (!action && !status) {
         result.error = true
         return result
     }
-
     // --- CLOSED: build elxrTkt with status=CLOSED ---
-    if (action == 'CLOSED') {
+    if (status == 'CLOSED') {
+        result.action = 'CLOSED'
         def base = _global?.elixir_create_ticket?.elxrTkt
         if (base == null) {
             result.error = true

@@ -12,20 +12,10 @@ def altPhoneRaw  = communications.find { it?.type == 'alt_phone' }?.input
 
 def hasAltPhone = (altPhoneRaw != null && altPhoneRaw != '')
 
-// Format phone numbers with +91 prefix if not already present
-def formatPhone = { String phone ->
-    if (!phone) return ''
-    phone = phone.trim()
-    if (phone.startsWith('+')) return phone
-    if (phone.startsWith('91') && phone.length() > 10) return '+' + phone
-    return '+91' + phone
-}
-
-def primaryPhoneFormatted = formatPhone(primaryPhone)
-def altPhoneFormatted     = hasAltPhone ? formatPhone(altPhoneRaw) : ''
-// Raw digits only (no country code) for input field defaultValues
-def primaryPhoneDigits = primaryPhone.replaceAll(/^\+?91/, '')
-def altPhoneDigits     = hasAltPhone ? altPhoneRaw.replaceAll(/^\+?91/, '') : ''
+def primaryPhoneFormatted = primaryPhone ?: ''
+def altPhoneFormatted     = hasAltPhone ? (altPhoneRaw ?: '') : ''
+def primaryPhoneDigits   = primaryPhone ?: ''
+def altPhoneDigits       = hasAltPhone ? (altPhoneRaw ?: '') : ''
 
 // -----------------------------------------------------------------------
 // Build inputOptions
