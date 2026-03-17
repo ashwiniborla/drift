@@ -7,7 +7,6 @@
  * Context:
  *   _global['questionnaire_instructions:viewResponse']?.selectedOptions  – resume response from INSTRUCTION
  *   _global.nodeParameters.questions    – questions config block from process_fake_workflow_details
- *   _global.nodeParameters.flowDirection – FORWARD or REVERSE
  *
  * Returns: Map { isValid, selectedOptionKey, selectedQuestionConfig, isFakeWorkflowRequired,
  *                questionnaireType, questionnaireData, buttonAction }
@@ -15,7 +14,6 @@
 
 def selectedOptions = _global['questionnaire_instructions:viewResponse']?.selectedOptions
 def questions = _global?.nodeParameters?.questions
-def flowDirection = _global?.nodeParameters?.flowDirection
 def questionnaireType = _global.nodeParameters?.questionnaireType
 
 def selectedOptionKey = selectedOptions?.fake_preference

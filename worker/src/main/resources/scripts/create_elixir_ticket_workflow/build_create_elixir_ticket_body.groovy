@@ -29,16 +29,18 @@ if (!entityType) {
     throw new IllegalArgumentException("elixirEntityType is required for create elixir ticket; got null or empty.")
 }
 
-def entityFlow = _global?.nodeParameters?.elixirEntityFlow?.toString()?.trim()
-if (!entityFlow) {
-    throw new IllegalArgumentException("elixirEntityFlow is required for create elixir ticket; got null or empty.")
-}
 
-def issueType = _enum_store?.elixir?.issueConfig?.get(issueId)?.issue
+def issueConfig = _enum_store?.elixir?.issueConfig?.get(issueId)
+def issueType = issueConfig?.issue
 if (issueType == null || issueType.toString().trim().isEmpty()) {
     throw new IllegalArgumentException("issue_type not found in enum store for key: elixir.issueConfig." + issueId + ".issue")
 }
 issueType = issueType.toString().trim()
+
+def entityFlow = issueConfig?.flowDirection
+if (!entityFlow) {
+    throw new IllegalArgumentException("elixirEntityFlow is required for create elixir ticket; got null or empty.")
+}
 
 def callbackUrl = _enum_store?.elixir?.callbackUrl
 if (callbackUrl == null || callbackUrl.toString().trim().isEmpty()) {
