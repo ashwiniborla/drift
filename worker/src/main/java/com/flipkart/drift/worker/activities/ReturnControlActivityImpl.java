@@ -31,4 +31,3 @@ public class ReturnControlActivityImpl implements ReturnControlActivity {
         return status;
     }
 }
-
