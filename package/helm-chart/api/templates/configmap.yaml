@@ -29,6 +29,7 @@ data:
       master: {{ .Values.env.REDIS_MASTER }}
       sentinels: {{ .Values.env.REDIS_SENTINELS }}
       prefix: {{ .Values.env.REDIS_PREFIX }}
+      database: {{ .Values.env.REDIS_DATABASE | default "0" }}
       maxTotal: 50
       maxWaitMillis: 100
       maxIdle: 25

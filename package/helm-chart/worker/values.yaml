@@ -74,6 +74,7 @@ configFiles:
       master: ${REDIS_MASTER}
       sentinels: ${REDIS_SENTINELS}
       prefix: ${REDIS_PREFIX}
+      database: ${REDIS_DATABASE:-0}
       maxTotal: 50
       maxWaitMillis: 100
       maxIdle: 25
