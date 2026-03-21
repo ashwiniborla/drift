@@ -610,6 +610,7 @@ REDIS_PASSWORD=your-redis-password
 REDIS_MASTER=redis-master-hostname
 REDIS_SENTINELS=redis-sentinel1:26379,redis-sentinel2:26379
 REDIS_PREFIX=drift-local
+REDIS_DATABASE=0
 
 # Config File Paths (relative to worker module)
 ENUM_STORE_BUCKET=src/main/resources/config/lookup.properties
