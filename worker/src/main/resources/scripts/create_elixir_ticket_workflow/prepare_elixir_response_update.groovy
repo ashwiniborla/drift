@@ -4,9 +4,9 @@
  * object and drops entity/workflowId/type etc. So we send the full object: initial elxrTkt from
  * elixir_create_ticket (entity, workflowId, type, createdAt) with id, status, updatedAt from callback.
  */
-def base = _global?.elixir_create_ticket?.elxrTkt ?: _global.elixir_filter_incidents?.firstElixirDetails
+def base = _global?.prepare_create_ticket_details?.elxrTkt ?: _global.elixir_filter_incidents?.firstElixirDetails
 if (base == null) {
-    throw new IllegalArgumentException("elixir_create_ticket.elxrTkt not found in context; cannot build full elxrTkt update.")
+    throw new IllegalArgumentException("prepare_create_ticket_details.elxrTkt not found in context; cannot build full elxrTkt update.")
 }
 
 def viewResponse = _global.get('elixir_waiting_for_response:viewResponse')?.selectedOptions

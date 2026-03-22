@@ -64,13 +64,15 @@ Interactively build a Drift workflow definition JSON by:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `instanceName` | yes | Same as the state key |
+| `instanceName` | yes | **Must be identical to the state key** — never a different string for “context override” |
 | `resourceId` | yes | ID of the node definition this state uses |
 | `resourceVersion` | yes | Use **`"SNAPSHOT"`** when adding nodes to a workflow. Other values: `"LATEST"`, `"ACTIVE"`, or a specific version. |
 | `type` | yes | Always `"NODE"` |
 | `parameters` | no | Map of parameter bindings — keys are param names, values are JsonPath expressions (e.g., `"$.orderDetails[0].orderId"`) or JS-like expressions (e.g., `"_global.params?.client"`) |
 | `nextNode` | no | Key of the next state to execute (omit if branching is handled by the node itself) |
 | `end` | yes | `true` if this is a terminal state, `false` otherwise |
+
+**`instanceName` rule (non-negotiable)**: For every entry in `states`, `states.<key>.instanceName` **must equal** `<key>`. Output appears in context as `_global.<instanceName>`; mismatched names break JsonPath and flattening expectations.
 
 **Important**: Do NOT include node config/definition details (scripts, HTTP config, groovy, etc.) in the workflow JSON. States only reference nodes by `resourceId`.
 
@@ -147,6 +149,7 @@ Before writing:
 - Verify `defaultFailureNode` exists in `states`
 - Verify all `nextNode` references point to existing state keys (warn if any are missing)
 - Verify at least one state has `"end": true`
+- Verify **every** state has `instanceName` **exactly equal** to its key in `states` (see `.cursor/rules/drift-workflow-instancename-statekey.mdc`)
 
 If validation finds issues, report them and ask the user how to proceed.
 

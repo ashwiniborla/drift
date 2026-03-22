@@ -70,6 +70,8 @@ Collect the following information through questions. Do **not** assume any value
 **Workflow side** — the state that runs this node must pass the parameter, e.g.:
 `"parameters": { "orderId": "$.orderDetails[0].orderId" }`. See workflow-generate-new skill for the full parameter-passing sample.
 
+**Workflow `instanceName` (mandatory)**: In every workflow state, `instanceName` **must** be **exactly equal** to the state key (the key in `states`). Do not use a different `instanceName` to alias `_global` output; use `resourceId` when reusing a shared node definition. See project rule `.cursor/rules/drift-workflow-instancename-statekey.mdc`.
+
 ### Step 3: Type-specific fields
 
 Based on the node type selected, ask about the required fields from `nodes_pattern.md`.

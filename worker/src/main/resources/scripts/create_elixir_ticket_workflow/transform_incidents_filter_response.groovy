@@ -31,13 +31,14 @@ def filteredIncidents = matchedIncidents.collect { inc ->
 }.findAll { it?.incidentId != null }
 
 def firstElixirDetails = matchedIncidents?.getAt(0)?.incidentResponseData?.customFields?.elxrTkt
+def firstElixirIncidentId = matchedIncidents?.getAt(0)?.externalId
 
 
 // field will be used by next branch node
 def action = null;
 
 if (filteredIncidents.size() > 0) {
-    if (firstElixirDetails?.workflowId == _global.workflowId) {
+    if (firstElixirIncidentId == _global.params.incidentId) {
         if (firstElixirDetails?.id == null) {
             action = "wait_for_elixir_acceptance"
         } else {

@@ -13,8 +13,8 @@
  * Email / event-generation logic is intentionally excluded.
  *
  * Context:
- *   _global.e2e_fetch_order_details.units         – full units map from Oxford
- *   _global.e2e_fetch_order_details.targetUnitIds  – list of unit IDs to check
+ *   _global.fetch_order_oxford.units         – full units map from Oxford (written by extract_oxford_order_units)
+ *   _global.fetch_order_oxford.targetUnitIds  – list of unit IDs to check
  *
  * Returns:
  *   [ useCaseName: "<name>", ended: true|false ]
@@ -60,9 +60,9 @@ def isUnitCancelledOrCourierReturn = { unit ->
 
 // ── load data from previous node ───────────────────────────────────────────
 
-def fetchResult = _global?.e2e_fetch_order_details
+def fetchResult = _global?.fetch_order_oxford
 if (!fetchResult) {
-    throw new Exception("e2e_fetch_order_details output not found in workflow context")
+    throw new Exception("fetch_order_oxford output not found in workflow context — ensure extract_oxford_order_units ran before this node")
 }
 
 def allUnits     = fetchResult.units ?: [:]

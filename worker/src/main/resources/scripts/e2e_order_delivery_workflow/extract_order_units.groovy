@@ -1,12 +1,15 @@
 /**
  * extract_order_units.groovy
  *
- * Oxford response transformer for the e2e_fetch_order_details node.
- * Extracts the full units map from the Oxford resolved-variables response so
+ * Retained for reference. The active extraction path uses:
+ *   scripts/shared/extract_oxford_order_units.groovy  (GROOVY node: extract_oxford_order_units)
+ * which reads from _global.fetch_order_oxford instead of _response.
+ *
+ * Extracts the full units map from an Oxford resolved-variables response so
  * that downstream use-case scripts can evaluate order-unit statuses, chores,
  * and promise data.
  *
- * Context:
+ * Context (when called via HTTP transformer, _response is the raw Oxford response):
  *   _response  – raw Oxford API response (Map)
  *   _global.orderDetails          – array of {orderId, orderItemId, orderItemUnitId, trackingId}
  *   _global.nodeParameters.dataVariable – Oxford data-variable key

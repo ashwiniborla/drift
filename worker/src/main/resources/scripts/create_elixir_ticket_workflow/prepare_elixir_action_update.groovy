@@ -44,7 +44,7 @@ try {
     // --- CLOSED: build elxrTkt with status=CLOSED ---
     if (status == 'CLOSED') {
         result.action = 'CLOSED'
-        def base = _global?.elixir_create_ticket?.elxrTkt
+        def base = _global?.prepare_create_ticket_details?.elxrTkt
         if (base == null) {
             result.error = true
             return result
@@ -71,10 +71,10 @@ try {
 
         // --- Non-CLOSED: build thread ---
         def context = viewResponse?.context
-        def reasonCode = context?.reasonCode?.toString()?.trim() ?: ''
-        def subreasonCode = context?.subreasonCode?.toString()?.trim() ?: ''
-        def reasonText = context?.reasonText?.toString()?.trim() ?: ''
-        def subReasonText = context?.subReasonText?.toString()?.trim() ?: ''
+        def reasonCode = context?.reason_code?.toString()?.trim() ?: ''
+        def subreasonCode = context?.subreason_code?.toString()?.trim() ?: ''
+        def reasonText = context?.reason_text?.toString()?.trim() ?: ''
+        def subReasonText = context?.subreason_text?.toString()?.trim() ?: ''
         persona = context?.persona?.toString()?.trim() ?: ''
 
         def defaultFallbackText = [
