@@ -30,13 +30,11 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.security.UserGroupInformation;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPoolAbstract;
 import redis.clients.jedis.JedisSentinelPool;
 import redis.clients.jedis.Protocol;
 
 import javax.ws.rs.core.Response;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -62,35 +60,11 @@ public class WorkerModule extends AbstractModule {
             while (strTkn.hasMoreTokens()) hostList.add(strTkn.nextToken());
             Set<String> sentinels = new HashSet<>(hostList);
             GenericObjectPoolConfig<?> genericObjectPoolConfig = getGenericObjectPoolConfig(redisConfiguration);
-            int database = redisConfiguration.getDatabase();
-            JedisSentinelPool pool = new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig,
-                    Protocol.DEFAULT_TIMEOUT, redisConfiguration.getPassword(), database);
-            log.info("Redis JedisSentinelPool ready: logicalDatabase={}, sentinelMaster={}, keyPrefix={}",
-                    database, redisConfiguration.getMaster(), redisConfiguration.getPrefix());
-            writeStartupDbVerificationKey(pool, redisConfiguration);
-            return pool;
+            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig,
+                    Protocol.DEFAULT_TIMEOUT, redisConfiguration.getPassword(), redisConfiguration.getDatabase());
         } catch (Exception e) {
             log.error("Failed to Connected to RedisDao Server " + e.getMessage(), e);
             throw new RedisStoreException(Response.Status.INTERNAL_SERVER_ERROR, "Unable to init redis config", e.getMessage());
-        }
-    }
-
-    /** Temporary: remove after Redis DB verification. */
-    private static void writeStartupDbVerificationKey(JedisSentinelPool pool, RedisConfiguration redisConfiguration) {
-        if (pool == null) {
-            return;
-        }
-        int database = redisConfiguration.getDatabase();
-        String prefix = StringUtils.isNotBlank(redisConfiguration.getPrefix()) ? redisConfiguration.getPrefix() : "drift";
-        String key = prefix + ":drift_db_startup_verify";
-        int ttl = 604800;
-        String value = "Hello from DB" + database + " at " + Instant.now();
-        try (Jedis jedis = pool.getResource()) {
-            jedis.setex(key, ttl, value);
-            log.info("Redis DB verification key written: db={}, key={}, ttl={}s. Example: redis-cli -h <host> -n {} GET {}",
-                    database, key, ttl, database, key);
-        } catch (Exception e) {
-            log.warn("Redis DB verification key could not be written: {}", e.getMessage());
         }
     }
 
