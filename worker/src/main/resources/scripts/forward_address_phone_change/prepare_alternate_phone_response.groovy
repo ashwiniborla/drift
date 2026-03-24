@@ -30,7 +30,7 @@ inputOptions << [
     instructions: [[
         templateId: 'iris_static_message',
         templateVariables: [
-            irisKey: 'request_raised_header',
+            irisKey: 'elixir.phone.header',
             defaultText: 'Request raised'
         ]
     ]]
@@ -44,7 +44,7 @@ inputOptions << [
     instructions: [[
         templateId: 'iris_static_message',
         templateVariables: [
-            irisKey: 'request_raised_to_delivery_team_message',
+            irisKey: 'elixir.request_raised_to_delivery_team_message',
             defaultText: "We've raised your request to the delivery team"
         ]
     ]]
@@ -54,11 +54,11 @@ inputOptions << [
 inputOptions << [
     id: 'request_raised_subtitle',
     description: 'Sorry for inconvenience caused',
-    tags: [values: ['ss.static_text', 'ss.success_popup']],
+    tags: [values: ['ss.text_widget', 'ss.success_popup']],
     instructions: [[
         templateId: 'iris_static_message',
         templateVariables: [
-            irisKey: 'sorry_for_inconvenience_caused',
+            irisKey: 'elixir.sorry_for_inconvenience_caused',
             defaultText: 'Sorry for the inconvenience caused'
         ]
     ]]
@@ -66,7 +66,7 @@ inputOptions << [
 
 // --- Common: main title ---
 inputOptions << [
-    id: 'request_raised_title',
+    id: 'alternate_number_title',
     description: 'Title',
     tags: [values: ['ss.static_text']],
     instructions: [[
@@ -81,26 +81,26 @@ inputOptions << [
 // --- Conditional: subtitle (irisKey/defaultText differs by scenario) ---
 if (hasAltPhone) {
     inputOptions << [
-        id: 'request_raised_subtitle',
+        id: 'alternate_number_subtitle',
         description: 'Subtitle',
         tags: [values: ['ss.static_text']],
         instructions: [[
             templateId: 'iris_static_message',
             templateVariables: [
-                irisKey: 'confirm_contact_details_subtitle',
+                irisKey: 'elixir.confirm_contact_details',
                 defaultText: 'Please confirm the contact details'
             ]
         ]]
     ]
 } else {
     inputOptions << [
-        id: 'request_raised_subtitle',
+        id: 'alternate_number_subtitle',
         description: 'Subtitle',
         tags: [values: ['ss.static_text']],
         instructions: [[
             templateId: 'iris_static_message',
             templateVariables: [
-                irisKey: 'confirm_contact_and_add_alternate_subtitle',
+                irisKey: 'elixir.confirm_contact_details_and_add_number',
                 defaultText: 'Please confirm the contact details and add an alternate number'
             ]
         ]]
@@ -165,24 +165,10 @@ inputOptions << [
     tags: [values: ['ss.button_widget', 'ss.next_request_data']],
     possibleValues: [[
         displayValue: 'I confirm my details are correct',
-        metaData: [irisKey: 'confirm_details_button'],
+        metaData: [irisKey: 'elixir.button.confirm_details_button'],
         value: 'CONFIRM_DETAILS'
     ]]
 ]
-
-// --- Conditional: close button only when alt phone IS present ---
-if (hasAltPhone) {
-    inputOptions << [
-        id: 'close_button_widget',
-        description: 'Close main screen',
-        tags: [values: ['ss.button_widget']],
-        possibleValues: [[
-            displayValue: 'Close',
-            metaData: null,
-            value: 'CLOSE'
-        ]]
-    ]
-}
 
 // --- Common: modal fields (parentId = add_alternate_number_row) ---
 inputOptions << [
@@ -209,7 +195,7 @@ inputOptions << [
         templateVariables: [
             displayValue: "Receiver's name",
             defaultValue: customerName,
-            irisKey: 'phone_number_receiver_name'
+            irisKey: 'elixir.bottomsheet.receiver_name_label'
         ]
     ]]
 ]
@@ -224,7 +210,7 @@ inputOptions << [
         templateVariables: [
             displayValue: "Receiver's phone number",
             defaultValue: primaryPhoneDigits,
-            irisKey: 'phone_number_receiver_number'
+            irisKey: 'elixir.bottomsheet.primary_number_label'
         ]
     ]]
 ]
@@ -240,7 +226,7 @@ inputOptions << [
         templateVariables: [
             displayValue: 'Alternate phone number',
             defaultValue: altPhoneDigits,
-            irisKey: 'phone_number_alternate_number'
+            irisKey: 'elixir.bottomsheet.alternate_number_label'
         ]
     ]]
 ]
@@ -253,7 +239,7 @@ inputOptions << [
     instructions: [[
         templateId: 'iris_static_message',
         templateVariables: [
-            irisKey: 'delivery_communications_shared_on_same_number',
+            irisKey: 'elixir.bottomsheet.info_text',
             defaultText: 'Delivery communications will be sent to these numbers'
         ]
     ]]
@@ -266,7 +252,7 @@ inputOptions << [
     tags: [values: ['ss.button_widget', 'ss.next_request_data']],
     possibleValues: [[
         displayValue: 'Update',
-        metaData: [irisKey: 'update_button'],
+        metaData: [irisKey: 'elixir.button.update'],
         value: 'update'
     ]]
 ]

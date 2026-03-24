@@ -3,9 +3,12 @@
  * Builds the full inputOptions list for the QuestionnaireInstructions screen from the questions config.
  *
  * Context:
- *   _global.nodeParameters.questions - config block { title: { iris: { key, default } }, subTitle: { iris: { key, default } }, questions: [ { key, displayName: { iris: { key, default } }, ... } ] }
+ *   _global.nodeParameters.questions - config block {
+ *     title: { iris: { irisKey, default } }, subTitle: { iris: { irisKey, default } },
+ *     questions: [ { key, displayName: { iris: { irisKey, default } } }, ... ] }
+ *   Legacy enum store may still use iris.key; script accepts irisKey ?: key for migration.
  *
- * Returns: Map with key "inputOptions" = List of Option-like maps for elixir_questionnaire_screen (question_header, question_title, question_subtitle, fake_preference, raise_to_delivery_team_button, close_button_widget)
+ * Returns: Map with key "inputOptions" = List of Option-like maps for elixir_questionnaire_screen (question_header, question_title, question_subtitle, elixir_questionnaire_preference, raise_to_delivery_team_button, close_button_widget)
  */
 def questions = _global?.nodeParameters?.questions
 def inputOptions = []
@@ -19,6 +22,10 @@ def subTitleIris = questions?.subTitle?.iris
 def questionList = questions?.questions
 if (!(questionList instanceof List)) questionList = []
 
+def resolveIrisKey = { iris, fallback ->
+    (iris?.irisKey != null ? iris.irisKey : (iris?.key != null ? iris.key : fallback))
+}
+
 // question_header – static "Request assistance"
 inputOptions << [
         id          : 'question_header',
@@ -27,12 +34,15 @@ inputOptions << [
         instructions: [
                 [
                         templateId       : 'iris_static_message',
-                        templateVariables: [enum: 'request_assistance_title', defaultText: 'Request assistance']
+                        templateVariables: [
+                                irisKey: 'request_assistance_title',
+                                defaultText: 'Request assistance'
+                        ]
                 ]
         ]
 ]
 
-// question_title – from questions.title.iris (enum = key, defaultText = default)
+// question_title – from questions.title.iris
 inputOptions << [
         id          : 'question_title',
         description : 'Title',
@@ -41,7 +51,7 @@ inputOptions << [
                 [
                         templateId       : 'iris_static_message',
                         templateVariables: [
-                                key        : (titleIris?.key != null ? titleIris.key : 'help_schedule_next_delivery_attempt_title'),
+                                irisKey    : resolveIrisKey(titleIris, 'elixir.question.title'),
                                 defaultText: (titleIris?.default != null ? titleIris.default : 'Help us schedule your next delivery attempt')
                         ]
                 ]
@@ -57,25 +67,22 @@ inputOptions << [
                 [
                         templateId       : 'iris_static_message',
                         templateVariables: [
-                                key        : (subTitleIris?.key != null ? subTitleIris.key : 'reschedule_preference_helper_text'),
+                                irisKey    : resolveIrisKey(subTitleIris, 'elixir.question.subtitle'),
                                 defaultText: (subTitleIris?.default != null ? subTitleIris.default : 'To help us plan, could you let us know your preference for the recent reschedule request')
                         ]
                 ]
         ]
 ]
 
-// fake_preference – single select, possibleValues from questions.questions
+// elixir_questionnaire_preference – single select, possibleValues from questions.questions
 def possibleValues = questionList.collect { item ->
     def iris = item?.displayName?.iris
     if (iris != null) {
+        def optionFallback = item?.key != null ? "elixir.question.answer.${item.key}" : 'elixir.question.answer'
         [
                 displayValue: (iris?.default != null ? iris.default : (item?.key ?: '')),
                 metaData    : [
-                        templateId       : 'iris_static_message',
-                        templateVariables: [
-                                key        : iris.key,
-                                defaultText: (subTitleIris?.default != null ? subTitleIris.default : 'To help us plan, could you let us know your preference for the recent reschedule request')
-                        ]
+                        irisKey: resolveIrisKey(iris, optionFallback)
                 ],
                 value       : (item?.key != null ? item.key : '')
         ]
@@ -88,9 +95,9 @@ def possibleValues = questionList.collect { item ->
     }
 }
 inputOptions << [
-        id            : 'fake_preference',
+        id            : 'elixir_questionnaire_preference',
         description   : 'Single select preference',
-        tags          : [values: ['ss.single_select']],
+        tags          : [values: ['ss.single_select', 'ss.next_request_data']],
         possibleValues: possibleValues
 ]
 
@@ -98,19 +105,15 @@ inputOptions << [
 inputOptions << [
         id            : 'raise',
         description   : 'Raise to delivery team',
-        tags          : [values: ['ss.button_widget']],
+        tags          : [values: ['ss.button_widget', 'ss.next_request_data']],
         possibleValues: [
-                [displayValue: 'Raise to delivery team', metaData: null, value: 'submit']
-        ]
-]
-
-// close_button_widget
-inputOptions << [
-        id            : 'close',
-        description   : 'Close',
-        tags          : [values: ['ss.button_widget']],
-        possibleValues: [
-                [displayValue: 'Close', metaData: null, value: 'close']
+                [
+                        displayValue: 'Raise to delivery team',
+                        metaData    : [
+                                irisKey: 'elixir.button.raise_request'
+                        ],
+                        value       : 'submit'
+                ]
         ]
 ]
 

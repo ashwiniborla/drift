@@ -104,6 +104,7 @@ Based on the node type selected, ask about the required fields from `nodes_patte
 #### INSTRUCTION node questions
 
 - Defer to the **workflow-contract-generate-new** skill for widget/option details.
+- For `templateId` **`iris_static_message`**, use **`templateVariables.irisKey`** (plus **`defaultText`** when needed), not **`key`**. See `nodes_pattern.md` (INSTRUCTION → `iris_static_message`).
 - Ask: layoutId, disposition, workflowStatus, inputOptions structure.
 - **Resume request scenarios**: For the instruction’s **resume_request.md**, collect **2–3 possible resume scenarios** (e.g. “user selects option A”, “user selects option B”, “user does not respond / timeout”). For each scenario ask: short name, description, and what the resume request payload/response looks like (sample fields or example).
 

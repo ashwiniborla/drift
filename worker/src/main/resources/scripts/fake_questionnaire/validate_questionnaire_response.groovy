@@ -16,7 +16,7 @@ def selectedOptions = _global['questionnaire_instructions:viewResponse']?.select
 def questions = _global?.nodeParameters?.questions
 def questionnaireType = questions?.type
 
-def selectedOptionKey = selectedOptions?.fake_preference
+def selectedOptionKey = selectedOptions?.elixir_questionnaire_preference
 
 def questionList = questions?.questions ?: []
 

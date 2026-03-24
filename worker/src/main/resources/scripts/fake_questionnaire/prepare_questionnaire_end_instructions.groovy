@@ -37,7 +37,7 @@ inputOptions << [
                 [
                         displayValue: 'Submit',
                         value       : 'SUBMIT',
-                        metaData    : [redirect: true]
+                        metaData    : [odRedirection: true]
                 ]
         ]
 ]

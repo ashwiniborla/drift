@@ -76,8 +76,10 @@ Defaults:
 
 - **Iris-powered static text**:
   - `templateId`: `iris_static_message`
-  - `templateVariables`: at minimum `enum`
-  - optional: `defaultText`, `params` (if parameterization is needed)
+  - **Preferred** `templateVariables`: **`irisKey`** (Iris lookup path, often dotted e.g. `elixir.question.subtitle`) and **`defaultText`** (fallback copy)
+  - **Legacy / alternate**: `enum` + `defaultText` where product still requires the older enum shape
+  - optional: `params` (if parameterization is needed)
+  - **Do not** use `templateVariables.key` for new work — use **`irisKey`**
 
 Use unique `templateId`s only when:
 

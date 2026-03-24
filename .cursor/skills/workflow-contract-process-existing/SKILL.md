@@ -54,8 +54,9 @@ Default recommendation:
 
 - Iris-powered static text:
   - `templateId`: `iris_static_message`
-  - `templateVariables`: at minimum `enum`
-  - optional: `defaultText`, `params`
+  - **Standard** `templateVariables`: **`irisKey`** (Iris lookup path) and **`defaultText`** (fallback)
+  - **Legacy**: `enum` + `defaultText`, or **`key`** in `templateVariables` — document as legacy if observed; prefer **`irisKey`** for new or migrated contracts
+  - optional: `params`
 
 Keep original `templateId` values as “observed” when documenting legacy/external samples, but add a short note if they can be represented by a generic templateId.
 
