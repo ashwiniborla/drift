@@ -7,9 +7,10 @@ public enum ConnectionType {
     HOT("ims_hot"),COLD("ims_cold"),ARCHIVAL("ims_archive"),AUDIT("ims_audit");
 
     ConnectionType(String namespace) {
-        this.namespace = namespace;
+        String envKey = "HBASE_NAMESPACE_" + this.name();
+        String overrideNamespace = System.getenv(envKey);
+        this.namespace = (overrideNamespace!=null && !overrideNamespace.isBlank()) ? overrideNamespace : namespace;
     }
 
     private final String namespace;
 }
-
