@@ -10,7 +10,7 @@
  *   _global.get_current_address  – fallback contactId if Oxford has no toParty.deliveryAddressId
  */
 
-def fetchResult = _global?.fetch_order_oxford
+def fetchResult = _global?.oxford_unit_details
 if (!fetchResult) {
     throw new Exception("fetch_order_oxford output not found in workflow context")
 }

@@ -42,7 +42,7 @@ if(needLocation) {
 inputOptions << [
         id            : 'submit_button',
         description   : 'Submit — odRedirection drives redirect vs resume to parent',
-        tags          : [values: ['ss.button_widget']],
+        tags          : [values: submitInputTags],
         possibleValues: [
                 [
                         displayValue: 'Submit',
