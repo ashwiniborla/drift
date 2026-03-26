@@ -13,7 +13,17 @@
  */
 
 def needLocation = _global.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == true
-def odRedirection = !needLocation
+def odRedirection;
+def layoutId;
+def submitInputTags = ['ss.button_widget']
+if(needLocation) {
+    odRedirection = false
+    submitInputTags.add("ss.button_widget")
+    layoutId = "phone_number_updated_successfully"
+}else {
+    odRedirection = true
+    layoutId = "request_raised_to_delivery_team_end"
+}
 
 def inputOptions = []
 
@@ -33,11 +43,7 @@ inputOptions << [
 ]
 
 
-def submitInputTags = ['ss.button_widget']
 
-if(needLocation) {
-    submitInputTags.add("ss.button_widget")
-}
 
 inputOptions << [
         id            : 'submit_button',
@@ -52,4 +58,4 @@ inputOptions << [
         ]
 ]
 
-return [inputOptions: inputOptions]
+return [inputOptions: inputOptions, layoutId: layoutId]

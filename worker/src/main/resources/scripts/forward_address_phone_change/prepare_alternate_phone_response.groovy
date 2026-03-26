@@ -72,7 +72,7 @@ inputOptions << [
         instructions: [[
                                templateId: 'iris_static_message',
                                templateVariables: [
-                                       irisKey: 'delivery_partner_cant_reach_title',
+                                       irisKey: 'elixir.delivery_partner_cant_reach_title',
                                        defaultText: "Sometimes this happens if the delivery partner can't reach you"
                                ]
                        ]]
@@ -146,8 +146,8 @@ if (!hasAltPhone) {
             instructions: [[
                                    templateId: 'contact_card_button',
                                    templateVariables: [
-                                           titleIrisKey: 'add_alternate_number_title',
-                                           subtitleIrisKey: 'add_alternate_number_subtitle'
+                                           titleIrisKey: 'elixir.add_alternate_number_title',
+                                           subtitleIrisKey: 'elixir.add_alternate_number_subtitle'
                                    ]
                            ]],
             possibleValues: [[
@@ -179,7 +179,7 @@ inputOptions << [
         instructions: [[
                                templateId: 'iris_static_message',
                                templateVariables: [
-                                       irisKey: 'elixir.bottomsheet.title',
+                                       irisKey: 'elixir.bottomsheet.change_add_title',
                                        defaultText: 'Change or add number'
                                ]
                        ]]
