@@ -37,7 +37,7 @@ if (!altPhone) {
 def communications = [[type: 'mobile', input: primaryPhone], [type: 'alt_phone', input: altPhone]]
 
 def body = [
-        name: [input: current?.name?.input ?: ''],
+        userName: [input: current?.name?.input ?: ''],
         address: [
                 addressType  : 'user_generated',
                 addressLine1 : addr?.addressLine1?.input ?: '',
