@@ -12,32 +12,81 @@
 
 def inputOptions = []
 
-// Static success message
 inputOptions << [
-        id          : 'request_raised_to_delivery_team_message',
-        description : 'Request raised success message',
-        tags        : [values: ['ss.static_text']],
+        id          : "request_raised_header",
+        description : "Header",
+        tags        : [
+                values: [
+                        "ss.static_text"
+                ]
+        ],
         instructions: [
                 [
-                        templateId       : 'iris_static_message',
+                        templateId       : "iris_static_message",
                         templateVariables: [
-                                enum       : 'request_raised_to_delivery_team',
-                                defaultText: 'Request raised to the delivery team'
+                                irisKey    : "elixir.address.header",
+                                defaultText: "Request raised"
                         ]
                 ]
         ]
 ]
 
-// Submit button with redirect: true in metaData — tells UI to redirect, not call resume
 inputOptions << [
-        id            : 'submit_button',
-        description   : 'Submit button — redirect: true tells UI to redirect instead of calling resume',
-        tags          : [values: ['ss.button_widget']],
+        id          : "request_raised_title",
+        description : "We have raised request to delivery team",
+        tags        : [
+                values: [
+                        "ss.static_text",
+                        "ss.success_popup"
+                ]
+        ],
+        instructions: [
+                [
+                        templateId       : "iris_static_message",
+                        templateVariables: [
+                                irisKey    : "elixir.request_raised_to_delivery_team_message",
+                                defaultText: "We've raised your request to the delivery team"
+                        ]
+                ]
+        ]
+]
+
+inputOptions << [
+        id          : "request_raised_subtitle",
+        description : "Sorry for inconvenience caused",
+        tags        : [
+                values: [
+                        "ss.text_widget",
+                        "ss.success_popup"
+                ]
+        ],
+        instructions: [
+                [
+                        templateId       : "iris_static_message",
+                        templateVariables: [
+                                irisKey    : "elixir.sorry_for_inconvenience_caused",
+                                defaultText: "Sorry for the inconvenience caused"
+                        ]
+                ]
+        ]
+]
+
+inputOptions << [
+        id            : "raise_to_delivery_team_button",
+        description   : "Raise to delivery team",
+        tags          : [
+                values: [
+                        "ss.button_widget",
+                        "ss.next_request_data"
+                ]
+        ],
         possibleValues: [
                 [
-                        displayValue: 'Submit',
-                        value       : 'SUBMIT',
-                        metaData    : [odRedirection: true]
+                        value       : "submit",
+                        displayValue: "Submit",
+                        metaData    : [
+                                irisKey: "elixir.button.submit_button"
+                        ]
                 ]
         ]
 ]

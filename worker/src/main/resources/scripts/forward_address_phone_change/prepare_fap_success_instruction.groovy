@@ -12,48 +12,43 @@
  * Returns: [ inputOptions: List ]
  */
 
-def needLocation = _global.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == true
-def odRedirection;
-def layoutId;
-def submitInputTags = ['ss.button_widget']
-if(needLocation) {
-    odRedirection = false
-    submitInputTags.add("ss.button_widget")
-    layoutId = "phone_number_updated_successfully"
-}else {
-    odRedirection = true
-    layoutId = "request_raised_to_delivery_team_end"
-}
+
+
+def layoutId = "phone_number_updated_successfully"
+def submitInputTags = ['ss.button_widget', "ss.next_request_data"]
+def odRedirection = false
 
 def inputOptions = []
 
 inputOptions << [
-        id          : 'fap_success_message',
-        description : 'Address/phone update success message',
-        tags        : [values: ['ss.static_text']],
-        instructions: [
+        id            : 'phone_number_updated_successfully_message',
+        description   : 'Phone number updated successfully message',
+        tags          : [values: ['ss.static_text']],
+        "instructions": [
                 [
-                        templateId       : 'iris_static_message',
-                        templateVariables: [
-                                irisKey    : 'elixir.request_raised_to_delivery_team_message',
-                                defaultText: "We've updated your request successfully"
+                        "templateId"       : "iris_static_message",
+                        "templateVariables": [
+                                "irisKey"      : "elixir.phone_confirmation.success_message",
+                                "defaultText"  : "Your phone number has been updated successfully"
                         ]
                 ]
         ]
+
 ]
 
 
-
-
 inputOptions << [
-        id            : 'submit_button',
-        description   : 'Submit — odRedirection drives redirect vs resume to parent',
+        id            : 'phone_number_updated_successfully_okay_button',
+        description   : 'Okay',
         tags          : [values: submitInputTags],
         possibleValues: [
                 [
-                        displayValue: 'Submit',
+                        displayValue: 'Okay',
                         value       : 'SUBMIT',
-                        metaData    : [odRedirection: odRedirection]
+                        metaData    : [
+                                odRedirection: odRedirection,
+                                irisKey      : "elixir.button.okay"
+                        ]
                 ]
         ]
 ]
