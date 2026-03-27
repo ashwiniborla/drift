@@ -77,15 +77,15 @@ inputOptions << [
         tags          : [
                 values: [
                         "ss.button_widget",
-                        "ss.next_request_data"
+                        "ss.success_popup"
                 ]
         ],
         possibleValues: [
                 [
-                        value       : "submit",
-                        displayValue: "Submit",
+                        value       : "done",
+                        displayValue: "Done",
                         metaData    : [
-                                irisKey: "elixir.button.submit_button"
+                                irisKey: "elixir.button.done_button"
                         ]
                 ]
         ]

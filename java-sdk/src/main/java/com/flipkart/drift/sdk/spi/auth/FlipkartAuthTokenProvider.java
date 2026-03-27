@@ -10,7 +10,7 @@ public class FlipkartAuthTokenProvider implements TokenProvider{
     private boolean initialised = false;
     @Override
     public void init() {
-        AuthTokenService.init("https://service.authn-prod.fkcloud.in/", "imsv2_varadhi_client1", "RJ8URYfBT0v+T3WO+uh8eLAc8VMuNKJ1ibqhjnNqWsfc2sGo");
+        AuthTokenService.init("https://service.authn-prod.fkcloud.in/", "", "");
         tokenService = AuthTokenService.getInstance();
         initialised = true;
     }
