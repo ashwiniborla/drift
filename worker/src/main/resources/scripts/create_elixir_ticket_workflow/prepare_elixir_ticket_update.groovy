@@ -7,6 +7,8 @@
  * Node parameters:
  *   elixirTicketId (required to send), updateType (e.g. ALT_PH_NUMBER_REQUIRED),
  *   optional: persona (default CX), persona_id, asset_type, id_type
+ *   elixirTicketId source is workflow-defined (e.g. $.params.elixirTicketId or, for
+ *   forward_address_phone_change_smart, $.get_incident_for_elixir.elixirTicketId).
  *
  * If action config or responseConfig is missing, or ticket id is empty, returns
  * sendElixirCommunicationUpdate: false and skips push (workflow BRANCH).

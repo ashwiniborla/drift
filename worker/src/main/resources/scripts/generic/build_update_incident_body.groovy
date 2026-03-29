@@ -23,6 +23,7 @@
  *       For action "add":
  *         isSmartWorkflow: _enum_store.childWorkflow.<childWorkflowName>.isSmart (false if not configured)
  *         actionEligibility: _enum_store.childWorkflow.<childWorkflowName>.actionEligibility (null if not configured)
+ *         _global.nodeParameters.childWorkflowParams – optional; object or JSON object string; maps to meta.params (defaults to {} when omitted)
  *       For action "update":
  *         _global.nodeParameters.childWorkflowCompleted – optional boolean; maps to meta.isCompleted
  *
@@ -86,6 +87,30 @@ if (threads != null && threads instanceof List && !threads.isEmpty()) {
 def childWorkflowAction = _global?.nodeParameters?.childWorkflowAction?.toString()?.trim()
 def childWorkflowMeta = _global?.nodeParameters?.childWorkflowMeta
 
+/** meta.params for AddMeta: blank JSON object by default; Map or JSON object string from nodeParameters.childWorkflowParams */
+def resolveChildWorkflowParams = {
+    def raw = _global?.nodeParameters?.childWorkflowParams
+    if (raw == null) {
+        return [:]
+    }
+    if (raw instanceof Map) {
+        return new LinkedHashMap(raw)
+    }
+    def s = raw.toString().trim()
+    if (s.isEmpty()) {
+        return [:]
+    }
+    try {
+        def parsed = new groovy.json.JsonSlurper().parseText(s)
+        if (!(parsed instanceof Map)) {
+            throw new IllegalArgumentException("childWorkflowParams must be a JSON object")
+        }
+        return new LinkedHashMap(parsed)
+    } catch (Exception e) {
+        throw new IllegalArgumentException("Invalid childWorkflowParams JSON: ${e.message}", e)
+    }
+}
+
 if (childWorkflowAction != null && !childWorkflowAction.isEmpty()) {
     if (childWorkflowMeta != null) {
         // Branch 1: full object supplied by caller — use as-is
@@ -112,7 +137,8 @@ if (childWorkflowAction != null && !childWorkflowAction.isEmpty()) {
                         workflowId        : workflowId.toString().trim(),
                         isSmartWorkflow   : isSmartWorkflow,
                         actionEligibility : actionEligibility,
-                        action            : 'add'
+                        action            : 'add',
+                        params            : resolveChildWorkflowParams()
                 ],
                 workflowName    : workflowNameStr,
                 workflowVersion : childWorkflowVersion.toString().trim()
