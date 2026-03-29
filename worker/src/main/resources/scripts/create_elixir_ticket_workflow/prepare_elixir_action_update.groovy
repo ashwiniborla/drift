@@ -5,28 +5,21 @@
  *
  * CLOSED is handled separately: builds elxrTkt with status=CLOSED.
  *
- * For ALT_PH_NUMBER_REQUIRED, a child workflow is registered:
- *   childWfAction='add', childWorkflowName='forward_address_phone_change_smart', childWorkflowVersion='SNAPSHOT'
+ * For actions with _enum_store.elixir.actionConfig[action].smartActionConfig, a child workflow is registered
+ * (workflowName / workflowVersion from that config).
  *
  * Returns: a single Map { action, elxrTkt, threads, error, childWfAction, childWorkflowName, childWorkflowVersion }
+ * (reason/subreason composite key for reach-out is built in elixir_prepare_reach_out_instructions.groovy only.)
  */
 
-def childWorkflowMap = [
-    'ALT_PH_NUMBER_REQUIRED': [
-        childWfAction       : 'add',
-        childWorkflowName   : 'forward_address_phone_change_smart',
-        childWorkflowVersion: 'SNAPSHOT'
-    ]
-]
-
 def result = [
-    action              : null,
-    elxrTkt             : null,
-    threads             : null,
-    error               : false,
-    childWfAction       : null,
-    childWorkflowName   : null,
-    childWorkflowVersion: null
+        action              : null,
+        elxrTkt             : null,
+        threads             : null,
+        error               : false,
+        childWfAction       : null,
+        childWorkflowName   : null,
+        childWorkflowVersion: null,
 ]
 
 try {
@@ -41,6 +34,10 @@ try {
         result.error = true
         return result
     }
+
+    def elixirActionCfg = action ? _enum_store?.elixir?.actionConfig?.get(action) : null
+    def smartActionConfig = elixirActionCfg?.smartActionConfig
+
     // --- CLOSED: build elxrTkt with status=CLOSED ---
     if (status == 'CLOSED') {
         result.action = 'CLOSED'
@@ -52,20 +49,20 @@ try {
 
         def entity = base?.entity
         def entityCopy = (entity != null && entity instanceof Map)
-            ? [referenceType: entity.referenceType, referenceId: entity.referenceId, type: entity.type]
-            : null
+                ? [referenceType: entity.referenceType, referenceId: entity.referenceId, type: entity.type]
+                : null
 
         threadText = "Elixir ticket closed"
         persona = "Elixir Team"
 
         result.elxrTkt = [
-            id        : base?.id,
-            workflowId: base?.workflowId,
-            status    : 'CLOSED',
-            type      : base?.type,
-            entity    : entityCopy,
-            createdAt : base?.createdAt,
-            updatedAt : new Date()
+                id        : base?.id,
+                workflowId: base?.workflowId,
+                status    : 'CLOSED',
+                type      : base?.type,
+                entity    : entityCopy,
+                createdAt : base?.createdAt,
+                updatedAt : new Date()
         ]
     } else {
 
@@ -85,7 +82,7 @@ try {
                 "Persona: ${persona}"
         ].join('\n')
 
-        if (childWorkflowMap.get(action) != null) {
+        if (smartActionConfig != null) {
             def enumKey = 'elixir.action.threadText.' + action
             def enumValue = _enum_store?.get(enumKey)?.toString()?.trim()
             threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
@@ -97,20 +94,21 @@ try {
     }
 
     result.threads = [[
-        text           : threadText,
-        contentType    : 'text/plain',
-        threadEntryType: [id: 30, name: null],
-        createdByUser  : persona,
-        action         : 'add'
-    ]]
+                              text           : threadText,
+                              contentType    : 'text/plain',
+                              threadEntryType: [id: 30, name: null],
+                              createdByUser  : persona,
+                              action         : 'add'
+                      ]]
 
     // --- Action-type actions: register a child workflow ---
-    if (childWorkflowMap.get(action) != null) {
-        def childWf = childWorkflowMap[action]
-        if (childWf != null) {
-            result.childWfAction        = childWf.childWfAction
-            result.childWorkflowName    = childWf.childWorkflowName
-            result.childWorkflowVersion = childWf.childWorkflowVersion
+    if (smartActionConfig != null) {
+        def wfName = smartActionConfig?.workflowName?.toString()?.trim()
+        def wfVer = smartActionConfig?.workflowVersion?.toString()?.trim()
+        if (wfName && wfVer) {
+            result.childWfAction = 'add'
+            result.childWorkflowName = wfName
+            result.childWorkflowVersion = wfVer
         }
     }
 

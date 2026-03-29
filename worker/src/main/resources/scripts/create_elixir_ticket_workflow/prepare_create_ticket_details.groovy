@@ -2,7 +2,7 @@
  * prepare_create_ticket_details.groovy
  *
  * Prepares all inputs needed to push an Elixir create-ticket request to the Varadhi queue
- * via the generic push_to_varadhi_queue node, and builds the elxrTkt map for the
+ * via the generic push_to_varadhi node, and builds the elxrTkt map for the
  * subsequent update_incident_elixir_requested node.
  *
  * Replaces: build_create_elixir_ticket_body.groovy (body) +
@@ -19,7 +19,7 @@
  *   clients['elixir.ch.host']                 – Elixir API base host
  *   elixir['publishQueue']                    – Varadhi queue name
  *
- * Returns: Map with keys for push_to_varadhi_queue params + elxrTkt for update_incident
+ * Returns: Map with keys for push_to_varadhi params + elxrTkt for update_incident
  */
 
 // --- Required parameter validation ---
@@ -145,7 +145,7 @@ if (firstElixirDetails != null) {
 }
 
 return [
-    // Inputs for push_to_varadhi_queue node parameters
+    // Inputs for push_to_varadhi node parameters
     body        : body,
     extraHeaders: extraHeaders,
     httpUri     : httpUri,
