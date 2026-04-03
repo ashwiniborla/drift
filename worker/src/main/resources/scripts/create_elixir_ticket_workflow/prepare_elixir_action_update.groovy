@@ -83,12 +83,11 @@ try {
         ].join('\n')
 
         if (smartActionConfig != null) {
-            def enumKey = 'elixir.action.threadText.' + action
-            def enumValue = _enum_store?.get(enumKey)?.toString()?.trim()
+            def enumValue = _enum_store.get('elixir')?.get('action')?.get('threadText')?.get(action)?.toString()?.trim()
             threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
         } else {
-            def enumKey = 'elixir.updates.threadText.' + reasonCode + '.' + subreasonCode
-            def enumValue = _enum_store?.get(enumKey)?.toString()?.trim()
+            def enumKey = reasonCode + '.' + subreasonCode
+            def enumValue = _enum_store.get('elixir')?.get('updates')?.get('threadText')?.get(enumKey)?.toString()?.trim()
             threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
         }
     }

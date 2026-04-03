@@ -16,9 +16,33 @@
  * @param dataVariable The variable name containing the order value data (e.g. v2OrderData_imsv2_varadhi_client1_default)
  * @param targetOrderItemUnitId The order item unit id to select (matches Oxford units map key / unit.id)
  * @param isReverse Whether the issue flow is reverse (pickup/return)
- * @return Map with itemType, postFulfillmentData, and allowed
+ * @return Map with itemType, postFulfillmentData, allowed, and allUnitsFlat (all units merged from nested childUnits)
  * @throws Exception if response is null, units not found, no matching unit, or itemType is null
  */
+
+def flattenUnitsRecursive(Map rootUnits) {
+    def flat = [:]
+    def visit
+    visit = { unit, mapKey ->
+        if (unit == null) {
+            return
+        }
+        def uid = unit.id?.toString() ?: (mapKey != null ? mapKey.toString() : null)
+        if (uid) {
+            flat[uid] = unit
+        }
+        def children = unit.childUnits
+        if (children instanceof Map) {
+            children.each { k, child -> visit(child, k) }
+        } else if (children instanceof List) {
+            children.eachWithIndex { child, idx -> visit(child, idx.toString()) }
+        }
+    }
+    if (rootUnits instanceof Map) {
+        rootUnits.each { k, unit -> visit(unit, k) }
+    }
+    return flat
+}
 
 /**
  * Finds the active reverse child unit within a parent unit's childUnits.
@@ -68,9 +92,11 @@ def getPostFulfillmentDataByOrderItemUnitId(response, String orderId, String dat
         throw new Exception("Could not locate 'units' in the JSON structure for Order ID: ${orderId}")
     }
 
-    def matchedUnit = unitsMap[targetOrderItemUnitId]
+    def allUnitsFlat = flattenUnitsRecursive(unitsMap)
+
+    def matchedUnit = allUnitsFlat[targetOrderItemUnitId]
     if (!matchedUnit) {
-        matchedUnit = unitsMap.values().find { unit ->
+        matchedUnit = allUnitsFlat.values().find { unit ->
             unit?.id?.toString() == targetOrderItemUnitId
         }
     }
@@ -97,6 +123,7 @@ def getPostFulfillmentDataByOrderItemUnitId(response, String orderId, String dat
             itemType           : effectiveUnit?.type?.toUpperCase(),
             postFulfillmentData: effectiveUnit.postFulfillmentData,
             allowed            : allowed,
+            allUnitsFlat       : allUnitsFlat,
     ]
 
     if (result.itemType == null) {

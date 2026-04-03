@@ -15,11 +15,37 @@
  *
  * Returns (stored at _global.oxford_unit_details via contextOverrideKey):
  *   [
- *     units           : { <unitId>: { status, statusHistories, chores, postFulfillmentData, promiseDataBag, ... } },
+ *     units           : top-level units map from Oxford (parent units only; each may have nested childUnits),
+ *     allUnitsFlat    : { <unitId>: unit } — every unit at all levels, merged into one map (includes nested childUnits),
  *     targetUnitIds   : [ list of orderItemUnitIds from the workflow input ],
- *     deliveryAddressId: "CNTCT..." (toParty.deliveryAddressId from the first target unit)
+ *     deliveryAddressId: "CNTCT..." (toParty.deliveryAddressId from the first target unit; resolved via allUnitsFlat)
  *   ]
  */
+
+def flattenUnitsRecursive(Map rootUnits) {
+    def flat = [:]
+    // Forward-declare so nested closures (e.g. childUnits.each) resolve to this closure, not Script.visit()
+    def visit
+    visit = { unit, mapKey ->
+        if (unit == null) {
+            return
+        }
+        def uid = unit.id?.toString() ?: (mapKey != null ? mapKey.toString() : null)
+        if (uid) {
+            flat[uid] = unit
+        }
+        def children = unit.childUnits
+        if (children instanceof Map) {
+            children.each { k, child -> visit(child, k) }
+        } else if (children instanceof List) {
+            children.eachWithIndex { child, idx -> visit(child, idx.toString()) }
+        }
+    }
+    if (rootUnits instanceof Map) {
+        rootUnits.each { k, unit -> visit(unit, k) }
+    }
+    return flat
+}
 
 def rawResponse = _global?.fetch_order_oxford
 
@@ -48,12 +74,15 @@ if (!unitsMap) {
     throw new Exception("Could not locate 'units' in Oxford response for orderId: ${orderId}, dataVariable: ${dataVar}")
 }
 
+def allUnitsFlat = flattenUnitsRecursive(unitsMap)
+
 def targetUnitIds = (_global?.orderDetails ?: []).collect { it?.orderItemUnitId?.toString() }.findAll { it }
 
-def deliveryAddressId = targetUnitIds.collect { unitsMap[it]?.toParty?.deliveryAddressId?.toString() }.find { it }
+def deliveryAddressId = targetUnitIds.collect { allUnitsFlat[it]?.toParty?.deliveryAddressId?.toString() }.find { it }
 
 return [
         units           : unitsMap,
+        allUnitsFlat    : allUnitsFlat,
         targetUnitIds   : targetUnitIds,
         deliveryAddressId: deliveryAddressId
 ]
