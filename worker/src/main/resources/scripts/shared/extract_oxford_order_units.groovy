@@ -4,7 +4,8 @@
  * GROOVY node script for extract_oxford_order_units.
  * Reads the raw Oxford resolved-variables response from _global.fetch_order_oxford
  * (written by the preceding e2e_fetch_order_details HTTP state with contextOverrideKey: fetch_order_oxford)
- * and returns the full units map plus the list of targetUnitIds from the workflow input.
+ * and returns the full units map, the list of targetUnitIds from the workflow input,
+ * and the deliveryAddressId from the first target unit's toParty.
  *
  * Context:
  *   _global.fetch_order_oxford       – raw Oxford API response (Map)
@@ -12,10 +13,11 @@
  *   _global.nodeParameters.dataVariable – Oxford data-variable key
  *                                         (default: v2OrderData_imsv2_varadhi_client1_default)
  *
- * Returns (stored at _global.fetch_order_oxford via contextOverrideKey):
+ * Returns (stored at _global.oxford_unit_details via contextOverrideKey):
  *   [
- *     units        : { <unitId>: { status, statusHistories, chores, postFulfillmentData, promiseDataBag, ... } },
- *     targetUnitIds: [ list of orderItemUnitIds from the workflow input ]
+ *     units           : { <unitId>: { status, statusHistories, chores, postFulfillmentData, promiseDataBag, ... } },
+ *     targetUnitIds   : [ list of orderItemUnitIds from the workflow input ],
+ *     deliveryAddressId: "CNTCT..." (toParty.deliveryAddressId from the first target unit)
  *   ]
  */
 
@@ -48,7 +50,10 @@ if (!unitsMap) {
 
 def targetUnitIds = (_global?.orderDetails ?: []).collect { it?.orderItemUnitId?.toString() }.findAll { it }
 
+def deliveryAddressId = targetUnitIds.collect { unitsMap[it]?.toParty?.deliveryAddressId?.toString() }.find { it }
+
 return [
-        units        : unitsMap,
-        targetUnitIds: targetUnitIds
+        units           : unitsMap,
+        targetUnitIds   : targetUnitIds,
+        deliveryAddressId: deliveryAddressId
 ]

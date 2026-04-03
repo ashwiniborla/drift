@@ -67,11 +67,13 @@ if (!accountId) {
 }
 
 def eventName = (prepareAction == 'ALT_PH_NUMBER_REQUIRED') ? 'ELIXIR_ACTIONABLE_EVENT' : 'ELIXIR_NONACTIONABLE_EVENT'
+def flowType = _global.prepare_create_ticket_details?.body?.issue_type
 
 def extraHeaders = [
         'X-TENANT-ID'       : 'imsv3-worker',
         'X_REASON_SUBREASON': reasonSubReasonKey,
         'X_EVENT_NAME'      : eventName,
+        'X_FLOW_TYPE'       : flowType
 ]
 
 def body = [
@@ -83,13 +85,14 @@ def body = [
         subreason : subreasonCode,
         trackingId: trackingId,
         persona   : persona,
+        flow_type : flowType
 ]
 
 return [
-        topicName    : topicName,
-        body         : body,
-        extraHeaders : extraHeaders,
-        groupId      : null,
-        httpUri      : null,
-        method       : 'POST',
+        topicName   : topicName,
+        body        : body,
+        extraHeaders: extraHeaders,
+        groupId     : null,
+        httpUri     : null,
+        method      : 'POST',
 ]

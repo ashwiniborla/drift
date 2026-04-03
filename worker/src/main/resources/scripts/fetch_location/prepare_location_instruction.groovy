@@ -15,9 +15,26 @@
  *   _global.get_current_address.address.locationTypeTag     – address type tag (e.g. Home)
  *   _global.evaluate_location.nudge.deepLink                – deeplink URL for location sharing
  *
+ * Node parameters:
+ *   _global.nodeParameters.showSuccess – when the UI should include request_raised_title and request_raised_subtitle.
+ *     - If the value is a Boolean (e.g. JsonPath `$.chore_confirm_address.isSuccess`), it is treated as chore success and inverted for the UI (!isSuccess).
+ *     - If the value is a String (`"true"` / `"false"`), it is used as the literal UI flag (no invert).
+ *
  * evaluate_location HTTP body is built entirely by scripts/fetch_location/build_evaluate_location_http_body.groovy
  */
 
+def np = _global?.nodeParameters
+def showSuccessRaw = np?.get('showSuccess')
+def showSuccess = false
+if (showSuccessRaw != null) {
+    if (showSuccessRaw instanceof Boolean) {
+        // JsonPath resolves booleans; fetch_location binds chore isSuccess here — invert for UI copy
+        showSuccess = !showSuccessRaw
+    } else {
+        def s = showSuccessRaw.toString().trim().toLowerCase()
+        showSuccess = (s == 'true' || s == '1')
+    }
+}
 def addr       = _global?.get_current_address?.address
 def addressLine1  = addr?.addressLine1?.input?.toString() ?: ''
 def addressLine2  = addr?.addressLine2?.input?.toString() ?: ''
@@ -29,6 +46,34 @@ def stateCode     = addr?.stateCode?.input?.toString() ?: ''
 def country       = addr?.country?.input?.toString() ?: ''
 def locationTypeTag = addr?.locationTypeTag?.toString() ?: ''
 def deepLink      = _global?.evaluate_location?.nudge?.deepLink?.toString() ?: ''
+
+def requestRaisedTitle = [
+    id: 'request_raised_title',
+    description: 'Sorry for inconvenience, we have informed the team',
+    tags: [values: ['ss.static_text', 'ss.success_popup']],
+    instructions: [
+        [
+            templateId: 'iris_static_message',
+            templateVariables: [
+                irisKey: 'sorry_inconvenience_informed_team',
+                defaultText: 'Sorry for the inconvenience. We\'ve informed the team.'
+            ]
+        ]
+    ]
+]
+
+def requestRaisedSubtitle = [
+    id: 'request_raised_subtitle',
+    description: 'Sorry for inconvenience caused',
+    tags: [values: ['ss.text_widget', 'ss.success_popup']],
+    instructions: [[
+        templateId: 'iris_static_message',
+        templateVariables: [
+            irisKey: 'elixir.sorry_for_inconvenience_caused',
+            defaultText: 'Sorry for the inconvenience caused'
+        ]
+    ]]
+]
 
 def inputOptions = [
     [
@@ -44,21 +89,15 @@ def inputOptions = [
                 ]
             ]
         ]
-    ],
-    [
-        id: 'request_raised_title',
-        description: 'Sorry for inconvenience, we have informed the team',
-        tags: [values: ['ss.static_text', 'ss.success_popup']],
-        instructions: [
-            [
-                templateId: 'iris_static_message',
-                templateVariables: [
-                    irisKey: 'sorry_inconvenience_informed_team',
-                    defaultText: 'Sorry for the inconvenience. We\'ve informed the team.'
-                ]
-            ]
-        ]
-    ],
+    ]
+]
+
+if (showSuccess) {
+    inputOptions << requestRaisedTitle
+    inputOptions << requestRaisedSubtitle
+}
+
+inputOptions.addAll([
     [
         id: 'change_addressstatic_location',
         description: 'Location placeholder',
@@ -129,6 +168,6 @@ def inputOptions = [
             ]
         ]
     ]
-]
+])
 
 return [inputOptions: inputOptions]
