@@ -15,8 +15,18 @@
 
 
 def layoutId = "phone_number_updated_successfully"
-def submitInputTags = ['ss.button_widget', "ss.next_request_data"]
-def odRedirection = false
+def submitInputTags = ['ss.button_widget']
+def odRedirection = _global?.nodeParameters?.odRedirect
+
+if (odRedirection == "false" || !odRedirection) {
+    odRedirection = false
+    if(_global?.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == false) {
+        odRedirection = true
+    }
+    submitInputTags << "ss.next_request_data"
+} else {
+    odRedirection = true
+}
 
 def inputOptions = []
 

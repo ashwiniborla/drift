@@ -13,8 +13,8 @@
  * Email / event-generation logic is intentionally excluded.
  *
  * Context:
- *   _global.fetch_order_oxford.units         – full units map from Oxford (written by extract_oxford_order_units)
- *   _global.fetch_order_oxford.targetUnitIds  – list of unit IDs to check
+ *   _global.orderDetails              – list of maps with orderItemUnitId (source of target units)
+ *   _global.fetch_order_oxford.units – top-level units map from Oxford (JSON: oms3_order_data.units)
  *
  * Returns:
  *   [ useCaseName: "<name>", ended: true|false ]
@@ -33,6 +33,50 @@ def UC_ALL_DELIVERED = 'ALL_ITEMS_DELIVERED'
 def UC_ALL_CANCELLED = 'ALL_ITEMS_CANCELLED'
 def UC_ALL_POST_SLA  = 'ALL_ITEMS_POST_SLA'
 def UC_RUNNING       = 'USE_CASE_RUNNING'
+
+// ── Oxford unit lookup (keys in units map match unit.id; see drift/oxfordResponse.json) ─
+
+def flattenUnitsRecursive(Map rootUnits) {
+    def flat = [:]
+    def visit
+    visit = { unit, mapKey ->
+        if (unit == null) {
+            return
+        }
+        def uid = unit.id?.toString() ?: (mapKey != null ? mapKey.toString() : null)
+        if (uid) {
+            flat[uid] = unit
+        }
+        def children = unit.childUnits
+        if (children instanceof Map) {
+            children.each { k, child -> visit(child, k) }
+        } else if (children instanceof List) {
+            children.eachWithIndex { child, idx -> visit(child, idx.toString()) }
+        }
+    }
+    if (rootUnits instanceof Map) {
+        rootUnits.each { k, unit -> visit(unit, k) }
+    }
+    return flat
+}
+
+/**
+ * Resolves a unit by orderItemUnitId: Oxford keys the units map by the same id string as unit.id.
+ */
+def resolveUnitByOrderItemUnitId(Map topLevelUnits, Map allUnitsFlat, String orderItemUnitId) {
+    if (!orderItemUnitId?.trim()) {
+        return null
+    }
+    def id = orderItemUnitId.toString()
+    def u = allUnitsFlat[id] ?: topLevelUnits[id]
+    if (!u) {
+        u = allUnitsFlat?.values()?.find { it?.id?.toString() == id }
+    }
+    if (!u) {
+        u = topLevelUnits?.values()?.find { it?.id?.toString() == id }
+    }
+    return u
+}
 
 // ── helper closures ────────────────────────────────────────────────────────
 
@@ -65,15 +109,27 @@ if (!fetchResult) {
     throw new Exception("fetch_order_oxford output not found in workflow context — ensure extract_oxford_order_units ran before this node")
 }
 
-def allUnits     = fetchResult.units ?: [:]
-def targetUnitIds = fetchResult.targetUnitIds ?: []
-if (targetUnitIds.isEmpty()) {
-    throw new Exception("No target unit IDs found in workflow context")
+def topLevelUnits = fetchResult.units ?: [:]
+def allUnitsFlat = fetchResult.allUnitsFlat
+if (allUnitsFlat == null && topLevelUnits) {
+    allUnitsFlat = flattenUnitsRecursive(topLevelUnits)
+}
+if (!allUnitsFlat) {
+    allUnitsFlat = [:]
 }
 
-def targetUnits = targetUnitIds.collect { uid -> allUnits[uid] }.findAll { it != null }
-if (targetUnits.isEmpty()) {
-    throw new Exception("None of the target unit IDs matched units in Oxford response")
+def orderDetails = _global?.orderDetails ?: []
+def targetUnitIds = orderDetails.collect { it?.orderItemUnitId?.toString() }.findAll { it }
+if (targetUnitIds.isEmpty()) {
+    throw new Exception("No orderItemUnitId entries in _global.orderDetails")
+}
+
+def targetUnits = targetUnitIds.collect { uid ->
+    def u = resolveUnitByOrderItemUnitId(topLevelUnits, allUnitsFlat, uid)
+    if (!u) {
+        throw new Exception("No unit found in Oxford data for orderItemUnitId: ${uid}")
+    }
+    u
 }
 
 // ── decision tree (mirrors OrderDelayCodeBaseWorkflowExecutionV2.runWorkflow) ──

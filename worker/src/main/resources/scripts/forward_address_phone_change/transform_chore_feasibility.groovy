@@ -36,5 +36,6 @@ def isFeasible = _response?.status?.toString() == 'SUCCESS' && nonActionableUnit
 return [
     actionableUnitIds   : actionableUnits,
     nonActionableUnitIds: nonActionableUnits,
-    isFeasible          : isFeasible
+    isFeasible          : isFeasible,
+    choreId             : _response.choreId
 ]

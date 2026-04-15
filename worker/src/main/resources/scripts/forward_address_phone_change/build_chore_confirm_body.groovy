@@ -22,7 +22,7 @@
  */
 
 def orderId          = _global?.orderDetails?.getAt(0)?.orderId?.toString()
-def choreId          = _global?.chore_eligibility?.choreId?.toString()
+def choreId          = _global?.chore_feasibility?.choreId?.toString()
 def unitIds          = (_global?.chore_feasibility?.actionableUnitIds ?: [])
 def pincode          = _global?.get_current_address?.address?.pincode?.input?.toString()
 def newAddressId     = _global?.create_new_address?.newAddressId?.toString()

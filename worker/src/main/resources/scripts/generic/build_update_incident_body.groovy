@@ -134,7 +134,7 @@ if (childWorkflowAction != null && !childWorkflowAction.isEmpty()) {
         def actionEligibility = (actionEligibilityVal != null && actionEligibilityVal.toString().trim().length() > 0) ? actionEligibilityVal.toString().trim() : null
         incidentDataRequest['v3ChildWorkflowRequest'] = [
                 meta            : [
-                        workflowId        : workflowId.toString().trim(),
+                        workflowId        : workflowId != null ? workflowId.toString().trim() : null,
                         isSmartWorkflow   : isSmartWorkflow,
                         actionEligibility : actionEligibility,
                         action            : 'add',
