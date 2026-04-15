@@ -24,15 +24,14 @@
  */
 
 def np = _global?.nodeParameters
-def showSuccessRaw = np?.get('showSuccess')
+def dontShowSuccess = np?.get('dontShowSuccess')
 def showSuccess = false
-if (showSuccessRaw != null) {
-    if (showSuccessRaw instanceof Boolean) {
-        // JsonPath resolves booleans; fetch_location binds chore isSuccess here — invert for UI copy
-        showSuccess = !showSuccessRaw
+if (dontShowSuccess != null) {
+    if (dontShowSuccess instanceof Boolean) {
+        showSuccess = !dontShowSuccess
     } else {
-        def s = showSuccessRaw.toString().trim().toLowerCase()
-        showSuccess = (s == 'true' || s == '1')
+        def s = dontShowSuccess.toString().trim().toLowerCase()
+        showSuccess = (s != 'true')
     }
 }
 def addr       = _global?.get_current_address?.address

@@ -86,7 +86,7 @@ try {
             def enumValue = _enum_store.get('elixir')?.get('action')?.get('threadText')?.get(action)?.toString()?.trim()
             threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
         } else {
-            def enumKey = reasonCode + '.' + subreasonCode
+            def enumKey = reasonCode + '.' + subreasonCode + '.' + persona
             def enumValue = _enum_store.get('elixir')?.get('updates')?.get('threadText')?.get(enumKey)?.toString()?.trim()
             threadText = (enumValue != null && !enumValue.isEmpty()) ? enumValue : defaultFallbackText
         }

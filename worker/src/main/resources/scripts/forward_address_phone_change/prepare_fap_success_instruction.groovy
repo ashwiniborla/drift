@@ -23,7 +23,9 @@ if (odRedirection == "false" || !odRedirection) {
     if(_global?.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == false) {
         odRedirection = true
     }
-    submitInputTags << "ss.next_request_data"
+    if(!odRedirection){
+        submitInputTags << "ss.next_request_data"
+    }
 } else {
     odRedirection = true
 }
