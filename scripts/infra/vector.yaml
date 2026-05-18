@@ -1,0 +1,58 @@
+# Vector configuration — tails Drift service log files and forwards to VictoriaLogs
+
+sources:
+  drift_api_logs:
+    type: file
+    include:
+      - /tmp/drift-logs/api.log
+    read_from: beginning
+    encoding:
+      codec: text
+
+  drift_worker_logs:
+    type: file
+    include:
+      - /tmp/drift-logs/worker.log
+    read_from: beginning
+    encoding:
+      codec: text
+
+transforms:
+  add_api_label:
+    type: remap
+    inputs:
+      - drift_api_logs
+    source: |
+      .service = "api"
+      .env = "local"
+
+  add_worker_label:
+    type: remap
+    inputs:
+      - drift_worker_logs
+    source: |
+      .service = "worker"
+      .env = "local"
+
+sinks:
+  victorialogs_api:
+    type: http
+    inputs:
+      - add_api_label
+    uri: http://victorialogs:9428/insert/jsonline
+    encoding:
+      codec: json
+    request:
+      headers:
+        VL-Stream-Fields: service,env
+
+  victorialogs_worker:
+    type: http
+    inputs:
+      - add_worker_label
+    uri: http://victorialogs:9428/insert/jsonline
+    encoding:
+      codec: json
+    request:
+      headers:
+        VL-Stream-Fields: service,env

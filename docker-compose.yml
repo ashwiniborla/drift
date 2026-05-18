@@ -1,0 +1,44 @@
+version: "3.9"
+
+# Drift local observability stack.
+# app-runtime: local — only Vector + VictoriaLogs run here.
+# The API (port 8000) and Worker (port 7200) run as native JVM processes via boot.sh.
+
+services:
+
+  # ─── VictoriaLogs — log storage and query ───────────────────────────────────
+  victorialogs:
+    image: victoriametrics/victoria-logs:v0.28.0
+    container_name: drift-victorialogs
+    command:
+      - "-storageDataPath=/vlogs"
+      - "-retentionPeriod=7d"
+      - "-httpListenAddr=:9428"
+    ports:
+      - "9428:9428"
+    volumes:
+      - victorialogs-data:/vlogs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9428/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Vector — log shipper from app stdout to VictoriaLogs ────────────────────
+  vector:
+    image: timberio/vector:0.39.0-alpine
+    container_name: drift-vector
+    volumes:
+      - ./scripts/infra/vector.yaml:/etc/vector/vector.yaml:ro
+      - /tmp/drift-logs:/tmp/drift-logs:ro
+    depends_on:
+      victorialogs:
+        condition: service_healthy
+    environment:
+      VECTOR_LOG: warn
+    restart: unless-stopped
+
+volumes:
+  victorialogs-data:
+    driver: local

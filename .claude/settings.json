@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "Edit": [
+      {
+        "type": "command",
+        "command": "bash /Users/nidhi.b/IdeaProjects/drift/scripts/agent/validate-guard.sh",
+        "event": "afterToolCall",
+        "description": "Warn when source files are edited outside the execute.md -> validate.md pipeline"
+      }
+    ],
+    "Write": [
+      {
+        "type": "command",
+        "command": "bash /Users/nidhi.b/IdeaProjects/drift/scripts/agent/validate-guard.sh",
+        "event": "afterToolCall",
+        "description": "Warn when source files are created outside the execute.md -> validate.md pipeline"
+      }
+    ]
+  }
+}

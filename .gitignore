@@ -51,7 +51,7 @@ logs/
 *.pem
 .cursor
 # ----- Internal implementation -----
-/scripts
+# /scripts is now tracked (harness agent scripts live here)
 # ----- Internal implementation and documentation -----
 /worker-flipkart
 /docs
@@ -60,3 +60,13 @@ logs/
 # ----- Maven -----
 settings.xml
 .flattened-pom.xml
+
+# ----- Harness credentials (never commit) -----
+.confluence-credentials
+.jira-credentials
+.github-credentials
+.sonar-credentials
+
+# ----- Harness runtime (local only) -----
+/tmp/drift-logs/
+/tmp/drift-pids/
