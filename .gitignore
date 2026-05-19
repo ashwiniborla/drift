@@ -52,6 +52,8 @@ logs/
 .cursor
 # ----- Internal implementation -----
 /scripts
+# Claude Code internal working directories
+.claude/worktrees/
 # ----- Internal implementation and documentation -----
 /worker-flipkart
 /docs
