@@ -1,0 +1,196 @@
+---
+description: Architecture enforcement — map layer rules and generate mechanical linting/test enforcement to prevent layer violations
+alwaysApply: false
+---
+
+## Architecture Enforcement
+
+Analyzes the repo's module/package structure, codifies layering and dependency rules, then generates mechanical enforcement tooling.
+
+---
+
+### Step 1: Discover the Architecture
+
+Before generating anything, explore the repository:
+
+1. Read `ARCHITECTURE.md` and `harness-docs/design-harness-docs/core-beliefs.md` if they exist
+2. Map all top-level packages/modules with source code
+3. Detect the tech stack: language, framework, build tool
+4. Trace actual imports between internal modules:
+   - Java: scan `import` statements and Maven/Gradle module deps
+   - Python: scan `import`/`from` statements
+   - Go: scan `import` blocks
+   - JS/TS: scan `import`/`require` statements
+5. Identify intended layers from naming patterns:
+   - `types/models` → `config` → `db/repo` → `service/domain` → `api/handler`
+   - `entities` → `use_cases` → `adapters` → `frameworks` (Clean Architecture)
+   - `domain` → `application` → `infrastructure` → `presentation` (Hexagonal)
+6. Identify cross-cutting concerns: auth, logging, observability, feature flags
+7. Find existing violations — document as known debt
+
+**This repo's layer order (never import upward):**
+```
+fraud-reco-service-app   ← REST, Guice modules, health checks (top)
+       ↓
+scorer-module            ← Scorer implementations, GenAI client wrappers
+       ↓
+fraud-scoring-app-sdk    ← Scoring contracts, interfaces, DTOs
+       ↓
+fraud-signal-extractor   ← Signal extraction logic
+       ↓
+fraud-commons / s13n-commons  ← Shared entities, utilities (bottom)
+```
+
+---
+
+### Step 2: Codify Rules
+
+For each rule: `Allowed: A → B` | `Forbidden: B ✗→ A` | `Why: one sentence`
+
+Core invariants:
+- Inner layers must never import outer layers (dependency inversion)
+- Feature modules must never import sibling feature modules directly
+- Application logic must never import framework/infrastructure directly
+- Shared utilities must not import from business logic
+- Test utilities must never be imported by production code
+
+---
+
+### Step 3: Generate Enforcement Tooling
+
+Choose the right tool for the detected stack:
+
+| Stack | Tool | Config |
+|-------|------|--------|
+| TypeScript/JS | dependency-cruiser | `.dependency-cruiser.js` |
+| Python | import-linter | `.importlinter` |
+| Java/Kotlin | ArchUnit | `src/test/.../ArchitectureTest.java` |
+| Go | go-arch-lint | `go-arch-lint.yml` |
+
+#### ArchUnit Test Template (Java)
+
+```java
+package com.flipkart.fde.recommendation.service.architecture;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchRule;
+import org.junit.Test;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
+public class ArchitectureTest {
+
+    private final JavaClasses classes = new ClassFileImporter()
+        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+        .importPackages("com.flipkart.fde");
+
+    @Test
+    public void scorerModuleShouldNotDependOnServiceApp() {
+        ArchRule rule = noClasses()
+            .that().resideInAPackage("..scorer.module..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("..recommendation.service..")
+            .because("scorer-module is a lower layer — it must not depend on the service app");
+        rule.check(classes);
+    }
+
+    @Test
+    public void sdkShouldNotDependOnImplementation() {
+        ArchRule rule = noClasses()
+            .that().resideInAPackage("..scoring.app.sdk..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage("..scoring.app.service..", "..scorer.module..")
+            .because("SDK defines contracts — it must not know about implementations");
+        rule.check(classes);
+    }
+
+    @Test
+    public void signalExtractorShouldNotDependOnScorers() {
+        ArchRule rule = noClasses()
+            .that().resideInAPackage("..signal.extractor..")
+            .should().dependOnClassesThat()
+            .resideInAnyPackage("..scorer.module..", "..recommendation.service..")
+            .because("signal-extractor is a lower layer");
+        rule.check(classes);
+    }
+}
+```
+
+#### dependency-cruiser Template (JS/TS)
+
+```javascript
+module.exports = {
+  forbidden: [
+    {
+      name: "no-domain-imports-infra",
+      severity: "error",
+      from: { path: "^src/domain" },
+      to: { path: "^src/infrastructure" },
+      comment: "Domain layer must not import from infrastructure"
+    },
+    {
+      name: "no-circular",
+      severity: "error",
+      from: {},
+      to: { circular: true },
+      comment: "No circular dependencies allowed"
+    }
+  ]
+};
+```
+
+### Error messages must be actionable
+
+Every rule violation message must tell the agent:
+1. What class/module violated what rule
+2. Which direction the dependency should flow
+3. How to fix it (move the class, extract an interface, use dependency injection)
+
+---
+
+### Step 4: Wire into Build + CI
+
+Add arch check to `AGENTS.md` build commands:
+```bash
+# Run ArchUnit tests
+mvn test -pl fraud-recommedation-service/fraud-reco-service-app -Dtest=ArchitectureTest
+
+# Run dependency-cruiser (JS/TS)
+npx depcruise --validate .dependency-cruiser.js src
+
+# Run import-linter (Python)
+lint-imports
+```
+
+Include in **execute.md** static validation and CI pipeline.
+
+---
+
+### Step 5: Document Known Debt
+
+Create or update `harness-docs/ARCHITECTURE_RULES.md`:
+- All codified rules with rationale
+- Known violations (pre-existing debt, not new)
+- Remediation plan for each violation
+- How to add new rules
+
+---
+
+### Step 6: Generate `ARCHITECTURE.md` Updates
+
+If `ARCHITECTURE.md` exists, add:
+- Allowed dependency directions table
+- ASCII dependency graph
+- Cross-references to enforcement config
+
+---
+
+### Constraints
+
+- Rules must be mechanically enforced — not just documented
+- Error messages must be readable by both humans and AI agents
+- Never suppress violations with inline directives — fix the code or document as known debt
+- Run arch check in **execute.md** — failing arch = failing build
+- Pre-existing violations: document, do not suppress, do not block new code

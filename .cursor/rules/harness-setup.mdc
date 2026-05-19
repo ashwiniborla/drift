@@ -1,0 +1,678 @@
+---
+description: MANDATORY FIRST STEP — runs before any feature, bug fix, or refactor. Scaffolds docs, infra, agent scripts, and arch rules, then DISPATCHES the correct subagent. NEVER writes application code — only orchestrates. The `execute` subagent writes all code.
+alwaysApply: true
+---
+
+## ⚠️ CRITICAL: THIS RULE NEVER WRITES APPLICATION CODE
+
+**harness-setup is an orchestrator, not an implementor.** If at any point you are about to:
+- Write or modify a `.java`, `.py`, `.go`, `.ts`, `.js`, `.kt`, or any source/test file → **STOP — dispatch the `execute` subagent**
+- Run `mvn`, `go build`, `npm`, `pip`, `gradle`, or any build/test command → **STOP — that is the `execute` subagent's job**
+- Create a plan doc or `_till_done.json` → **STOP — that is the `planner` subagent's job**
+
+## How dispatch works (Cursor Subagents)
+
+Pipeline stages live as **Cursor Subagents** in `.cursor/agents/` (also mirrored to `.claude/agents/` for Claude Code). harness-setup dispatches them via Cursor's Task tool / Subagents framework — each subagent runs in its own context window, returns a structured handoff block, and harness-setup chooses the next subagent to dispatch based on that block.
+
+| Subagent | Trigger condition | File |
+|---|---|---|
+| `designer` | Raw PRD or feature idea — design-first task | `.cursor/agents/designer.md` |
+| `hld` | After `DESIGN PHASE COMPLETE` handoff from designer | `.cursor/agents/hld.md` |
+| `lld` | After `HLD PHASE COMPLETE` handoff from hld | `.cursor/agents/lld.md` |
+| `planner` | After `LLD PHASE COMPLETE`, or for `IMPLEMENTATION_LARGE` tasks | `.cursor/agents/planner.md` |
+| `evaluator` | Dispatched from `planner` (plan review) and post-impl (acceptance) | `.cursor/agents/evaluator.md` |
+| `execute` | After `PLAN_APPROVED` (or `IMPLEMENTATION_SMALL` after coding-instructions) | `.cursor/agents/execute.md` |
+| `validate` | After `STATIC_VALIDATED` handoff from execute | `.cursor/agents/validate.md` |
+| `cleanup` | After validate's `LGTM` | `.cursor/agents/cleanup.md` |
+| `pr-review` | User asks about PR comments while `pipeline-stage: VALIDATED` and a PR exists | `.cursor/agents/pr-review.md` |
+| `confluence-agent` | **Mandatory** — any time a doc must be published, LGTM checked, or feedback retrieved | `.cursor/agents/confluence-agent.md` |
+| `jira-agent` | **Mandatory** — any time an epic/story must be created, closed, commented, or scope-change notified | `.cursor/agents/jira-agent.md` |
+
+Always-on rules (NOT subagents — they apply to the parent on every coding turn): `coding-instructions`, `arch-enforcer`, `app-legibility`, `docker-workflow`, `local-infra`, `repo-docs-init`. These remain in `.cursor/rules/`.
+
+## THIS RULE RUNS FIRST — Before Any Code Is Written
+
+**On every user prompt that involves writing, modifying, or fixing code** — features, bug fixes, refactors, new endpoints, config changes — execute this pipeline top-to-bottom BEFORE touching any application code.
+
+Do NOT skip this rule. Do NOT jump straight to implementation. The order is:
+1. **Scaffold Check** — ensure docs, infra, scripts, and arch rules exist
+2. **Read `AGENTS.md`** — load build commands, module map, ports, golden rules for this repo
+3. **Dispatch the right subagent** for the task type (then WAIT for its handoff before dispatching the next one):
+   - **Design-first** (PRD, feature idea, product requirement) → dispatch `designer` → on `DESIGN PHASE COMPLETE` dispatch `hld` → on `HLD PHASE COMPLETE` dispatch `lld` → on `LLD PHASE COMPLETE` **dispatch `integration-tests` as background (non-blocking) AND** dispatch `planner` → on `PLAN_APPROVED` dispatch `execute` → on `STATIC_VALIDATED` dispatch `validate` → on `LGTM` dispatch `cleanup`
+   - **Implementation (large)** (2+ files, 2+ logical changes) → dispatch `planner` → … → `execute` → `validate` → `cleanup`
+   - **Implementation (small)** (single file, single change) → apply `coding-instructions` rule, dispatch `execute` directly → `validate` → `cleanup`
+4. **Wait for handoff blocks** — read each subagent's final message for `<STAGE> PHASE COMPLETE` / `LGTM` / `RUNTIME VALIDATION FAILURE` and dispatch accordingly. harness-setup itself never edits files.
+5. **Docs maintenance** — update relevant docs after the chain completes
+
+If the user asks a question, explores code, or requests documentation only — this rule does not apply.
+
+---
+
+## Step 0-Pre-Flight: System Prerequisites (MANDATORY — every session, before everything else)
+
+```bash
+which mmdc 2>/dev/null || echo "MMDC_MISSING"
+```
+
+**⛔ If missing — HARD STOP.** Do not proceed. Prompt the user:
+
+```
+mmdc (mermaid-cli) is not installed. Required for rendering Mermaid diagrams on Confluence pages.
+
+  ! npm install -g @mermaid-js/mermaid-cli
+
+Confirm once installed.
+```
+
+Verify with `mmdc --version` before continuing. **Skip if `which mmdc` already returns a path.**
+
+---
+
+## Step 0-Pre: Feature Branch Policy (MANDATORY)
+
+Every feature runs on its own git branch. No exceptions.
+
+| Condition | Action |
+|---|---|
+| Working tree dirty AND `pipeline-stage` ∈ {`DONE`,`DOCS_UPDATED`} | **Scope addition after DONE** — do NOT reset, do NOT hard-stop. Show changed files. Ask: A) run through pipeline (reset to IMPLEMENTING, append scope-addition subtask to `_till_done.json`, dispatch execute → validate → cleanup), B) discard, C) commit manually (not recommended). If A: keep feature branch, reset `pipeline-stage: IMPLEMENTING`, append subtask `{"id":"scope-addition-<ts>","name":"<git diff --stat summary>","status":"IN_PROGRESS","source":"scope-addition-after-done"}`, dispatch execute. |
+| Working tree dirty AND `pipeline-stage` ∉ {`DONE`,`DOCS_UPDATED`} | **HARD STOP** — ask user to commit/stash/discard and re-ask |
+| `harness-state.md` has `feature-branch` AND `pipeline-stage` ∉ {`DONE`,`DOCS_UPDATED`,`UNINITIALIZED`} | **Resume.** If `git branch --show-current` ≠ `feature-branch` → `git checkout <feature-branch>` (create via `-b` only if the branch exists on neither local nor origin) |
+| `pipeline-stage` ∈ {`DONE`,`DOCS_UPDATED`} AND working tree clean | Previous task complete — reset to `UNINITIALIZED`, new `session-id`, proceed |
+| New feature | Ask user **once**: "Branch name? Your current branch `<current>` will NOT be used — a new branch will be created. (suggested: `feature/<slug>`)" — validate against `^(feature\|bugfix\|hotfix\|refactor\|chore)/[a-z0-9][a-z0-9-]{1,60}$`, reject `main`/`master`/`develop`/`trunk`. **Also reject if user provides the current branch name — new feature must be on a new branch.** Then `git fetch --prune origin && git checkout -b <branch>` from the current base. **Reject if the branch already exists locally or on origin.** |
+
+**Persist to `harness-state.md`:** `feature-branch: <branch>`, `feature-branch-base: <base-branch>`, `feature-branch-created-at: <ISO-timestamp>`.
+
+**Invariant.** Every downstream subagent (`designer`, `hld`, `lld`, `planner`, `execute`, `validate`, `cleanup`) MUST verify `git branch --show-current` matches `feature-branch` on entry — HARD STOP otherwise. Subagents start with a clean context window and do not see prior conversation, so this check must live in their prompt body, not be assumed.
+
+**Anti-patterns:** running on `main`/`master`; reusing an existing branch for a new feature even if the name matches the feature slug; accepting the current branch as the new feature branch; silent `git checkout` mid-pipeline.
+
+## Step 0: Read harness-state.md
+
+Read `harness-state.md` at the repo root.
+
+### Step 0A: Library Repo Detection
+
+If the repo has **no Dockerfile AND no runnable entrypoint** (`main` class, `@SpringBootApplication`, `if __name__`, `func main()`), it's a library/JAR. Collect the **consumer app repo path** (required — validate boots Docker there). Enforce the JAR version ends with `-SNAPSHOT` (allows re-publishing to JFrog without version bumps on each iteration). After execute static pass, prompt user to publish SNAPSHOT JAR (`! mvn deploy -DskipTests`); validate then boots the app repo's Docker stack and runs the full validate loop consuming the JAR.
+
+Persist: `repo-type: LIBRARY`, `library-app-repo: <path>`, `library-version: <version>`
+
+If `repo-type` is already set in `harness-state.md`, skip re-detection.
+
+### Step 0A-B: UI / Full-stack App Detection
+
+After library detection, detect whether this repo is a **UI/frontend application** or **full-stack application** (React, Vue, Angular, Next.js, Nuxt, Svelte, etc.).
+
+```bash
+HAS_PACKAGE_JSON=$(ls package.json 2>/dev/null)
+UI_FRAMEWORK=$(grep -oP '"(react|vue|@angular/core|next|nuxt|svelte|@sveltejs/kit|vite)"' package.json 2>/dev/null | head -1)
+HAS_BACKEND=$(find . -maxdepth 4 \( -name "pom.xml" -o -name "go.mod" -o -name "requirements.txt" \) 2>/dev/null | head -1)
+# Detect frontend in subdirectory (monorepo pattern: client/, frontend/, web/, etc.)
+FRONTEND_SUBDIR=$(find . -maxdepth 3 -name "package.json" ! -path "./node_modules/*" \
+  -exec grep -lP '"(react|vue|@angular/core|next|nuxt|svelte|@sveltejs/kit|vite)"' {} \; 2>/dev/null | head -1 | xargs dirname 2>/dev/null)
+```
+
+Three branches:
+
+---
+
+**Branch A — Pure frontend (UI app, no backend):**
+
+```bash
+if [ -n "$HAS_PACKAGE_JSON" ] && [ -n "$UI_FRAMEWORK" ] && [ -z "$HAS_BACKEND" ]; then
+  echo "UI_APP_DETECTED: $UI_FRAMEWORK"
+fi
+```
+
+Persist:
+```yaml
+repo-type: UI_APP
+ui-framework: <detected-framework>
+```
+
+Run browser prerequisite check (see prompt below). ⛔ HARD STOP until confirmed.
+
+---
+
+**Branch B — Full-stack (frontend + backend in same repo):**
+
+```bash
+if ([ -n "$HAS_PACKAGE_JSON" ] && [ -n "$UI_FRAMEWORK" ] && [ -n "$HAS_BACKEND" ]) || \
+   ([ -n "$FRONTEND_SUBDIR" ] && [ -n "$HAS_BACKEND" ]); then
+  echo "FULLSTACK_DETECTED"
+  FRONTEND_DIR="${FRONTEND_SUBDIR:-.}"
+fi
+```
+
+Detect the frontend package location and the dev server port:
+```bash
+FRONTEND_DIR=$([ -n "$FRONTEND_SUBDIR" ] && echo "$FRONTEND_SUBDIR" || echo ".")
+FRONTEND_PORT=$(grep -oP '"dev":\s*"[^"]*--port\s+\K[0-9]+' "${FRONTEND_DIR}/package.json" 2>/dev/null || \
+                grep -oP 'server:\s*\{[^}]*port:\s*\K[0-9]+' "${FRONTEND_DIR}/vite.config.*" 2>/dev/null || \
+                echo "3000")
+```
+
+Persist:
+```yaml
+repo-type: FULLSTACK
+ui-framework:          <detected-framework>
+frontend-dir:          <relative path, e.g. "client" or ".">
+frontend-port:         <detected port, e.g. 3000>
+browser-ui-validation: ENABLED   # always enabled for FULLSTACK — not opt-in
+```
+
+Run browser prerequisite check (see prompt below). ⛔ HARD STOP until confirmed.
+
+---
+
+**Branch C — Pure backend (no frontend signals):** classify as `SERVICE`. No browser prerequisite check.
+
+---
+
+**Browser prerequisite prompt (UI_APP and FULLSTACK):**
+
+```
+━━━ BROWSER VALIDATION REQUIRED ━━━
+
+Repo type: <UI_APP | FULLSTACK>
+Framework: <detected-framework>
+Frontend:  <frontend-dir>:<frontend-port>
+
+The harness uses Cursor's built-in Browser tool for UI validation.
+Docs: https://cursor.com/docs/agent/tools/browser
+
+  1. Enable Cursor Browser tool:
+     - Open Cursor Settings → Features → Agent → Browser → ON
+     - Configure approval mode:
+         "auto-run"  — unattended validation (recommended for validate loop)
+         "manual"    — confirm each browser action (recommended while building)
+     - Verify: the browser/globe icon appears in the Agent panel's tool list
+
+  2. (Optional) Cursor Browser Preview for live app inspection:
+     - Open Cursor Settings → Features → Browser Preview → ON
+     - Dev server URL: http://localhost:<frontend-port>
+     - Verify: the Preview pane opens when you start your dev server
+
+Respond "ready" once the Browser tool is enabled.
+Respond "skip preview" if you want Browser tool only, no Preview pane.
+```
+
+**⛔ HARD STOP** — wait for user confirmation before proceeding. The `validate` subagent for UI/full-stack apps drives the Cursor Browser tool; without it there is no runtime validation loop.
+
+**Persist in `harness-state.md`:**
+```yaml
+browser-tool: CONFIRMED             # set after user confirms Browser tool enabled
+browser-preview: CONFIRMED|SKIP     # set after user responds
+```
+
+If `repo-type` is already set in `harness-state.md`, skip re-detection and confirmation.
+
+| `pipeline-stage` | Action |
+|---|---|
+| `UNINITIALIZED` or missing | Normal entry — create/reset file with `pipeline-stage: UNINITIALIZED`, set `session-id` to the task name, proceed through all steps |
+| `SCAFFOLDED` | **Run Step 1 Scaffold Verify** (quick health check — Docker running? connections resolved? scripts exist?) — then re-read `task-type` from harness-state.md and proceed to Step 3. **Never skip scaffold verification.** |
+| `DESIGNING` | **Design pipeline started.** Read `task-type` from harness-state.md. Dispatch the `designer` subagent (or `hld`/`lld` if those docs exist and we're resuming mid-pipeline). **Do NOT fall through to Step 3 implementation path.** |
+| `HLD_IN_PROGRESS` | HLD generation in progress — dispatch `hld` subagent to resume or complete. |
+| `AWAITING_HLD_LGTM` | **HLD published, Confluence approval pending.** Dispatch `hld` subagent — it skips doc generation and runs `check-lgtm` directly. Do NOT dispatch `lld` yet. |
+| `LLD_IN_PROGRESS` | LLD generation in progress — dispatch `lld` subagent to resume or complete. |
+| `AWAITING_LLD_LGTM` | **LLD published, Confluence approval pending.** Dispatch `lld` subagent — it skips doc generation and runs `check-lgtm` directly. On LGTM: `lld` dispatches `integration-tests` as background AND triggers `planner`. Do NOT dispatch `planner` directly here. |
+| `AWAITING_PLAN_LGTM` | **Execution plan published, Confluence approval pending.** Dispatch `planner` subagent — it skips plan generation and runs `check-lgtm` directly. Do NOT dispatch `execute` yet. |
+| `PLAN_APPROVED` | Dispatch the `execute` subagent to start implementation. |
+| `IMPLEMENTING` / `STATIC_VALIDATED` | Dispatch the `execute` subagent to resume implementation; on `STATIC_VALIDATED`, dispatch `validate`. |
+| `VALIDATING` / `VALIDATED` / `CLEANING_UP` | Task in progress — confirm with user: resume or start new? |
+| `SCOPE_CHANGE` | **PRD/HLD/LLD scope changed.** (1) Read `scope-change-from` to determine cascade level. (2) Archive stale docs to `harness-docs/design/superseded/`. (3) Set `pending-sync` to all ENABLED integrations. (4) **Immediate Jira notification only** — add a scope-change comment to existing HLD/LLD/plan Jira stories NOW; do NOT republish to Confluence yet (downstream agents handle this when they regenerate their docs). (5) Re-dispatch from the correct entry agent: PRD→`designer`, HLD→`hld`, LLD→`lld`, PLAN→`planner`. **The cascade ALWAYS terminates at `planner` — even LLD scope changes must re-run planner to regenerate `_till_done.json` and the execution plan.** Each agent in the cascade: regenerates its doc locally, calls `publish-page` with the existing page ID (updates Confluence in place — never `create-page`), re-attaches updated doc to its existing Jira story, then triggers the next downstream agent. `pending-sync` is cleared by the downstream agents as they sync, not by harness-setup. If `scope-change-from: PR_REVIEW`, consult `<feature-tag>_pr_review.json` for comment context. |
+| `PR_REVIEW` | **GitHub PR feedback being processed.** Dispatch the `pr-review` subagent to resume — it reads `<feature-tag>_pr_review.json`, re-prompts if needed, routes to `execute` (IMPLEMENT comments) or back to `SCOPE_CHANGE` (design-impact comments). **Do NOT dispatch designer/planner/execute directly.** |
+| `DONE` / `DOCS_UPDATED` | **Check `git status --porcelain` first.** Dirty → scope addition after DONE — see Feature Branch Policy Case A above (route through execute → validate → cleanup; do NOT reset). Clean → reset to `UNINITIALIZED`, proceed. |
+
+**Write back:** set `task-type: DESIGN_FIRST|IMPLEMENTATION_LARGE|IMPLEMENTATION_SMALL` in Step 2B (BEFORE scaffold); `pipeline-stage: SCAFFOLDED` after Step 1; `DESIGNING` after triggering designer; `DOCS_UPDATED` after Step 5; `DONE` after final report. After any scope change or tweak, set `pending-sync` to the comma-separated list of ENABLED integrations that need updating (`confluence,jira,github`). Remove each entry after its sync succeeds. Approval gates must not advance while `pending-sync` is non-empty.
+
+**⚠️ `task-type` MUST be persisted BEFORE scaffold (Step 1).** Scaffold may involve blocking questions (connection discovery) that interrupt the flow. If `task-type` is not persisted, the triage decision is lost and harness-setup falls through to the wrong pipeline.
+
+**⚠️ Scaffold is NEVER trusted from state alone.** Docker may have stopped, connections may be PENDING, infra may be down. Always verify.
+
+## Step 1: Scaffold Check (runs EVERY session)
+
+**Full scaffold** when `UNINITIALIZED`: create missing items, run discovery, prompt user.
+**Verify scaffold** when `SCAFFOLDED` or later: quick health check — `docker compose ps`, check no `PENDING` connections, verify scripts exist. Only prompt user if something is broken.
+
+Run checks in parallel, fix what's missing sequentially.
+
+### Check 1 — Documentation (`harness-docs/` + `AGENTS.md`)
+```bash
+ls harness-docs/ 2>/dev/null && ls AGENTS.md 2>/dev/null
+```
+If missing: run `repo-docs-init` agent — generates `AGENTS.md`, `ARCHITECTURE.md`, full `harness-docs/` structure.
+If exists: dispatch `drift-detection` agent (not first-time run). Wait for handoff:
+- `DRIFT_CLEAN` → docs current, proceed to Check 2
+- `DRIFT_DETECTED:<N>` → agent already applied targeted edits, proceed to Check 2
+- `DRIFT_NEEDS_REVIEW` → ⛔ HARD STOP — surface architecture violation to user, wait for decision, re-dispatch drift-detection before continuing
+- `DRIFT_SKIP:NO_SCAFFOLD` → escalate to user (should not happen here)
+
+### Check 2 — Local Infrastructure (`docker-compose.yml`)
+```bash
+find . -maxdepth 4 -name "docker-compose*.yml" -o -name "docker-compose*.yaml" 2>/dev/null
+```
+If missing: run `local-infra` agent. If exists but lacks Vector/VictoriaLogs: extend it.
+
+**Check Docker, try minikube if down, hard-stop if both fail:**
+```bash
+# Fix known ~/.docker/config.json key bug before probing — 'credsStore' must be 'credStore'
+DOCKER_CFG="$HOME/.docker/config.json"
+if [ -f "$DOCKER_CFG" ] && grep -q '"credsStore"' "$DOCKER_CFG"; then
+  sed -i.bak 's/"credsStore"/"credStore"/g' "$DOCKER_CFG"
+  echo "Fixed ~/.docker/config.json: renamed 'credsStore' → 'credStore'"
+fi
+
+if ! timeout 5 docker info --format '{{.ServerVersion}}' &>/dev/null; then
+  echo "Docker daemon not running. Attempting: minikube start ..."
+  if command -v minikube &>/dev/null; then
+    minikube start
+    eval "$(minikube docker-env)"
+    if ! timeout 10 docker info --format '{{.ServerVersion}}' &>/dev/null; then
+      echo "ERROR: minikube started but Docker daemon still unreachable." >&2
+      echo "⛔ HARD STOP — fix Docker before proceeding." >&2
+      exit 1
+    fi
+    echo "Docker available via minikube."
+  else
+    echo "ERROR: Docker daemon not running and minikube not found." >&2
+    echo "⛔ HARD STOP — start Docker (Rancher Desktop / Docker Desktop / minikube) then re-run." >&2
+    exit 1
+  fi
+fi
+
+# Boot stack based on app-runtime mode (set in Step 0H; defaults to docker)
+APP_RUNTIME=$(grep -oP 'app-runtime:\s*\K\S+' harness-state.md 2>/dev/null || echo "docker")
+if [ "$APP_RUNTIME" = "local" ]; then
+  # App runs as native process — only start observability stack in Docker
+  docker compose up -d vector victorialogs 2>/dev/null || \
+    docker compose --profile observability up -d 2>/dev/null || \
+    docker compose up -d
+else
+  # Full stack in Docker Compose (default)
+  bash scripts/infra/start.sh 2>/dev/null || docker compose up -d
+fi
+```
+
+### Check 3 — Agent Scripts (`scripts/agent/`)
+```bash
+ls scripts/agent/boot.sh 2>/dev/null
+```
+If missing: run `app-legibility` agent — generates `boot.sh`, `health.sh`, `query-logs.sh`, `api-snapshot.sh`, `db-snapshot.sh`, `verify-pipeline.sh`.
+
+### Check 3B — Pre-flight Script (`scripts/agent/check-prereq.sh`)
+```bash
+ls scripts/agent/check-prereq.sh 2>/dev/null
+grep -q "check-prereq.sh" scripts/agent/boot.sh 2>/dev/null
+```
+If `check-prereq.sh` is missing: generate it directly (do not wait for `app-legibility`). It must:
+1. Fix `~/.docker/config.json` key bug: `sed -i.bak 's/"credsStore"/"credStore"/g' ~/.docker/config.json` (if key present).
+2. Check Docker daemon responds within 5 s — `timeout 5 docker info`. If absent → attempt `minikube start` + `eval "$(minikube docker-env)"`, re-probe. If still absent → exit 1.
+3. Check `docker compose version` exits 0. If absent → print PATH fix, exit 1.
+4. Warn (non-fatal) if `docker-compose.yml` is missing.
+Exit 0 only when Docker is confirmed running. Print `ALL PREREQUISITES MET` on success.
+Make executable: `chmod +x scripts/agent/check-prereq.sh`
+
+If `boot.sh` exists but does not call `check-prereq.sh`: add the call at the top before any Docker command.
+
+### Check 4 — Connection Discovery (`connections.md`)
+```bash
+test -f connections.md
+```
+If missing: create `connections.md` (generic discovery framework, not repo-specific data).
+Then run the discovery process: scan code for external endpoints, DB drivers, Hystrix commands, queue clients. Present all discoveries to the user and ask for each: **A) Local Docker, B) Use discovered endpoint, C) Provide different endpoint, D) Port-forward, E) Mock, F) Skip.** Populate the Resolved Connection Table with the user's responses. Never pre-fill with assumed values.
+
+**Network & access mode hints (always confirm with user):**
+- IPs in `10.83.0.0/16` (Calvin DC) or `10.24.0.0/16` (Hyderabad DC) → pre-suggest B (discovered-endpoint) — ELBs reachable without VPN.
+- Any resolvable FQDN (`*.internal`, `*.fkinternal.com`) → pre-suggest B (discovered-endpoint) — generally reachable from corporate network.
+- SQL / writable data stores → pre-suggest D (port-forward) or A (local Docker) — **⚠️ always ask user which environment (staging/dev/test). Never connect to production for testing.**
+
+### Check 5 — Architecture Enforcement
+```bash
+ls .dependency-cruiser.js .importlinter go-arch-lint.yml 2>/dev/null || \
+  grep -r "ArchUnit" src/test/ 2>/dev/null
+```
+If missing: run `arch-enforcer` agent.
+
+### Check 6 — Validate Guard Hook (`scripts/agent/validate-guard.sh`)
+```bash
+ls scripts/agent/validate-guard.sh 2>/dev/null
+ls .cursor/hooks.json 2>/dev/null
+```
+If `scripts/agent/validate-guard.sh` is missing: copy the Cursor variant from `harness-engineering/cursor/hooks/validate-guard.sh`, `chmod +x`. (The Cursor variant parses Cursor's `afterFileEdit` input schema — `{ file_path, edits: [{ old_string, new_string }] }` — which differs from Claude's flat shape.)
+
+If `.cursor/hooks.json` is missing: copy `harness-engineering/cursor/hooks/hooks.json` to `.cursor/hooks.json`. If it exists but does not contain `validate-guard`, merge the `afterFileEdit` entry in manually — do not overwrite unrelated hooks the user has configured.
+
+The wiring uses Cursor's native hook system ([docs](https://cursor.com/docs/hooks)):
+```json
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      { "command": "bash scripts/agent/validate-guard.sh", "matcher": "Write|Edit" }
+    ]
+  }
+}
+```
+
+The hook classifies changes as significant or non-significant:
+- **Warns** on: new functions/classes, control flow changes, new external calls, new annotations, new files
+- **Skips** silently: renames, formatting, comments, import reordering, string literal changes, test-only edits, any edit while `pipeline-stage` is `IMPLEMENTING`/`STATIC_VALIDATED`/`VALIDATING` or when `last-updated-by` is `execute`/`validate`/`cleanup`
+
+Verify after wiring: open **Cursor Settings → Hooks** tab — the `afterFileEdit` row should list `validate-guard.sh` as loaded. Cursor watches `hooks.json` and reloads automatically on save.
+
+### Checks 7–10 — Install All Helper Scripts
+
+**All four scripts are installed unconditionally at scaffold time.** Config flags (`confluence-parent-page`, `jira-epic`, `github-integration`, `sonar-project-key`) are only written in Steps 0C–0G, which run after scaffold. Installing here prevents every Step 0X from failing because its script doesn't exist yet.
+
+```bash
+mkdir -p scripts/agent
+
+# Resolution order (same for all scripts):
+#   1. ~/.harness/scripts/<script>  — global install via install.sh --global
+#   2. harness-engineering/claude/hooks/<script>  — source clone fallback
+install_helper() {
+  local script="$1"
+  local dest="scripts/agent/${script}"
+  [ -f "$dest" ] && return 0
+  if [ -f "$HOME/.harness/scripts/${script}" ]; then
+    cp "$HOME/.harness/scripts/${script}" "$dest"
+  else
+    HARNESS_PATH=$(find ~ -maxdepth 5 -name "harness-engineering" -type d 2>/dev/null | head -1)
+    if [ -n "$HARNESS_PATH" ] && [ -f "${HARNESS_PATH}/claude/hooks/${script}" ]; then
+      cp "${HARNESS_PATH}/claude/hooks/${script}" "$dest"
+    else
+      echo "WARN: could not find ${script} in ~/.harness/scripts/ or harness-engineering/claude/hooks/" >&2
+      return 1
+    fi
+  fi
+  chmod +x "$dest"
+  echo "  INSTALLED: scripts/agent/${script}"
+}
+
+install_helper confluence.sh
+install_helper jira.sh
+install_helper github.sh
+install_helper sonar.sh
+```
+
+**Script presence gate — ⛔ HARD STOP if any mandatory script is missing after install:**
+
+```bash
+MISSING=()
+
+[ -f scripts/agent/confluence.sh ] || MISSING+=("confluence.sh")
+[ -f scripts/agent/jira.sh ]       || MISSING+=("jira.sh")
+
+# github.sh is mandatory unless github-integration is explicitly set to SKIP
+GITHUB_SKIP=$(grep -oP 'github-integration:\s*\K\S+' harness-state.md 2>/dev/null || echo "")
+if [ "$GITHUB_SKIP" != "SKIP" ]; then
+  [ -f scripts/agent/github.sh ] || MISSING+=("github.sh")
+fi
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+  echo "⛔ SCAFFOLD GATE FAILED — missing mandatory scripts: ${MISSING[*]}"
+  echo ""
+  echo "These scripts are required for the harness pipeline to operate."
+  echo "Install the harness globally first:"
+  echo "  bash <path-to-harness-engineering>/install.sh --global"
+  echo ""
+  echo "Or copy them manually:"
+  for s in "${MISSING[@]}"; do
+    echo "  cp <harness-engineering>/claude/hooks/${s} scripts/agent/${s} && chmod +x scripts/agent/${s}"
+  done
+  echo ""
+  echo "⛔ HARD STOP — do not proceed until all mandatory scripts are present."
+  exit 1
+fi
+```
+
+> **Why this gate exists:** `install_helper` emits WARN and continues on failure. Without this gate, Steps 0C–0D (Confluence/Jira auth) reference scripts that don't exist, causing cryptic errors mid-pipeline. Fail fast here instead.
+
+**Auth verification — only for scripts whose config is already in `harness-state.md`** (resuming a session):
+
+```bash
+grep -q "confluence-parent-page:" harness-state.md 2>/dev/null && \
+  bash scripts/agent/confluence.sh test-auth   # fail → confluence.sh setup
+
+grep -q "jira-epic:" harness-state.md 2>/dev/null && \
+  bash scripts/agent/jira.sh test-auth         # fail → jira.sh setup
+
+grep -q "github-integration: ENABLED" harness-state.md 2>/dev/null && \
+  bash scripts/agent/github.sh test-auth       # fail → github.sh setup
+
+grep -q "sonar-project-key:" harness-state.md 2>/dev/null && \
+  # Dispatch sonar-agent SETUP_AUTH — verifies credentials, prompts setup if stale
+```
+
+On any auth failure: prompt `! bash scripts/agent/<script> setup` and STOP — do not advance past scaffold gate.
+
+### Check 10B — Browser Automation Prerequisites
+
+**Runs automatically if `repo-type: UI_APP` OR `repo-type: FULLSTACK` in `harness-state.md`.**
+**Also runs for SERVICE repos if `browser-ui-validation: ENABLED` is explicitly set.**
+**Skip entirely for LIBRARY and pure SERVICE repos.**
+
+```bash
+REPO_TYPE=$(grep -oP 'repo-type:\s*\K\S+' harness-state.md 2>/dev/null || echo "SERVICE")
+BROWSER_UI=$(grep -oP 'browser-ui-validation:\s*\K\S+' harness-state.md 2>/dev/null || echo "")
+
+if [ "$REPO_TYPE" != "UI_APP" ] && [ "$REPO_TYPE" != "FULLSTACK" ] && [ "$BROWSER_UI" != "ENABLED" ]; then
+  exit 0  # skip — pure backend or library
+fi
+```
+
+Docs: https://cursor.com/docs/agent/tools/browser
+
+#### Check 10B-1: Cursor Browser tool enabled
+
+Not machine-verifiable from the shell — rely on the confirmation from Step 0A-B.
+
+```bash
+grep -q "browser-tool: CONFIRMED" harness-state.md 2>/dev/null
+```
+
+**If not confirmed** → ⛔ HARD STOP:
+```
+Cursor Browser tool not confirmed for this UI app repo.
+
+Enable it in Cursor Settings → Features → Agent → Browser → ON
+Set approval mode to "auto-run" for unattended validate loops.
+Verify: the browser/globe icon appears in the Agent panel's tool list.
+
+Then respond "browser ready" to continue.
+```
+After user confirms → set `browser-tool: CONFIRMED` in `harness-state.md`.
+
+#### Check 10B-2: Cursor browser preview (optional)
+
+Not machine-verifiable — rely on the confirmation from Step 0A-B. If `browser-preview: CONFIRMED`, add a note to `AGENTS.md` under "Local Dev":
+```
+Browser Preview: Cursor Settings → Features → Browser Preview → ON
+Dev server URL: http://localhost:<detected-port>
+```
+If `browser-preview: SKIP` → continue without blocking.
+
+**Skip Check 10B if** `browser-tool: CONFIRMED` already in `harness-state.md`.
+
+### Check 11 — Mermaid CLI (mandatory)
+```bash
+which mmdc 2>/dev/null
+```
+**⛔ If missing:** prompt user to install: `! npm install -g @mermaid-js/mermaid-cli`. Required for rendering Mermaid diagrams on Confluence pages. Do NOT proceed without it.
+
+### Scaffold Gate — ALL must pass before proceeding
+```
+harness-docs/                           [EXISTS / CREATED]  drift: [CLEAN / DETECTED+UPDATED / FIRST_RUN]
+docker-compose                  [EXISTS / CREATED]
+infra stack                     [RUNNING / STARTED via minikube]  VictoriaLogs: [HEALTHY]  Vector: [HEALTHY]
+scripts/agent/boot.sh           [EXISTS / CREATED]
+scripts/agent/check-prereq.sh   [EXISTS / CREATED]  boot.sh calls it [VERIFIED]
+connections.md                  [EXISTS / CREATED]  PENDING entries: [0]
+arch rules                      [EXISTS / CREATED]
+validate-guard hook             [EXISTS / CREATED]  .cursor/hooks.json wired [VERIFIED]
+confluence.sh                   [EXISTS / INSTALLED]  auth: [OK / PENDING_SETUP / N/A]
+jira.sh                         [EXISTS / INSTALLED]  auth: [OK / PENDING_SETUP / N/A]
+github.sh                       [EXISTS / INSTALLED]  auth: [OK / PENDING_SETUP / N/A]
+sonar.sh                        [EXISTS / INSTALLED]  auth: [OK / PENDING_SETUP / N/A]
+browser-tool                    [CONFIRMED / N/A]   (if repo-type: UI_APP or FULLSTACK)
+browser-preview                 [CONFIRMED / SKIP / N/A]
+```
+Quick verify (when already SCAFFOLDED): `docker compose ps`, `grep -ci PENDING connections.md`, `ls scripts/agent/boot.sh`
+If any fails: fix before proceeding (restart infra, re-prompt connections, run missing agent).
+
+---
+
+## Step 2: Read AGENTS.md
+
+Load: build commands, module map, ports, golden rules.
+
+---
+
+## Step 2B: Triage — Route to Correct Pipeline
+
+**Before Step 3**, classify the task type. **⚠️ IMMEDIATELY persist `task-type` to harness-state.md** — this must happen BEFORE scaffold (Step 1) blocking questions can interrupt the flow.
+
+| Signal | Task Type | harness-state.md |
+|--------|-----------|------------------|
+| PRD, feature spec, "design", "HLD", "LLD", new capability spanning 3+ modules, new external integrations, architectural changes, protocol changes | **Design-first** | Set `task-type: DESIGN_FIRST`, `pipeline-stage: DESIGNING` |
+| HLD already exists | **HLD exists** | Set `task-type: DESIGN_FIRST`, `pipeline-stage: DESIGNING` |
+| LLD already exists | **LLD exists** | Set `task-type: DESIGN_FIRST`, `pipeline-stage: PLANNING` |
+| Bug fix, refactor, config change, well-scoped feature (large: 2+ files) | **Implementation (large)** | Set `task-type: IMPLEMENTATION_LARGE`, `pipeline-stage: PLANNING` |
+| Bug fix, config change, single-file feature | **Implementation (small)** | Set `task-type: IMPLEMENTATION_SMALL`, `pipeline-stage: IMPLEMENTING` |
+
+**⚠️ Do NOT proceed to scaffold without persisting `task-type`. If scaffold blocking questions interrupt the flow, harness-setup must be able to re-read `task-type` to know which agent to trigger.**
+
+**⚠️ PRDs and new-capability tasks MUST go through designer → HLD → LLD. Skipping produces execution plans without architectural grounding.**
+
+### Step 0C: Confluence Parent Page (Mandatory)
+
+**⛔ Required.** Collect the Confluence parent page URL/ID. All design docs and plans are published as child pages with LGTM approval gates. Do NOT proceed without it.
+
+`scripts/agent/confluence.sh` is guaranteed present from Checks 7–10 above.
+
+**Dispatch `confluence-agent` with `OPERATION: SETUP_AUTH`.**
+On `CONFLUENCE_AUTH_OK`: proceed. On `CONFLUENCE_AUTH_FAILED`: HARD STOP — prompt `! bash scripts/agent/confluence.sh setup`.
+
+Persist: `confluence-review: ENABLED`, `confluence-parent-page: <id>`, `confluence-base-url: https://flipkart.atlassian.net/wiki`
+
+### Step 0D: Jira Initiative (Mandatory)
+
+**⛔ Required.** Collect the Jira **initiative** key/URL (not epic). The harness auto-creates an epic for this feature under the initiative via `jira-agent`, then all stories (HLD, LLD, feature splits) are created under that epic. Do NOT proceed without an initiative.
+
+`scripts/agent/jira.sh` is guaranteed present from Checks 7–10 above.
+
+**Dispatch `jira-agent` with `OPERATION: SETUP_AUTH`.**
+On `JIRA_AUTH_OK`: proceed. On `JIRA_AUTH_FAILED`: HARD STOP — prompt `! bash scripts/agent/jira.sh setup`.
+
+**Then dispatch `jira-agent` with `OPERATION: SETUP_EPIC`.**
+It resolves the initiative key, verifies access, creates the epic (idempotent — skips if `jira-epic` already set).
+On `JIRA_EPIC_CREATED:<key>:<url>`: proceed. On `JIRA_ERROR:*`: HARD STOP.
+
+Persist: `jira-initiative: <key>`, `jira-epic: <auto-created-epic-key>`, `jira-base-url: https://flipkart.atlassian.net`. If resuming and `jira-epic` already set, `jira-agent` skips creation automatically.
+
+### Step 0E: Repos Involved (Mandatory)
+
+**⛔ Required.** Always ask which repos are involved — even single-repo tasks must confirm. Prevents mid-pipeline surprises. User confirms "just this repo" or provides paths to all affected repos. For multi-repo: designer produces cross-repo PRD, harness-setup spawns parallel pipelines (shared libraries first, consumers after).
+
+Persist: `cross-repo: ENABLED|SINGLE`, `cross-repo-paths: [...]`
+
+If secondary repos lack harness agents, offer to install them via `install.sh`.
+
+### Step 0F: GitHub Integration (Optional)
+
+For all task types that produce code. Ask user whether the harness should push the validated branch and open / sync a PR after every LGTM. If enabled, validate.md (after LGTM) runs `github.sh test-auth` → `push-branch` → `ensure-pr`, then persists `github-pr-number` and `github-pr-url`. Once a PR exists, the user can ask "check PR comments" and `pr-review.md` fetches reviewer feedback, asks which to implement, and routes through execute → validate → push (or back to harness-setup for SCOPE_CHANGE).
+
+Persist: `github-integration: ENABLED|SKIP`, `github-base-url: https://github.fkinternal.com` (default; override per-repo).
+
+If auth fails: prompt user to run `! bash scripts/agent/github.sh setup`. Setup expects a GitHub Personal Access Token (classic) with scopes `repo`, `read:org`. GHES tokens: `<github-base-url>/settings/tokens`. Credentials are stored in `.github-credentials` (gitignored, 0600).
+
+### Step 0G: SonarQube Project (Mandatory)
+
+**⛔ Required.** Collect the SonarQube project key or dashboard URL. Validate will not emit LGTM until Sonar coverage ≥ 90% and zero BLOCKER/CRITICAL issues. Flipkart instances: `https://service.sonar-prod.fkcloud.in` (default) or `http://service-lta.sonar-prod.fkcloud.in` (LTA).
+
+`scripts/agent/sonar.sh` is guaranteed present from Checks 7–10 above.
+
+Dispatch sonar-agent to resolve the project key and verify auth:
+```
+Dispatch sonar-agent with:
+  OPERATION:  RESOLVE_PROJECT
+  INPUT:      <user-provided URL or project key>
+```
+
+On `SONAR_PROJECT_RESOLVED:<key>`: agent has persisted `sonar-project-key` and `sonar-base-url` to harness-state.md. Proceed.
+
+On `SONAR_AUTH_FAILED`: sonar-agent surfaces the setup prompt. Wait for user to run `! bash scripts/agent/sonar.sh setup`, then re-dispatch.
+
+If resuming and `sonar-project-key` already set: dispatch sonar-agent `SETUP_AUTH` to verify credentials are still valid. Skip re-asking the user.
+
+### Step 0H: App Runtime Mode (Ask Once Per Feature)
+
+After SonarQube setup, ask the user how the application should run during the validate loop:
+
+```
+How should the application run during validation?
+
+  1) Docker  — full stack in Docker Compose (default)
+               `docker compose up -d` boots app + all dependencies + Vector + VictoriaLogs
+
+  2) Local   — app runs as native process; observability stack (Vector + VictoriaLogs) in Docker
+               `docker compose up -d vector victorialogs` then `bash scripts/agent/boot.sh`
+               App writes structured JSON logs to stdout/stderr → Vector tails → VictoriaLogs
+
+Enter 1 or 2:
+```
+
+**If Local mode selected:** verify that `boot.sh` can start the app natively (Python venv, Go binary, Maven exec, etc.). If `boot.sh` does not support local execution, update it or warn the user.
+
+**Persist:** `app-runtime: docker|local`
+
+**If already set in `harness-state.md` (resuming a session): skip this question.**
+
+---
+
+## Step 3: Dispatch the Correct Subagent — Do NOT Implement Here
+
+**⚠️ CRITICAL: harness-setup NEVER writes application code, test code, or build scripts. It ONLY orchestrates by dispatching subagents from `.cursor/agents/`.**
+
+### 3A: Re-read `task-type` from harness-state.md
+
+**Do NOT re-classify the task.** The triage was done in Step 2B and persisted. Read it now:
+```bash
+grep "task-type:" harness-state.md | awk '{print $2}'
+```
+
+### 3B: Dispatch the entry subagent based on `task-type`
+
+| `task-type` | Entry subagent | Chain (each handoff dispatches the next) |
+|---|---|---|
+| `DESIGN_FIRST` | `designer` (or `hld`/`lld` if those docs already exist) | designer → hld → lld → **[`integration-tests` background (non-blocking)]** + planner → evaluator (loop) → execute → validate → cleanup |
+| `IMPLEMENTATION_LARGE` | `planner` | planner → evaluator (loop) → execute → validate → cleanup |
+| `IMPLEMENTATION_SMALL` | apply `coding-instructions` rule, then dispatch `execute` directly | coding-instructions → execute → validate → cleanup |
+
+Dispatch and **WAIT** for the subagent's handoff. harness-setup does NOT implement anything itself.
+
+After each subagent completes, read its final-message handoff block (`<STAGE> PHASE COMPLETE`, `STATIC_VALIDATED`, `LGTM`, `RUNTIME VALIDATION FAILURE`, `PLAN REVISION REQUIRED`, etc.) and dispatch the next subagent in the chain — or escalate to the user if the chain stalls.
+
+### Anti-patterns for Step 3
+
+- **NEVER** read source files and start writing code — that is the `execute` subagent's job
+- **NEVER** run `mvn`, `go build`, `npm`, or any build/test command — that is the `execute` subagent's job
+- **NEVER** create plan docs — that is the `planner` subagent's job
+- **NEVER** assign feature tags — that is `coding-instructions` or the `planner` subagent's job
+- **NEVER** add debug logs or probes — that is the `execute` subagent's job
+- **NEVER** "implement directly" for small tasks — apply `coding-instructions` and dispatch `execute`
+
+If you find yourself about to write a source file — **STOP**. Dispatch the correct subagent instead.
+
+---
+
+## Step 4: Wait for Subagent Handoffs — Then Report
+
+After dispatching the entry subagent in Step 3, read its handoff block when it returns. Dispatch the next subagent in the chain. Repeat until the pipeline reaches `DOCS_UPDATED` or stalls.
+
+When the chain finishes, report the result to the user:
+- If **LGTM**: `Task complete — validated by execute + validate + cleanup.`
+- If **BLOCKED**: Present the blockage to the user and relay their response to the appropriate subagent.
+- If chain does not converge after 5 iterations on the same stage: stop and ask the user.
+
+**⚠️ Do NOT write code, run builds, fix failures, update docs, or do anything the subagent chain handles. Your job is to scaffold, dispatch, and route handoffs. Everything else belongs to the subagents.**

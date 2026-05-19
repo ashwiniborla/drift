@@ -1,0 +1,162 @@
+---
+description: Local infrastructure setup — docker-compose with app + dependencies + Vector/VictoriaLogs observability stack. Reads connections.md for external dependency wiring.
+alwaysApply: false
+---
+
+## Local Infrastructure Setup
+
+Generates a complete docker-compose stack: the application, all data stores, and the full observability pipeline (Vector + VictoriaLogs). Reads `connections.md` Resolved Connection Table for dependency wiring.
+
+---
+
+### Step 0: Verify Docker Runtime
+
+```bash
+docker info > /dev/null 2>&1 || { echo "Docker not running — start it first."; exit 1; }
+```
+
+### Step 1: Find Existing docker-compose
+
+Always search before creating:
+```bash
+find . -maxdepth 4 \( -name "docker-compose*.yml" -o -name "docker-compose*.yaml" \) 2>/dev/null
+```
+- Found → read fully → **extend, do not replace**
+- Not found → create from scratch
+
+### Step 1B: Read connections.md — Resolved Connection Table
+
+Before scanning the codebase or asking the user, check if `connections.md` exists and has a populated Resolved Connection Table.
+
+**If populated (all entries RESOLVED):** use it as the primary input for docker-compose generation:
+
+| Access Mode | docker-compose action |
+|---|---|
+| `local-docker` | Add a service block (DB, queue, cache) with healthcheck |
+| `discovered-endpoint` | Add `extra_hosts` entry mapping hostname → IP |
+| `user-provided` | Add to `.env` as env var, reference in app service `environment:` |
+| `port-forward` | Add `extra_hosts` entry mapping to `host.docker.internal`; document `kubectl port-forward` in comments |
+| `mock` | Add WireMock or stub service block |
+| `secret` | Add env var placeholder in `.env.example` with `# [SECRET]` |
+| `skip` | Add disable flag in `.env.example` |
+
+**If empty or has PENDING entries:** fall back to Step 2 (scan codebase) and interrogate the user.
+
+### Step 2: Scan Runtime Dependencies
+
+Read config files (`.env.example`, `application.yml`, `settings.py`, `*.properties`) to detect:
+- Databases: postgres, mysql, mongodb, redis, cassandra, HBase
+- Queues: kafka, rabbitmq, nats, pulsar
+- Cloud: S3/SQS → localstack, GCS → fake-gcs-server
+- External APIs → wiremock stubs
+
+### Step 3: docker-compose.yml Structure
+
+Every service must have:
+1. `logging: *default-logging` (json-file driver — Vector reads this)
+2. `labels: service.name` and `service.type` (Vector uses for log tagging)
+3. A `healthcheck`
+
+```yaml
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+    labels: "service.name,service.type"
+```
+
+App service must use `build:` context — never a pre-built image for local dev.
+
+### Step 4: Observability Stack (docker-compose.override.yml)
+
+Always include Vector and VictoriaLogs:
+
+```yaml
+services:
+  victorialogs:
+    image: jfrog.fkinternal.com/victoriametrics/victoria-logs:v1.3.2-victorialogs
+    ports:
+      - "9428:9428"
+    volumes:
+      - vlogs-data:/vlogs
+    command:
+      - "-storageDataPath=/vlogs"
+      - "-httpListenAddr=:9428"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9428/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  vector:
+    image: jfrog.fkinternal.com/timberio/vector:0.34-alpine
+    command: ["--config", "/etc/vector/vector.toml"]
+    volumes:
+      - ./config/vector/vector.toml:/etc/vector/vector.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      victorialogs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vector", "top", "--interval", "1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  vlogs-data:
+```
+
+**CRITICAL:** Vector must include `command: ["--config", "/etc/vector/vector.toml"]` — without it, Vector starts without config and logs are never shipped.
+
+Vector must NOT use the `*default-logging` anchor (no self-referential loop).
+
+### Step 5: `scripts/infra/start.sh`
+
+One-command boot script:
+```bash
+bash scripts/infra/start.sh           # start all services
+bash scripts/infra/start.sh --build   # rebuild app image
+bash scripts/infra/start.sh --reset   # wipe volumes + restart
+```
+
+Pipeline-first: start VictoriaLogs + Vector first, wait for healthy, then start app.
+
+### Step 6: `local-setup.sh` (repo root)
+
+Convenience wrapper:
+```bash
+./local-setup.sh            # full setup
+./local-setup.sh --build    # rebuild
+./local-setup.sh --reset    # wipe + rebuild
+./local-setup.sh --stop     # stop all
+./local-setup.sh --status   # show health
+./local-setup.sh --logs     # tail app logs (infra debug only)
+```
+
+### Step 7: `.env.example`
+
+Every environment variable the app reads must appear in `.env.example`. Mark secrets with `# [SECRET]`. Never hardcode secrets in docker-compose.yml.
+
+### Step 8: Dockerfile.local (if needed)
+
+If the repo needs a custom local Dockerfile:
+- Base image from `jfrog.fkinternal.com`
+- Copy compiled artifacts, not source
+- Set connection-related env vars from `connections.md` resolved table
+- Add `HEALTHCHECK` instruction
+
+---
+
+### Constraints
+
+- Docker must be running before all docker compose commands
+- App must be a docker-compose service — never a bare process
+- Every service needs `logging: *default-logging` + labels — Vector depends on this
+- Vector must be included — it is the only log source for **validate.md** (VictoriaLogs pipeline)
+- All Docker images from `jfrog.fkinternal.com` — never Docker Hub directly
+- Use pinned image versions — never `:latest` for core services
+- Never hardcode secrets — use env vars with safe local defaults
+- If docker-compose.yml already exists, merge — do not overwrite
+- Vector `command:` directive is mandatory — do not omit it

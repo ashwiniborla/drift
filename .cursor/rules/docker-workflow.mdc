@@ -1,0 +1,145 @@
+---
+description: Docker runtime rules — always-Docker, jfrog registry, log pipeline via VictoriaLogs, check-prereq.sh integration
+alwaysApply: true
+---
+
+## Docker Runtime
+
+Before any `docker compose` command, verify prerequisites:
+```bash
+bash scripts/agent/check-prereq.sh
+```
+If `check-prereq.sh` doesn't exist yet, run the minimum check:
+```bash
+docker info > /dev/null 2>&1 || { echo "Docker not running — start your Docker runtime first."; exit 1; }
+```
+
+Start the full stack:
+```bash
+bash scripts/infra/start.sh
+```
+
+---
+
+## Application Must Run in Docker
+
+**Never** start the app as a bare local process. Forbidden:
+- `java -jar app.jar`
+- `python main.py`
+- `./server`
+- `npm start` (outside Docker)
+- IntelliJ/IDE run configurations that start the app directly
+
+Always boot via:
+```bash
+bash scripts/agent/boot.sh --build   # compiles source → builds image → force-recreates container
+```
+
+**Critical invariants:**
+- Never `docker compose up -d app` without `--force-recreate` — Docker reuses old container silently
+- Never `docker compose build app` without compiling source first — repackages old artifact
+- `boot.sh` calls `check-prereq.sh` as its first step — if prereqs fail, no Docker commands run
+- Kill bare local processes before Docker boot: `lsof -ti :10080 :10081 | xargs kill 2>/dev/null || true`
+
+---
+
+## docker-compose Discovery
+
+Before creating a new `docker-compose.yml`, search for an existing one:
+```bash
+find . -maxdepth 4 \( -name "docker-compose*.yml" -o -name "docker-compose*.yaml" \) 2>/dev/null
+```
+- Found → extend it, do not replace
+- Not found → create with full stack (app + dependencies + Vector + VictoriaLogs)
+
+---
+
+## Docker Image Registry
+
+All images **must** be pulled from `jfrog.fkinternal.com`. Never from Docker Hub, `gcr.io`, or any other public registry.
+
+```yaml
+# Correct
+image: jfrog.fkinternal.com/postgres:<version>
+image: jfrog.fkinternal.com/timberio/vector:<version>
+
+# Wrong
+image: postgres:<version>
+```
+
+```dockerfile
+# Correct
+FROM jfrog.fkinternal.com/azul/zulu-openjdk:<version>
+```
+
+---
+
+## Pipeline-First Boot Order
+
+VictoriaLogs and Vector **must be healthy before** the app starts. Early startup logs are lost if the pipeline comes up after the app.
+
+```
+1. Start VictoriaLogs → wait for healthy
+2. Start Vector → wait for healthy
+3. Start app → wait for healthy
+```
+
+`scripts/infra/start.sh` and `boot.sh` enforce this order automatically.
+
+---
+
+## Vector Configuration
+
+Vector must include the `command` directive in docker-compose — without it, Vector starts without config:
+```yaml
+vector:
+  image: jfrog.fkinternal.com/timberio/vector:0.34-alpine
+  command: ["--config", "/etc/vector/vector.toml"]
+  volumes:
+    - ./config/vector/vector.toml:/etc/vector/vector.toml:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+---
+
+## Log Pipeline
+
+All container logs flow: `container stdout` → `Vector` → `VictoriaLogs` (queryable at `localhost:9428`).
+
+### Banned: `docker compose logs` for feature verification
+
+Never use `docker compose logs` to verify features, find errors, or debug application behavior.
+
+Always query VictoriaLogs via `bash scripts/agent/query-logs.sh` with a targeted filter:
+```bash
+# Correct
+bash scripts/agent/query-logs.sh 'feature:<sub-task-tag>' 20
+bash scripts/agent/query-logs.sh 'service:app level:ERROR' 10
+
+# Banned
+docker compose logs app
+docker compose logs -f app
+```
+
+`docker compose logs` is acceptable **only** for infra failures when VictoriaLogs itself is unreachable:
+- `docker compose logs vector` — debug why Vector is not shipping logs
+- `docker compose logs victorialogs` — debug why VictoriaLogs is not starting
+- `docker compose logs app` — only when container exits immediately before reaching VictoriaLogs
+
+### Query rules
+
+- Always include a filter: `feature:`, `service:`, `operation:`, or `level:`
+- Query `feature:<sub-task-tag>` first — retrieves all logs from new code for the current sub-task
+- The tag appears only on new code per `coding-instructions.mdc`
+- Use small limits (5–20) — never dump hundreds of log lines
+- Never declare a feature working on HTTP 200 alone — `feature:<tag>` must return results in VictoriaLogs
+
+---
+
+## Connection Awareness
+
+When Docker services need to reach external endpoints resolved in `connections.md`:
+- `local-docker` → services in the same compose network
+- `discovered-endpoint` / `user-provided` → add `extra_hosts` mapping in docker-compose
+- `port-forward` → forward must be active before boot; use `host.docker.internal` from inside container
+- Verify all connections before booting: `bash scripts/agent/check-prereq.sh` → connection verification step in **validate.md**

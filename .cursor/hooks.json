@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "bash scripts/agent/prompt-router.sh"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "bash scripts/agent/validate-guard.sh",
+        "matcher": "Write|Edit"
+      }
+    ]
+  }
+}

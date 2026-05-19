@@ -1,0 +1,691 @@
+---
+description: Coding instructions — governs how every implementation task is executed in this repo. Auto-attached on every coding task.
+alwaysApply: true
+---
+
+## THIS RULE APPLIES TO EVERY CODING TASK
+
+On any prompt that involves writing, modifying, or fixing code — follow this full process before writing any code.
+
+---
+
+## The Process
+
+```
+CODING TASK RECEIVED
+        │
+        ▼
+┌─────────────────────────┐
+│  STEP 0: READ           │  Read harness-state.md. Check pipeline-stage.
+│  harness-state.md       │
+└────────┬────────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  STEP 1: CLASSIFY       │  Design-first? Large? Small?
+│  How big is this?       │  Threshold: >1 logical change OR >2 files.
+└────────┬────────────────┘
+         │
+    ┌────┴──────┐
+    │           │
+  LARGE       SMALL
+    │           │
+    ▼           ▼
+┌───────────┐  ┌────────────────────────┐
+│ STEP 2A:  │  │ STEP 2B:               │
+│ PLAN DOC  │  │ ASSIGN FEATURE TAG     │
+│ sub-tasks │  │ + implement directly   │
+└─────┬─────┘  └──────────┬─────────────┘
+      │                   │
+      ▼                   │
+┌────────────────────┐    │
+│  STEP 3: ASSIGN    │    │
+│  FEATURE TAG       │    │
+│  per sub-task      │    │
+└────────┬───────────┘    │
+         │                │
+         ▼                ▼
+┌─────────────────────────────────────────┐
+│  STEP 4: IMPLEMENT SUB-TASK N           │
+│  - Only files in the correct arch layer │
+│  - Minimal logs on new code only        │
+│  - Write tests alongside code           │
+└────────┬────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│  STEP 5: VERIFY         │  5A: Static gates → 5B: Runtime gates.
+│                         │  Do NOT proceed until both pass.
+└────────┬────────────────┘
+         │
+    ┌────┴────────────┐
+  PASS              FAIL
+    │                 │
+    ▼                 ▼
+ Mark sub-task    Static fail → fix → re-run 5A
+ complete in      Runtime fail → RUNTIME VALIDATION FAILURE →
+ plan doc         fix → re-run 5A then 5B
+    │
+    ▼
+ More sub-tasks? ──yes──→ STEP 4 (next sub-task)
+    │ no
+    ▼
+ STEP 6: MARK PLAN COMPLETE
+ Delete / archive temp plan doc
+    │
+    ▼
+   DONE
+```
+
+---
+
+## Step 0: Read and Update harness-state.md
+
+**Before doing anything else**, read `harness-state.md` at the repo root.
+
+### Entry rules
+
+| Current `pipeline-stage` | Action |
+|---|---|
+| `UNINITIALIZED` or missing | Prerequisite not met. Run `harness-setup` first to scaffold the repo and load `AGENTS.md`. Do not proceed until `pipeline-stage` is `SCAFFOLDED`. |
+| `SCAFFOLDED` | Normal entry — proceed to Step 1 (Classify). |
+| `IMPLEMENTING` | A sub-task is already in progress. Resume from the first `PENDING` row in the Active Sub-Tasks table. |
+| `STATIC_VALIDATED` | All static gates for the current layer reported PASS; runtime verification should run next. Do not start the next layer until runtime validation completes. |
+| `VALIDATING` | Runtime validation is running (Docker, APIs, VictoriaLogs). Wait until `VALIDATED` before the next sub-task or layer. |
+| `VALIDATED` | Previous sub-task (or layer) passed runtime checks. Proceed to the next `PENDING` sub-task, or if none remain, hand off for docs update. |
+| File missing | `harness-state.md` does not exist. Run `harness-setup` first. |
+
+### State writes
+
+- **After classifying (large task):** set `pipeline-stage: PLANNING`, `task-size: LARGE`, `plan-doc: <path>`, append `PLANNING` row.
+- **After classifying (small task):** set `pipeline-stage: IMPLEMENTING`, `task-size: SMALL`, `feature-tag: <tag>`, append `IMPLEMENTING` row.
+- **When handing a sub-task to static verification (implementation done):** keep `pipeline-stage: IMPLEMENTING` until static gates pass; update Active Sub-Tasks to `IMPL: COMPLETE | VALIDATE: PENDING` as appropriate.
+- **When static gates complete for a sub-task:** set `pipeline-stage: STATIC_VALIDATED` when coordinating a layer; for a lone small task, proceed directly to runtime verification.
+- **When runtime verification starts:** set `pipeline-stage: VALIDATING`.
+- **When runtime verification passes for the sub-task/layer:** set `pipeline-stage: VALIDATED`.
+- **When all sub-tasks are validated:** keep `VALIDATED` until docs handoff.
+
+---
+
+## Step 1: Classify the Task
+
+Read the task description and determine its type.
+
+### 0. Design-First Detection (before classifying size)
+
+Before classifying as large/small, check if this task requires the **design pipeline**.
+
+| Signal | Action |
+|---|---|
+| PRD, feature spec, new capability spanning 3+ modules, new external integrations, architectural/protocol changes, implementation approach not obvious | **Design-first** — stop. Set `pipeline-stage: DESIGNING`. Route to the design pipeline: designer → HLD → LLD → planner → execute → validate. **Do NOT create a plan doc or execution plan yourself.** |
+| HLD exists but no LLD | Route to LLD → planner → execute → validate |
+| LLD exists but no execution plan | Route to planner → execute → validate |
+
+A task is **design-first** if ANY of these are true:
+- The user provides or references a **PRD** (Product Requirements Document)
+- The task involves a **new capability** (not an enhancement) spanning 3+ modules
+- The task requires **new external integrations** (new APIs, new data stores, new protocols)
+- The task involves **architectural changes** (new modules, new layers, protocol changes, migration)
+- The implementation approach is **not immediately obvious** from requirements alone
+- The user explicitly asks for design/architecture before implementation
+
+```
+⚠️  DESIGN-FIRST TASK DETECTED
+
+This task requires architectural design before implementation:
+  - Reason: <why this is design-first>
+
+Routing to designer → HLD → LLD → planner → execute → validate
+```
+
+**PRDs and new-capability tasks MUST go through designer → HLD → LLD before the planner. Skipping HLD/LLD produces architecturally ungrounded execution plans.**
+
+**When in doubt between large and design-first:** If the task involves new integrations, new modules, or protocol changes — it's design-first. If it's enhancing existing patterns in existing modules — it's large.
+
+### Small task (implement directly, no plan doc required)
+
+- Single method change or addition
+- Single config value change
+- Bug fix confined to one file
+- Rename or move with no logic change
+
+### Large task (plan doc required before any code)
+
+- New feature touching 2+ files
+- Bug fix requiring changes in multiple layers
+- Refactor of a class or module
+- Any task where the full change isn't immediately obvious
+- Any task described with multiple steps, "and", or "also"
+
+**When in doubt, treat as large.** A plan that turns out to be one sub-task costs 30 seconds. Starting a large task without a plan costs hours.
+
+---
+
+## Step 1B: Blast-Radius Analysis — Run Before Any Code
+
+Before writing a single line, determine what the change affects beyond what the user named. Run for every task, large or small.
+
+### How to analyse
+
+```bash
+# 1. Identify the class/method/module being changed
+# 2. Find all callers of that class/method across the repo
+grep -r "ClassName\|methodName" --include="*.java" --include="*.py" --include="*.go" \
+  --include="*.ts" -l 2>/dev/null | grep -v test | grep -v target
+
+# 3. Find all modules that declare a dependency on the changed module (Maven)
+grep -r "<artifactId>changed-module</artifactId>" --include="pom.xml" -l 2>/dev/null
+
+# 4. Check if the change touches a shared interface or contract
+# (interface, abstract class, DTO, protobuf, OpenAPI schema)
+# — any change here potentially breaks every implementor and every consumer
+```
+
+### What to look for
+
+| Signal | Risk |
+|---|---|
+| Changed method is `public` or `protected` | All callers in other modules affected |
+| Changed class implements a shared `interface` | All implementors and consumers affected |
+| Changed module is a transitive dependency | Cascading rebuild and potential breakage |
+| Changed config key or YAML field | All readers of that config affected |
+| Changed REST endpoint path/body/response | All API clients affected |
+| Changed Hystrix command key | Hystrix config may be stale |
+
+### Rule: pause and notify before touching out-of-scope modules
+
+If any **module, API, or class the user did NOT mention** is affected:
+
+```
+⚠️  BLAST RADIUS ALERT — unintended modules affected
+
+You asked to change: <what user requested>
+This change will also affect:
+  - <Module / class / API 1> — reason: <why>
+  - <Module / class / API 2> — reason: <why>
+
+Options:
+  A) Proceed — update all affected modules as part of this task
+  B) Scope down — change only what was asked, defer callers
+  C) Refactor interface first — backward-compatible change
+
+Please confirm before I write any code.
+```
+
+**Stop and wait.** Do not pick an option autonomously.
+
+### What does NOT require a pause
+
+- Changes confined to `private` methods with no callers outside the class
+- Changes to a class that is only instantiated in one place and that place is also being changed
+- Adding a new method to an existing class without modifying existing methods
+- Changes to test-only code that have no production impact
+
+---
+
+## Step 2A: Create Plan Doc (Large Tasks)
+
+Create `harness-docs/plans/active/<feature-tag>-plan.md`:
+
+```markdown
+# Plan: <Task Title>
+
+**Feature tag:** `<feature-tag>`
+**Created:** <date>
+**Status:** IN PROGRESS
+
+## Goal
+
+One paragraph: what and why.
+
+## Blast Radius (confirmed with user)
+
+- `<module>` — affected because: <reason> — user approved: yes/no/scoped
+
+## Affected Modules
+
+- `scorer-module` — reason
+- `fraud-recommedation-service/fraud-reco-service-app` — reason
+
+## Sub-Tasks
+
+| # | Sub-task | Module | Feature tag | Status | Validate gate |
+|---|----------|--------|-------------|--------|---------------|
+| 1 | <desc> | `<module>` | `<parent-tag>-<part>` | [ ] PENDING | tests + boot + feature-logs |
+| 2 | <desc> | `<module>` | `<parent-tag>-<part>` | [ ] PENDING | tests + boot + feature-logs |
+
+## Dependencies Between Sub-Tasks
+
+- Sub-task 2 requires sub-task 1's interface
+
+## Risks and Open Questions
+
+- List blockers and unsettled decisions
+- List any design decisions not yet settled
+
+## Done Criteria
+
+- [ ] All sub-tasks COMPLETE
+- [ ] All static + runtime gates pass for every sub-task
+- [ ] Docs updated for any new modules, endpoints, or config paths
+- [ ] Plan doc archived
+```
+
+### Sub-task decomposition rules
+
+1. **One sub-task per layer change.** Never mix persistence + service + REST in one sub-task.
+2. **Interface before implementation.** If a sub-task defines a new interface or contract, make that its own sub-task that runs first. Downstream sub-tasks depend on a stable interface.
+3. **Config before code.** Add config key before code that reads it.
+4. **Tests are part of the sub-task, not a separate one.** Every sub-task includes writing its tests. Never create a sub-task called "write tests for sub-task N."
+5. **Max ~3 files per sub-task;** if more, split.
+6. **Min:** a single trivial rename is too small — merge into adjacent sub-task.
+
+## Step 2B: Assign Feature Tag (Small Tasks)
+
+Skip plan doc. Assign a feature tag: short, lowercase, kebab-case (e.g., `fix-timeout-config`).
+
+---
+
+## Step 3: Feature Tags
+
+**Large task:** each sub-task gets its own tag derived from the parent:
+```
+Parent:    genvoy-image-scoring
+Sub 1:     genvoy-image-scoring-interface
+Sub 2:     genvoy-image-scoring-client
+Sub 3:     genvoy-image-scoring-scorer-impl
+```
+
+**Small task:** one tag for the whole change.
+
+Update the plan doc's sub-task table with each sub-task's feature tag before starting it.
+
+---
+
+## Step 4: Implement the Sub-Task
+
+### Pre-Implementation Checklist
+
+- [ ] Plan doc exists (large tasks) and this sub-task is current
+- [ ] **All plan questions resolved** — no pending clarifications, no unconfirmed external dependencies, no unresolved open questions. If any are pending, stop and ask the user first.
+- [ ] Feature tag assigned for this sub-task
+- [ ] Correct architectural layer identified (check `ARCHITECTURE.md`)
+- [ ] No previous sub-task has unresolved static or runtime verification failures
+
+### Rule 1: Minimal Debug Logs on New Code Only
+
+Add feature-tagged debug logs **only to code you are writing as part of this task**, and only where the log answers a concrete question runtime verification needs:
+
+- Did this code path execute at all?
+- Did it receive the right inputs?
+- Did it produce the right output or reach the right decision?
+- Did an external call succeed or fail?
+
+**Do not** add a mechanical entry+exit log to every new method. Ask: *"What would I look for in VictoriaLogs to confirm this feature worked?"* Log exactly that — no more.
+
+**Do NOT** add any debug logs to:
+- Pre-existing methods you are not writing
+- Methods you call but did not introduce
+- Existing branches untouched by this task
+
+**Deciding what to log — decision table:**
+
+| Question | If yes → log it |
+|---|---|
+| Is this the entry point where the new feature begins? | One log with key inputs |
+| Does this produce a result that is the whole point of the feature? | One log with the result value |
+| Is this an external call (HTTP, Hystrix, DB, queue) that could fail? | Pre-call log + post-call log with outcome |
+| Is there a branching decision whose outcome determines whether the feature activates? | One log identifying which branch was taken |
+| Is this a simple pass-through or delegation with no logic? | No log needed |
+
+**Java — new method with meaningful logic:**
+```java
+// Log the inputs that determine behaviour, and the result that proves it worked.
+public ScoringResult scoreWithGenvoy(ScoringRequest req) {
+    log.debug("operation=scoreWithGenvoy feature=<sub-task-tag> imageUrl={} scorerId={}",
+        req.getImageUrl(), req.getScorerId());
+    ScoringResult result = genvoyClient.score(req);
+    log.debug("operation=scoreWithGenvoy feature=<sub-task-tag> score={} labels={}",
+        result.getScore(), result.getLabels());
+    return result;
+}
+```
+
+**Java — new external call inside an existing method:**
+```java
+// Only the new call gets a log — the surrounding existing code does not
+ImageResult img = imageClient.fetch(event.getImageUrl());               // NEW
+log.debug("operation=processEvent feature=<sub-task-tag>"               // NEW
+    + " imageUrl={} fetchStatus={}", event.getImageUrl(), img.status()); // NEW
+```
+
+**Java — new branch that activates a feature:**
+```java
+// One log to confirm which path was taken and why
+if (config.isGenvoyEnabled()) {                                         // NEW
+    log.debug("operation=runScorers feature=<sub-task-tag>"             // NEW
+        + " branch=genvoy scorerId={}", scorer.getId());                // NEW
+    results.add(genvoyScorer.score(req));                               // NEW
+}
+```
+
+**Python — new method:**
+```python
+def score_with_genvoy(req):
+    result = genvoy_client.score(req)
+    log.debug("score_complete", operation="scoreWithGenvoy", feature="<sub-task-tag>",
+              score=result.score, labels=result.labels)
+    return result
+```
+
+**Go — new method:**
+```go
+func (s *Scorer) ScoreWithGenvoy(ctx context.Context, req ScoringRequest) (ScoringResult, error) {
+    result, err := s.genvoyClient.Score(ctx, req)
+    if err != nil {
+        slog.Error("genvoy score failed", "operation", "ScoreWithGenvoy",
+            "feature", "<sub-task-tag>", "error", err)
+        return ScoringResult{}, err
+    }
+    slog.Debug("genvoy score complete", "operation", "ScoreWithGenvoy",
+        "feature", "<sub-task-tag>", "score", result.Score)
+    return result, nil
+}
+```
+
+### Rule 2: Log Level Discipline
+
+| Situation | Level |
+|-----------|-------|
+| Normal entry/exit/branch | DEBUG |
+| Recoverable condition, retry, fallback | WARN |
+| Unrecoverable error, exception | ERROR |
+| High-frequency path (called >1/sec) | DEBUG only — never INFO |
+| Startup / config load | INFO (one-time, not per-request) |
+
+Never use INFO for per-request paths. INFO is for one-time lifecycle events (startup, shutdown, config load).
+
+### Rule 3: Structural Logging Requirements
+
+Every log line in a changed method **must** contain all of these structured fields:
+
+| Field | Value | Example |
+|-------|-------|---------|
+| `operation` | The method name, exactly | `operation=processPayment` |
+| `feature` | The sub-task feature tag | `feature=genvoy-scoring-client` |
+| `status` | `entry`, `exit`, or `error` | `status=entry` |
+| Context fields | Any IDs or values relevant to debugging | `orderId=123 userId=456` |
+| `durationMs` | Elapsed time — EXIT logs only | `durationMs=42` |
+| `error` | Exception message — ERROR logs only | `error=timeout after 30s` |
+
+Runtime verification uses `feature:<tag>` and `status:entry`/`status:exit` as structured queries. If these fields are absent, the runtime validation gate **will fail** and you must fix logs before re-running validation.
+
+### Rule 4: Arch Layer Compliance
+
+Before placing a new file or method, verify the layer:
+
+```
+fraud-reco-service-app   ← REST resources, Guice modules, health checks (top layer)
+       ↓ depends on
+scorer-module            ← Scorer implementations, GenAI client wrappers
+       ↓ depends on
+fraud-scoring-app-sdk    ← Scoring contracts, interfaces, DTOs
+       ↓ depends on
+fraud-signal-extractor   ← Signal extraction logic
+       ↓ depends on
+fraud-commons / s13n-commons  ← Shared entities, utilities (bottom layer)
+```
+
+**Never import upward.** `scorer-module` must not import from `fraud-reco-service-app`. If you need a class from a higher layer, it belongs in a lower shared module instead.
+
+### Rule 5: Tests Are Part of the Sub-Task
+
+Write tests alongside implementation — never as a follow-up:
+
+- **Unit test**: every new class with logic gets a `*Test.java` / `*_test.py` / `*_test.go` in the same module
+- **Integration test**: every new service method that calls external dependencies gets a mock-backed integration test
+- **Coverage**: >80% line + branch coverage on new code (static gate enforced)
+
+### Rule 6: External Call Observability (Metrics + Error Logs)
+
+Every new external call (HTTP API, database, cache, queue, gRPC) **must** publish metrics and log errors:
+
+**Required metrics:**
+
+| Metric | What | Example |
+|---|---|---|
+| Latency | Call start → response | `timer("external.<service>.<op>.latency")` |
+| Status codes | HTTP status / success-failure | `meter("external.<service>.<op>.status.<code>")` |
+| Error rate | Exceptions thrown | `meter("external.<service>.<op>.errors")` |
+
+**Required error logging:** Every `catch` block around an external call **must** log at ERROR level:
+```java
+log.error("operation={} feature={} status=error target={} error={} durationMs={}",
+    "callServiceX", "<feature-tag>", targetUrl, e.getMessage(), durationMs, e);
+```
+
+**Rules:**
+- Never swallow exceptions silently — at minimum log the error and publish the error metric
+- Successful calls: log at DEBUG with operation, target, status code, duration
+- Failed calls: log at ERROR with operation, target, error message, duration, and full exception
+- Metrics naming: `external.<service-name>.<operation>` for consistent dashboards
+- DB calls: log query type + table/keyspace + duration — never log actual query data (PII risk)
+
+### Rule 7: Circuit Breaker for External Calls
+
+Every new external call **must** be wrapped in a circuit breaker — Hystrix (if repo uses it) or Resilience4j (newer stacks):
+
+| External call type | Circuit breaker? |
+|---|---|
+| HTTP/gRPC to another service | **Yes** — always |
+| External database | **Yes** — longer timeout |
+| Cache (Redis, Memcached) | **Yes** — short timeout + skip-cache fallback |
+| Queue publish (Kafka, RabbitMQ) | **Yes** — async retry |
+| Local in-memory / file read | **No** |
+
+**Required configuration:**
+
+| Parameter | Guideline |
+|---|---|
+| Command key | `<ServiceName><Operation>Command` |
+| Timeout | Match dependency SLA (200-1000ms HTTP, 50-200ms cache) |
+| Fallback | Safe default, cached value, or degraded response — never naked throw |
+| Thread pool | Isolate per dependency |
+| Error threshold | 50% errors in 10s window (adjust per dependency) |
+
+**Rules:**
+- Check `AGENTS.md` and existing code for the repo's circuit breaker library — use whatever is already in use
+- Document fallback behavior in the plan doc — "what happens when this dependency is down?"
+- Register health check for circuit breaker state if repo uses Dropwizard HealthChecks
+- Never set timeout to 0 or MAX_VALUE — every external call must have a finite timeout
+- Log at WARN when fallback is invoked — operational signal
+
+### Rule 8: Imports at Top of File
+
+All import statements **must** be at the top of the file, before any class/function definitions:
+
+- **Java/Kotlin:** After `package`, before class. Group: (1) java/javax (2) third-party (3) project — blank lines between groups
+- **Python:** After docstring and `__future__`. PEP 8: (1) stdlib (2) third-party (3) local — blank lines between groups. No inline imports unless circular dependency (document with comment)
+- **Go:** Single `import()` block. Group: (1) stdlib (2) third-party (3) project
+- **TypeScript/JS:** Before any code. Group: (1) node/framework (2) third-party (3) local
+
+### Coding sequence per sub-task
+1. Implement with minimal feature-tagged logs on new code
+2. Write tests for this sub-task
+3. Run arch check — no boundary violations
+4. Run static gates (Step 5A), then runtime gates (Step 5B)
+5. Mark sub-task complete in plan doc → start next
+
+---
+
+## Step 5: Verify This Sub-Task
+
+After implementing the sub-task, verification is **split**: Step 5A owns static checks; Step 5B owns Docker, APIs, and VictoriaLogs. Runtime verification does not patch application code — it emits `RUNTIME VALIDATION FAILURE` for you to fix in the code and re-verify.
+
+**Orchestration:** For large tasks, run parallel static verification per subtask in a layer, then one runtime verification for that layer (bisect on failure). For small tasks, run 5A then 5B sequentially.
+
+### Step 5A — Static verification
+
+Confirm before static run:
+
+- [ ] Every new code path has at least one log line with `feature=<sub-task-tag>` (for later VictoriaLogs queries)
+- [ ] All tests for this sub-task are written
+- [ ] No compilation errors (build affected modules: `mvn install -DskipTests -pl <modules> -am`)
+
+**Typical commands (diff-aware):**
+
+```bash
+git diff --name-only HEAD
+mvn install -DskipTests -pl <changed-modules>,fraud-recommedation-service/fraud-reco-service-app -am
+mvn test -pl <changed-modules>
+# + coverage, lint, arch checks
+```
+
+**Static completion gate** — emit:
+
+```
+SUBTASK IMPLEMENTATION COMPLETE
+```
+
+Update `harness-state.md`: `pipeline-stage: STATIC_VALIDATED` when a full layer is ready for runtime; otherwise proceed to 5B.
+
+### Step 5B — Runtime verification
+
+**Typical commands:**
+
+```bash
+bash scripts/agent/check-prereq.sh
+bash scripts/agent/boot.sh
+bash scripts/agent/verify-pipeline.sh
+# Exercise the changed path with real request data (ask user if undocumented)
+bash scripts/agent/query-logs.sh 'feature:<sub-task-tag>' 20
+bash scripts/agent/query-logs.sh 'feature:<sub-task-tag> level:error' 10
+bash scripts/agent/api-snapshot.sh
+```
+
+**Runtime completion gate — ALL must pass:**
+
+```
+Docker stack    [healthy]
+Log pipeline    [VictoriaLogs returns results for service:app]
+Feature logs    [query-logs 'feature:<sub-task-tag>' returns results]
+Feature errors  [query-logs 'feature:<sub-task-tag> level:error' returns 0]
+Runtime errors  [0 ERROR-level logs across entire app where applicable]
+API responses   [api-snapshot.sh passes — actual vs expected]
+```
+
+### On failure
+
+| Failed in | Who fixes | Action |
+|-----------|-----------|--------|
+| Build / tests / coverage / lint / arch | You (code fix) | Static fix loop; re-run 5A |
+| Docker / logs / API / mismatch | You (code/config fix) | `RUNTIME VALIDATION FAILURE` emitted; patch and re-run 5A then 5B |
+
+**Stop only if:** same root cause fails 3 times, or blocked on secret/credential/design decision (escalate to user).
+
+### Runtime test input — always ask, never assume
+
+| Situation | Action |
+|---|---|
+| User provided curl / sample payload / test fixture | Use it exactly |
+| `harness-docs/PRODUCT_SENSE.md` or `api-snapshot.sh` has documented example | Use that |
+| Integration tests contain a valid request fixture | Use that |
+| None of the above | **Stop and ask the user** |
+
+```
+⚠️  RUNTIME TEST INPUT REQUIRED
+
+To exercise <METHOD> <path> I need:
+  1. Request body — required fields: <field1>, <field2>, ...
+  2. <Auth token / header / path param if missing>
+
+Please provide the input and I will continue.
+```
+
+**Never fill placeholders with invented values.** Exceptions: health checks, smoke-test boot checks, or user explicitly said "use dummy data."
+
+### Update Plan Doc After Each Sub-Task
+
+After runtime verification passes for a sub-task (or layer), update the plan doc:
+
+```markdown
+| 1 | <description> | `scorer-module` | [x] COMPLETE | all gates passed |
+```
+
+---
+
+## Step 6: Mark the Plan Complete
+
+After all sub-tasks pass validation:
+
+1. Update the plan doc status to `COMPLETE`
+2. Verify the final state of the docs (run the doc-staleness check)
+3. Update `AGENTS.md`, `ARCHITECTURE.md`, or `harness-docs/` files for any new modules, endpoints, or config paths introduced
+4. Archive the plan doc by moving it to `harness-docs/plans/completed/<feature-tag>-plan.md`
+5. Report to the user:
+   - What was built
+   - Which sub-tasks were completed
+   - Static + runtime verification results for each
+   - Any docs that were updated
+
+---
+
+## Quick Reference — Debug Log Checklist
+
+Use this before marking any sub-task ready for validation.
+
+**Scope: only new code written for this task. Pre-existing code is not touched.**
+
+**For each piece of new code, ask:**
+- [ ] Does `feature:<sub-task-tag>` in VictoriaLogs prove this code path executed?
+- [ ] Are the key inputs logged — the ones that determine the behaviour?
+- [ ] Is the outcome logged — the result or decision that proves the feature worked?
+- [ ] For every new external call: is the call outcome (success/failure/duration) logged?
+- [ ] For every new external call: are latency + status code + error rate metrics published? (Rule 6)
+- [ ] For every new external call: is it wrapped in a circuit breaker with timeout + fallback? (Rule 7)
+- [ ] For every new branch that activates the feature: is the branch decision logged?
+- [ ] Are all imports at the top of the file, properly grouped? (Rule 8)
+
+**All feature-tagged log lines must:**
+- [ ] Include `feature=<sub-task-tag>` — the VictoriaLogs query key
+- [ ] Include `operation=<methodName>` — the method where the log lives
+- [ ] Use DEBUG level (not INFO on per-request paths)
+- [ ] Contain no sensitive data (no API keys, tokens, passwords, PII)
+
+**Do not add a log just because a method exists.** A simple getter, a delegation, a constructor — these don't need logs. Log only where it proves something about the feature's correctness.
+
+**VictoriaLogs verification (run after exercising the endpoint):**
+```bash
+# Must return results — proves the new code path was reached
+bash scripts/agent/query-logs.sh 'feature:<sub-task-tag>' 20
+
+# Must return 0 — no errors from new code
+bash scripts/agent/query-logs.sh 'feature:<sub-task-tag> level:error' 10
+```
+
+If the first query returns nothing: the new code path was not reached, or `feature=<tag>` is missing from its logs. Fix before declaring the sub-task done.
+
+---
+
+## Important Constraints
+
+1. **Never start coding without a plan** for tasks touching more than one logical change.
+2. **Add only the logs runtime verification needs.** Log what proves the feature executed and produced the right result — not a mechanical entry/exit on every method. A simple delegation or getter needs no log. An external call, a branching decision, or a computed result does.
+3. **Only new code gets the feature tag.** `feature:<tag>` in VictoriaLogs must only appear in code written for this task — that keeps the query unambiguous. Never add the tag to pre-existing methods.
+4. **Never move to the next sub-task** while the current one has any failing static or runtime gate.
+5. **Never use INFO for per-request paths.** Always DEBUG for operations that run on every request.
+6. **Never log sensitive data** — no API keys, tokens, passwords, or PII in any log line.
+7. **Never skip runtime verification** because "the build passed." Runtime behavior must be verified via Docker + VictoriaLogs + APIs.
+8. **Plan doc is a living document** — update sub-task status after every validation pass, not at the end.
+9. **Feature tag per sub-task**, not one per whole task — it keeps VictoriaLogs queries focused on exactly the code being validated right now.
+10. **Never add an external call without metrics, error logging, and a circuit breaker.** Silent external failures cause cascading production incidents.
+11. **Never put imports anywhere except the top of the file.** Inline imports are only acceptable for documented circular dependency workarounds.
+
+---
+
+## When This Rule Does NOT Apply
+
+- Pure documentation edits
+- Read-only code exploration or questions
+- Variable/method renames with zero logic change
+- Comment-only or formatting-only edits

@@ -1,0 +1,137 @@
+---
+description: Repo documentation scaffold — generate AGENTS.md, ARCHITECTURE.md, and full harness-docs/ knowledge base by analyzing the actual codebase
+alwaysApply: false
+---
+
+## Repo Docs Initialization
+
+When a repo lacks `harness-docs/` or `AGENTS.md`, generate a complete knowledge base from the actual codebase. Never make up content — only write what you find.
+
+---
+
+### Step 1: Explore the Repository
+
+Before writing a single file, thoroughly explore:
+
+1. Read root structure, README, and manifests (pom.xml, go.mod, package.json, pyproject.toml)
+2. Identify tech stack (language, framework, runtime, database, cloud)
+3. Identify the product domain — what does this software do?
+4. Identify architectural patterns (monolith, microservices, monorepo, layered)
+5. Find existing tests, CI config, deployment setup
+6. Scan cross-cutting concerns: auth, observability, feature flags, caching
+7. Find any existing docs, wikis, inline comments that reveal intent
+
+Use Glob and Grep extensively. Read key source files. Build real understanding before writing.
+
+---
+
+### Step 2: Generate This Structure
+
+```
+AGENTS.md                        ← Map/table of contents, max 150 lines
+ARCHITECTURE.md                  ← Domain map, package layering rules
+harness-docs/
+├── design-harness-docs/
+│   ├── index.md                 ← Catalogue of design decisions
+│   └── core-beliefs.md          ← Agent-first operating principles
+├── exec-plans/
+│   ├── active/                  ← Placeholder for active plans
+│   ├── completed/               ← Placeholder for completed plans
+│   └── tech-debt-tracker.md     ← Known technical debt catalogue
+├── generated/
+│   └── db-schema.md             ← Database schema or API contracts
+├── product-specs/
+│   ├── index.md                 ← Product features catalogue
+│   └── overview.md              ← High-level product description
+├── references/
+│   └── stack-reference.md       ← Key libraries, versions, usage patterns
+├── plans/                       ← Sub-task plan docs (created by coding-instructions)
+├── DESIGN.md                    ← Design system / UI patterns (if frontend)
+├── LOCAL_DEV.md                 ← Local setup: prerequisites, env vars, services, debug
+├── PLANS.md                     ← How to write execution plans
+├── PRODUCT_SENSE.md             ← Product values, user personas, north-star metrics
+├── QUALITY_SCORE.md             ← Quality grades per domain and known gaps
+├── RELIABILITY.md               ← SLOs, SLIs, latency budgets, critical paths
+├── SECURITY.md                  ← Auth model, secrets handling, compliance
+├── SONAR.md                     ← Quality gate thresholds
+├── TEST.md                      ← Testing strategy, framework, coverage targets
+└── APP_LEGIBILITY.md            ← Agent scripts, observability stack docs
+```
+
+---
+
+### AGENTS.md Rules
+
+- **Max 150 lines** — move extras to `harness-docs/`
+- Must include:
+  - Repo description (2–3 sentences)
+  - Build commands (test, lint, build, boot, coverage)
+  - Module map table (module | purpose)
+  - Ports table (port | service)
+  - Environment variables table
+  - Key config paths table
+  - Golden rules (5–10 non-negotiable constraints)
+  - Links to key docs
+- Written for AI agents — structured, terse, no narrative prose
+- Cross-link to detailed docs: "See `harness-docs/RELIABILITY.md` for SLO details"
+
+---
+
+### ARCHITECTURE.md Rules
+
+- Module dependency graph (ASCII or Mermaid)
+- Layer order: which modules can import which (never import upward)
+- Allowed and forbidden dependency directions with one-line rationale
+- Known violations documented as tech debt
+- Cross-cutting concern patterns (auth, logging, config)
+
+---
+
+### LOCAL_DEV.md Must Include
+
+- Prerequisites: exact runtime versions, CLI tools
+- Environment variables: full table with `[SECRET]` markers
+- External services: how to run locally (Docker, mock, port-forward)
+- Local startup: ordered steps from zero to running app
+- `connections.md` reference: how external deps are resolved
+- Common debug scenarios: debugger setup, single test run, state reset
+
+### TEST.md Must Include
+
+- Test framework, commands (all tests / single test / with coverage)
+- Coverage requirement: **>80% line and branch on new code**
+- Test categories: Unit / Integration / E2E — when each is required
+- Agent rules: tests alongside code, never after; mock only at system boundaries
+- Diff-aware test command: `mvn test -pl <changed-modules>`
+
+### PRODUCT_SENSE.md Must Include
+
+- Product overview and user personas
+- Key API endpoints with input/output contracts
+- Business rules and edge cases
+- Feature flags and their effects
+- Sample request/response pairs for key endpoints
+
+### RELIABILITY.md Must Include
+
+- SLOs for latency, availability, error rate
+- Critical paths and their timeout budgets
+- Hystrix command configurations and circuit breaker thresholds
+- Retry policies and backoff strategies
+
+### QUALITY_SCORE.md Must Include
+
+- Current quality grades per module (A-F)
+- Known gaps and improvement priorities
+- Coverage metrics per module
+
+---
+
+### Constraints
+
+- Never overwrite existing files — read first, incorporate existing content
+- Never make up library names, endpoints, or file paths not in the repo
+- Use `<!-- TODO: Fill in after human review -->` for unknowns
+- Cross-link docs aggressively
+- Progressive disclosure: AGENTS.md is the map, harness-docs/ files are the detail
+- Every doc must be accurate to the current codebase — verify claims by reading source

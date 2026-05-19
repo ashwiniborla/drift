@@ -1,0 +1,236 @@
+---
+description: App legibility — wire up health endpoints, structured JSON logging, and agent scripts so the app is fully observable at runtime
+alwaysApply: false
+---
+
+## App Legibility Setup
+
+Make the running application directly inspectable by an agent: boot, query logs, verify behavior — all without human copy-pasting.
+
+---
+
+### Step 1: Detect the Stack
+
+Before generating anything, explore the repository:
+
+1. **Identify language + framework**: Java/Dropwizard/Spring Boot, Python/FastAPI/Flask/Django, Go/Echo/Gin
+2. **Find existing observability**: health endpoints, logging config, metrics, tracing
+3. **Find startup command**: Dockerfile, docker-compose.yml, Makefile, README
+4. **Detect service type**: REST API, gRPC, background worker, CLI
+5. **Find ports and external dependencies**
+
+---
+
+### Step 2: Generate Agent Scripts
+
+The app runs in Docker via `docker compose` — never as a bare process.
+
+#### `scripts/agent/boot.sh`
+
+Pipeline-first, compile-before-build:
+1. Run `check-prereq.sh` — abort if Docker prerequisites not met
+2. Check VictoriaLogs + Vector are up — start infra if not
+3. Compile source if changed (mvn/pip/go/npm — auto-detected from diff)
+4. Build Docker image if artifact or Dockerfile changed
+5. `docker compose up -d --force-recreate app`
+6. Wait for healthcheck (configurable timeout, default 120s)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+# Pre-flight
+bash scripts/agent/check-prereq.sh || exit 1
+
+# Pipeline-first: ensure observability is up
+docker compose ps victorialogs --format '{{.Health}}' 2>/dev/null | grep -q healthy || \
+  bash scripts/infra/start.sh
+
+# Compile if source changed (Java example)
+if [ "$1" = "--build" ] || find . -name "*.java" -newer target/ 2>/dev/null | head -1 | grep -q .; then
+  mvn clean install -DskipTests -pl fraud-recommedation-service/fraud-reco-service-app -am
+fi
+
+# Build image if JAR or Dockerfile changed
+docker compose build app
+
+# Force-recreate always
+docker compose up -d --force-recreate app
+
+# Wait for health
+echo "Waiting for app health..."
+for i in $(seq 1 60); do
+  curl -sf http://localhost:10081/healthcheck > /dev/null 2>&1 && { echo "App healthy."; exit 0; }
+  sleep 2
+done
+echo "App failed to become healthy within 120s" && exit 1
+```
+
+#### `scripts/agent/check-prereq.sh`
+
+Pre-flight checks before any Docker operation:
+1. Rancher Desktop running (macOS) — `rdctl list`, `pgrep`, or `~/.rd/bin/docker`
+2. Docker daemon responsive — `timeout 5 docker info`
+3. `docker compose` V2 available — `docker compose version`
+4. `docker-compose.yml` exists (warning only)
+
+Exit 0 only when checks 1–3 pass. Print actionable fix for each failure.
+
+#### `scripts/agent/health.sh`
+
+```bash
+#!/usr/bin/env bash
+# Java/Dropwizard
+curl -sf http://localhost:10081/healthcheck | python3 -m json.tool
+# Python/FastAPI
+# curl -sf http://localhost:8000/health | python3 -m json.tool
+# Go
+# curl -sf http://localhost:8080/health | python3 -m json.tool
+```
+
+#### `scripts/agent/query-logs.sh`
+
+```bash
+#!/usr/bin/env bash
+QUERY="${1:?Usage: query-logs.sh '<expr>' [limit]}"
+LIMIT="${2:-20}"
+VICTORIALOGS_URL="${VICTORIALOGS_URL:-http://localhost:9428}"
+curl -sf "${VICTORIALOGS_URL}/select/logsql/query" \
+  --data-urlencode "query=${QUERY}" \
+  --data-urlencode "limit=${LIMIT}" | python3 -m json.tool 2>/dev/null || \
+  curl -sf "${VICTORIALOGS_URL}/select/logsql/query" \
+    --data-urlencode "query=${QUERY}" \
+    --data-urlencode "limit=${LIMIT}"
+```
+
+#### `scripts/agent/verify-pipeline.sh`
+
+Verify the full log pipeline: container → Vector → VictoriaLogs + structured fields.
+
+```bash
+#!/usr/bin/env bash
+echo "Checking VictoriaLogs..."
+curl -sf http://localhost:9428/health || { echo "VictoriaLogs not healthy"; exit 1; }
+
+echo "Checking Vector..."
+docker compose ps vector --format '{{.Health}}' | grep -q healthy || { echo "Vector not healthy"; exit 1; }
+
+echo "Querying for recent logs..."
+bash scripts/agent/query-logs.sh 'service:app' 3 || { echo "No logs found"; exit 1; }
+
+echo "Pipeline OK ✓"
+```
+
+#### `scripts/agent/api-snapshot.sh`
+
+Exercises all live API endpoints and validates:
+1. HTTP status is 2xx
+2. Response body is valid JSON
+3. Required top-level fields are present
+
+```bash
+#!/usr/bin/env bash
+VERBOSE="${1:-}"
+BASE_URL="${APP_BASE_URL:-http://localhost:10080}"
+ADMIN_URL="${APP_ADMIN_URL:-http://localhost:10081}"
+FAILURES=0
+
+check_endpoint() {
+  local method="$1" url="$2" desc="$3" body="${4:-}"
+  local args=(-sf -w "\n%{http_code}" -X "$method")
+  [ -n "$body" ] && args+=(-H "Content-Type: application/json" -d "$body")
+  RESPONSE=$(curl "${args[@]}" "$url" 2>/dev/null)
+  HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+  BODY=$(echo "$RESPONSE" | sed '$d')
+  if [[ "$HTTP_CODE" =~ ^2 ]]; then
+    echo "✓ $desc ($HTTP_CODE)"
+    [ "$VERBOSE" = "--verbose" ] && echo "$BODY" | python3 -m json.tool 2>/dev/null
+  else
+    echo "✗ $desc (HTTP $HTTP_CODE)"
+    FAILURES=$((FAILURES + 1))
+  fi
+}
+
+check_endpoint GET "$ADMIN_URL/healthcheck" "Health check"
+# Add more endpoints as discovered
+
+exit $FAILURES
+```
+
+#### `scripts/agent/db-snapshot.sh`
+
+Inspect database state — adapt per detected DB.
+
+---
+
+### Step 3: Health Endpoints
+
+Every service must expose a `/health` endpoint:
+
+| Stack | Endpoint | Notes |
+|---|---|---|
+| Java (Dropwizard) | `localhost:10081/healthcheck` | Built-in |
+| Java (Spring Boot) | `localhost:8080/actuator/health` | Enable in `application.yml` |
+| Python (FastAPI) | `localhost:8000/health` | Add `@app.get("/health")` |
+| Go | `localhost:8080/health` | JSON handler with `{"status":"ok","timestamp":...}` |
+
+---
+
+### Step 4: Structured JSON Logging
+
+Logs must be structured JSON to stdout so Vector can parse and route to VictoriaLogs.
+
+**Java (Dropwizard/Spring Boot):**
+
+Add `logstash-logback-encoder` to `pom.xml`:
+```xml
+<dependency>
+  <groupId>net.logstash.logback</groupId>
+  <artifactId>logstash-logback-encoder</artifactId>
+  <version>7.4</version>
+</dependency>
+```
+
+Configure `logback.xml`:
+```xml
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <includeMdcKeyName>loggingId</includeMdcKeyName>
+      <includeMdcKeyName>operation</includeMdcKeyName>
+      <includeMdcKeyName>feature</includeMdcKeyName>
+    </encoder>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>
+```
+
+Required fields: `timestamp`, `level`, `message`, `logger`, `operation`.
+
+**Python:** Use `structlog` with JSON renderer.
+**Go:** Use `log/slog` with `slog.NewJSONHandler(os.Stdout, nil)`.
+
+Logging pattern for new code (per `coding-instructions.mdc`): add `feature=<tag>` only to new code, only where it proves the feature worked.
+
+---
+
+### Step 5: `harness-docs/APP_LEGIBILITY.md`
+
+Document all generated scripts, their usage, and the observability stack.
+
+---
+
+### Constraints
+
+- App must run in Docker via `docker compose` — never as a bare process
+- Logs to stdout as JSON — never to files
+- All Docker images from `jfrog.fkinternal.com` — never Docker Hub
+- Do not add observability to generated code, migrations, or vendor directories
+- If health endpoints already exist, document them — do not duplicate
+- `boot.sh` must call `check-prereq.sh` as its first action
+- Vector `command: ["--config", "/etc/vector/vector.toml"]` is mandatory in docker-compose
