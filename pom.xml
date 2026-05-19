@@ -18,7 +18,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <dropwizard.version>2.0.27</dropwizard.version>
         <junit.version>5.10.0</junit.version>
-        <lombok.version>1.18.30</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
         <guice.version>7.0.0</guice.version>
         <mockito.version>5.6.0</mockito.version>
         <junit4.version>4.13.1</junit4.version>

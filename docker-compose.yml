@@ -1,8 +1,10 @@
-# docker-compose.yml — Drift Local Observability Stack
+# docker-compose.yml — Drift Local Development Stack
 #
 # What this file starts:
 #   - VictoriaLogs  (log storage, :9428)
 #   - Vector        (log shipper: tails app logs → VictoriaLogs)
+#   - drift-api     (Dropwizard HTTP service, app :8000, admin :8001)
+#   - drift-worker  (Dropwizard Temporal worker, app :7200, admin :7201)
 #
 # What this file does NOT start (already running in Rancher Desktop):
 #   - Temporal      (:7233 gRPC, :8080 UI)
@@ -10,15 +12,21 @@
 #   - Redis Sentinel (:26379, :6379)
 #
 # Usage:
-#   docker compose up -d             # start observability stack
-#   docker compose down              # stop observability stack
-#   docker compose logs -f vector    # tail vector log shipper
+#   docker compose up -d                        # start full stack (observability + api + worker)
+#   docker compose up -d victorialogs vector    # start observability only
+#   docker compose down                         # stop all services
+#   docker compose logs -f drift-api            # tail API logs
+#   docker compose logs -f drift-worker         # tail Worker logs
+#   docker compose logs -f vector               # tail vector log shipper
 #
-# App services (drift-api, drift-worker) are started separately via
-# scripts/agent/boot.sh — they are NOT defined here to avoid duplicating
-# the build step. Vector is configured to tail their log files.
+# Prerequisites:
+#   - Build JARs first: mvn clean package -DskipTests -pl java-sdk,commons,api,worker -am
+#   - .env file at repo root with required variables (see .env.example)
+#
+# Alternatively, use boot.sh for native JVM process mode:
+#   bash scripts/agent/boot.sh                  # native processes (app-runtime: local)
+#   bash scripts/agent/boot.sh --docker         # Docker Compose mode (delegates here)
 
-version: "3.9"
 
 services:
 
@@ -27,7 +35,7 @@ services:
   # Receives logs from Vector, serves LogsQL query API on :9428
   # ─────────────────────────────────────────────────────────────────────────
   victorialogs:
-    image: victoriametrics/victoria-logs:v0.28.0
+    image: victoriametrics/victoria-logs:v0.28.0-victorialogs
     container_name: drift-victorialogs
     restart: unless-stopped
     ports:
@@ -39,11 +47,11 @@ services:
       - -retentionPeriod=7d
       - -httpListenAddr=:9428
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9428/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
   # ─────────────────────────────────────────────────────────────────────────
   # Vector — log collection agent
