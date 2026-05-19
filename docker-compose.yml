@@ -1,0 +1,71 @@
+# docker-compose.yml — Drift Local Observability Stack
+#
+# What this file starts:
+#   - VictoriaLogs  (log storage, :9428)
+#   - Vector        (log shipper: tails app logs → VictoriaLogs)
+#
+# What this file does NOT start (already running in Rancher Desktop):
+#   - Temporal      (:7233 gRPC, :8080 UI)
+#   - HBase         (:2181 ZooKeeper, :9090 Thrift)
+#   - Redis Sentinel (:26379, :6379)
+#
+# Usage:
+#   docker compose up -d             # start observability stack
+#   docker compose down              # stop observability stack
+#   docker compose logs -f vector    # tail vector log shipper
+#
+# App services (drift-api, drift-worker) are started separately via
+# scripts/agent/boot.sh — they are NOT defined here to avoid duplicating
+# the build step. Vector is configured to tail their log files.
+
+version: "3.9"
+
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # VictoriaLogs — single-node log storage backend
+  # Receives logs from Vector, serves LogsQL query API on :9428
+  # ─────────────────────────────────────────────────────────────────────────
+  victorialogs:
+    image: victoriametrics/victoria-logs:v0.28.0
+    container_name: drift-victorialogs
+    restart: unless-stopped
+    ports:
+      - "9428:9428"
+    volumes:
+      - victorialogs_data:/vlogs
+    command:
+      - -storageDataPath=/vlogs
+      - -retentionPeriod=7d
+      - -httpListenAddr=:9428
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9428/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Vector — log collection agent
+  # Tails log files written by drift-api and drift-worker (when running as
+  # native processes), parses them, and forwards to VictoriaLogs.
+  # ─────────────────────────────────────────────────────────────────────────
+  vector:
+    image: timberio/vector:0.38.0-debian
+    container_name: drift-vector
+    restart: unless-stopped
+    depends_on:
+      victorialogs:
+        condition: service_healthy
+    volumes:
+      - ./scripts/infra/vector.yaml:/etc/vector/vector.yaml:ro
+      # Mount the host log directory so Vector can tail app log files
+      # when services run as native processes (app-runtime: local)
+      - /tmp/drift-logs:/var/log/drift:ro
+    command: ["--config", "/etc/vector/vector.yaml"]
+    environment:
+      - VECTOR_LOG=info
+
+volumes:
+  victorialogs_data:
+    driver: local

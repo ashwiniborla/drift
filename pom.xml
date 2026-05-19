@@ -12,6 +12,7 @@
 
     <properties>
         <revision>1.0-SNAPSHOT</revision>
+        <archunit.version>1.2.1</archunit.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -444,6 +445,13 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit4.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- ArchUnit: architecture rule enforcement via ArchUnit JUnit 5 integration -->
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
