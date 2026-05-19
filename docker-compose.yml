@@ -68,8 +68,9 @@ services:
     volumes:
       - ./scripts/infra/vector.yaml:/etc/vector/vector.yaml:ro
       # Mount the host log directory so Vector can tail app log files
-      # when services run as native processes (app-runtime: local)
-      - /tmp/drift-logs:/var/log/drift:ro
+      # when services run as native processes (app-runtime: local).
+      # Must be under $HOME — Rancher Desktop (Lima) does not share /tmp.
+      - ${HOME}/.drift-logs:/var/log/drift:ro
     command: ["--config", "/etc/vector/vector.yaml"]
     environment:
       - VECTOR_LOG=info
