@@ -1,105 +1,30 @@
-# Harness State
+pipeline-stage: VALIDATED
+task-type: DESIGN_FIRST
+feature-branch: feature/retry-timeout-config
+confluence-parent-page: 474522469
+confluence-base-url: https://flipkart.atlassian.net/wiki
+confluence-review: ENABLED
+jira-integration: SKIP
+github-integration: SKIP
+sonar-project-key: SKIP
+feature-tag: retry-timeout-config
 
-session-id: drift-harness-setup-2026-05-19
-pipeline-stage: SCAFFOLDED
-task-type: UNINITIALIZED
-feature-branch:
-feature-branch-base:
-feature-branch-created-at:
+prd-confluence-page-id: 474620696
+prd-confluence-page-url: https://flipkart.atlassian.net/wiki/pages/viewpage.action?pageId=474620696
+prd-local-path: harness-docs/design/active/retry-timeout-config-prd-expanded.md
 
-## Repo Classification
+hld-confluence-page-id: 474588363
+hld-confluence-page-url: https://flipkart.atlassian.net/wiki/pages/viewpage.action?pageId=474588363
+hld-local-path: harness-docs/design/active/retry-timeout-config-hld.md
 
-repo-type: SERVICE
-# Multi-module Maven monorepo: java-sdk (library), commons (library),
-# api (Dropwizard HTTP :8000/:8001), worker (Dropwizard Temporal worker :7200/:7201)
-# Both api and worker are runnable services with Dockerfiles.
-# java-sdk and commons are library modules consumed by api and worker.
+lld-confluence-page-id: 475268668
+lld-confluence-page-url: https://flipkart.atlassian.net/wiki/pages/viewpage.action?pageId=475268668
+lld-local-path: harness-docs/design/active/retry-timeout-config-lld.md
 
-## Runtime Mode
+plan-local-path: harness-docs/design/active/retry-timeout-config_execution_plan.md
+till-done-path: _till_done.json
+last-updated-by: validate
 
-app-runtime: local
-# app-runtime: local — services are started as native JVM processes via boot.sh
-# Observability stack (Vector + VictoriaLogs) runs in Docker Compose.
-# External services (Temporal, HBase, Redis Sentinel) run in Rancher Desktop.
-
-## External Dependencies
-
-# - Temporal (gRPC :7233) — running in Rancher Desktop
-# - Temporal UI (:8080) — running in Rancher Desktop
-# - HBase (ZooKeeper :2181, Thrift :9090) — running in Rancher Desktop
-# - Redis Sentinel (:26379, Redis :6379) — running in Rancher Desktop
-# - VictoriaLogs (:9428) — Docker Compose (observability)
-# - Vector — Docker Compose (log shipper)
-
-## Integration Config
-
-confluence-parent-page:
-confluence-base-url:
-confluence-review: PENDING
-
-jira-initiative:
-jira-epic:
-jira-base-url:
-
-github-integration: PENDING
-
-sonar-project-key:
-sonar-base-url:
-
-cross-repo: SINGLE
-cross-repo-paths:
-  - /Users/ashwiniborla.vc/Desktop/Flipkart/drift
-
-## Scaffold Status
-
-# harness-docs/:              DONE — repo-docs-init complete
-#   AGENTS.md:                DONE
-#   ARCHITECTURE.md:          DONE
-#   harness-docs/LOCAL_DEV.md:       DONE
-#   harness-docs/TEST.md:            DONE
-#   harness-docs/RELIABILITY.md:     DONE
-#   harness-docs/PRODUCT_SENSE.md:   DONE
-#   harness-docs/APP_LEGIBILITY.md:  DONE
-#   harness-docs/ARCHITECTURE_RULES.md: DONE
-#
-# docker-compose.yml:         DONE — observability only (VictoriaLogs + Vector)
-# scripts/infra/vector.yaml:  DONE
-# scripts/infra/start.sh:     DONE
-# scripts/infra/stop.sh:      DONE
-# scripts/infra/status.sh:    DONE
-#
-# connections.md:             DONE — all services documented and resolved
-#
-# scripts/agent/check-prereq.sh: DONE
-# scripts/agent/boot.sh:         DONE
-# scripts/agent/health.sh:       DONE
-# scripts/agent/query-logs.sh:   DONE
-# scripts/agent/api-snapshot.sh: DONE
-# scripts/agent/verify-pipeline.sh: DONE
-#
-# arch rules (ArchUnit):      DONE
-#   api/src/test/.../ApiArchTest.java:         DONE
-#   worker/src/test/.../WorkerArchTest.java:   DONE
-#   commons/src/test/.../CommonsArchTest.java: DONE
-#   java-sdk/src/test/.../JavaSdkArchTest.java: DONE
-#   archunit-junit5 added to pom.xml (parent + all modules): DONE
-#
-# validate-guard hook:        EXISTS (scripts/agent/validate-guard.sh)
-# confluence.sh:              EXISTS
-# jira.sh:                    EXISTS
-# github.sh:                  EXISTS
-# sonar.sh:                   EXISTS
-# mmdc:                       CONFIRMED (v11.15.0)
-# .env.example:               DONE
-
-## Stage Completion Log
-
-| timestamp            | stage              | notes                                               |
-|----------------------|--------------------|-----------------------------------------------------|
-| 2026-05-19T00:00:00  | UNINITIALIZED      | harness-state.md created                            |
-| 2026-05-19T12:00:00  | SCAFFOLD           | repo-docs-init: AGENTS.md, ARCHITECTURE.md, harness-docs/ |
-| 2026-05-19T12:01:00  | SCAFFOLD           | local-infra: docker-compose.yml, vector.yaml, infra scripts |
-| 2026-05-19T12:02:00  | SCAFFOLD           | connections.md: all connections resolved             |
-| 2026-05-19T12:03:00  | SCAFFOLD           | app-legibility: boot.sh, check-prereq.sh, health.sh, query-logs.sh, api-snapshot.sh, verify-pipeline.sh |
-| 2026-05-19T12:04:00  | SCAFFOLD           | arch-enforcer: ArchUnit tests for all 4 modules, archunit-junit5 added to poms |
-| 2026-05-19T12:05:00  | SCAFFOLDED         | All scaffold stages complete                         |
+stage-completion-log:
+  - 2026-05-21 validate: BLOCKED — Static checks PASS (build ok for java-sdk/commons/worker; 11 unit tests pass including 7 ActivityOptionsBuilderTest + 4 WorkerArchTest; activityOptionsV1 references in WorkflowNodeExecutor.java = 0). Runtime BLOCKED — HBase not reachable at localhost:2181 / :16020, worker fails Guice provisioning with RetriesExhaustedException. Pre-existing infra prerequisite (per user memory: one-time HBase setup needed). Pre-existing test-compile failure in api/ArchTest (missing junit-jupiter dep) — unrelated to this feature.
+  - 2026-05-21 validate: LGTM — HBase up (ZK :2181, RS :16020). boot.sh --skip-build PASS, API healthy :8001, Worker healthy :7201. health.sh all OK (Temporal, Redis, HBase reachable). query-logs drift-worker ERROR last 5m = 0 entries. query-logs drift-worker all last 5m shows clean boot: ZK session established, HBase scans (NodeDefinition + WorkflowDefinition) OK, Temporal Worker started, Redis cache invalidator subscribed, Jetty serving on :7200/:7201. activityOptionsV1 references in worker/.../workflows/WorkflowNodeExecutor.java = 0. No ProvisionException, no HBase RetriesExhaustedException.
