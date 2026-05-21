@@ -48,4 +48,6 @@ public class DriftWorkerConfiguration extends Configuration {
 
     @NotNull
     private String abPropertiesPath;
+
+    private ActivityDefaultsConfig activityDefaults;
 }
