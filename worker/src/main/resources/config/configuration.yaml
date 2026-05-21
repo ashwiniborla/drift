@@ -54,6 +54,12 @@ workerDynamicOptions:
   workflowCacheSize: 600
   maxWorkflowThreadCount: 800
 
+# Optional — per-node activity defaults for external-node Temporal stubs.
+# Omitting this block is valid; JVM defaults (1 attempt, 10 s) apply.
+activityDefaults:
+  defaultMaxAttempts: 1
+  defaultTimeoutSeconds: 10
+
 # Optional Hadoop identity parameters for HBase connection
 hadoopUserName: ${HADOOP_USERNAME}
 hadoopLoginUser: ${HADOOP_LOGIN_USER}
