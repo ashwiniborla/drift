@@ -14,3 +14,4 @@ public enum ConnectionType {
 
     private final String namespace;
 }
+
