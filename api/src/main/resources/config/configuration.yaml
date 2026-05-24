@@ -17,18 +17,6 @@ logging:
       timeZone: IST
       logFormat: "%date %level [%thread] %logger{0} [%X{id}] %msg%n"
 
-redisConfiguration:
-  password: ${REDIS_PASSWORD}
-  master: ${REDIS_MASTER}
-  sentinels: ${REDIS_SENTINELS}
-  prefix: ${REDIS_PREFIX}
-  maxTotal: 50
-  maxWaitMillis: 100
-  maxIdle: 25
-  minIdle: 25
-  testOnBorrow: true
-  blockWhenExhausted: true
-
 cacheRefreshExecutorServiceConfig:
   minThreads: 1
   maxThreads: 3

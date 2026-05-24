@@ -27,7 +27,6 @@
         <hbase.version>2.2.2</hbase.version>
         <hadoop.version>2.10.2</hadoop.version>
         <archaius.version>0.7.12</archaius.version>
-        <jedis.version>3.3.0</jedis.version>
         <protobuf.version>3.22.0</protobuf.version>
         <validation.api.version>2.0.1.Final</validation.api.version>
         <commons.lang.version>2.6</commons.lang.version>
@@ -286,12 +285,6 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>${jedis.version}</version>
-            </dependency>
-
             <!-- Utilities -->
             <dependency>
                 <groupId>com.google.protobuf</groupId>

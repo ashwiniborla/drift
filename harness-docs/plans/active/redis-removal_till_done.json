@@ -2,7 +2,7 @@
   "feature_tag": "redis-removal",
   "created_at": "2026-05-24T00:00:00Z",
   "plan_doc": "harness-docs/plans/active/redis-removal_execution_plan.md",
-  "status": "IN_PROGRESS",
+  "status": "ALL_SUBTASKS_COMPLETE",
   "validate_verdict": "PENDING",
   "jira_epic": "RPROC-18913",
   "jira_plan_story": "RPROC-18975",
@@ -69,7 +69,7 @@
       ],
       "jira_key": "RPROC-18966",
       "subtask_ids": ["subtask-6"],
-      "status": "PENDING",
+      "status": "STATIC_COMPLETE",
       "pr_number": null,
       "pr_url": null,
       "pr_pushed_at": null
@@ -615,7 +615,7 @@
       "status": "STATIC_PASS",
       "static_status": "PASS",
       "validate_status": "PENDING",
-      "commit_sha": null,
+      "commit_sha": "d29793d",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T15:10:00Z",
       "test_command": "mvn test -pl worker -Dgpg.skip=true -Dattach.sources.skip=true -Dattach.javadoc.skip=true",
@@ -700,73 +700,73 @@
         "worker/pom.xml"
       ],
       "depends_on": ["subtask-3a", "subtask-3b", "subtask-5b"],
-      "status": "PENDING",
-      "static_status": "PENDING",
+      "status": "STATIC_PASS",
+      "static_status": "PASS",
       "validate_status": "PENDING",
       "commit_sha": null,
-      "started_at": null,
-      "completed_at": null,
+      "started_at": "2026-05-24T00:00:00Z",
+      "completed_at": "2026-05-24T15:20:00Z",
       "test_command": "mvn clean package -DskipTests -Dgpg.skip=true -Dattach.sources.skip=true -Dattach.javadoc.skip=true",
       "acceptance_criteria": [
         {
           "id": "AC-6-1",
           "description": "api/src/main/resources/config/configuration.yaml: redisConfiguration block entirely removed (all 10 fields); all other sections unchanged",
           "source": "LLD §10B File 1",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-2",
           "description": "worker/src/main/resources/config/configuration.yaml: redisConfiguration block removed; new callbackConfig block added: enabled: true, timeoutSeconds: 10, maxAttempts: 3, initialIntervalSeconds: 1, backoffCoefficient: 2.0, maxIntervalSeconds: 20",
           "source": "LLD §10B File 2, LLD §10",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-3",
           "description": "connections.md: Redis Sentinel and Redis Master rows removed from Resolved Connection Table; entire Redis Sentinel .env block removed; Setup Instructions §3 Redis Sentinel section removed",
           "source": "LLD §10B File 3",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-4",
           "description": "pom.xml root: dependency redis.clients:jedis removed from dependencyManagement; jedis.version property removed",
           "source": "LLD §10B File 4",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-5",
           "description": "api/pom.xml: dependency redis.clients:jedis removed",
           "source": "LLD §10B File 5",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-6",
           "description": "worker/pom.xml: dependency redis.clients:jedis removed",
           "source": "LLD §10B File 6",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-7",
           "description": "mvn clean package -DskipTests -Dgpg.skip=true exits 0 after all 6 changes (compile-time proof no Redis import was missed in any module)",
           "source": "LLD §2 Constants design notes: compile errors are the safety net",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-8",
           "description": "grep -r 'jedis|Jedis' pom.xml api/pom.xml worker/pom.xml returns empty",
           "source": "Dependency removal verification",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-9",
           "description": "grep -r 'redisConfiguration' api/src/main/resources/ worker/src/main/resources/ returns empty",
           "source": "YAML cleanup verification",
-          "met": false
+          "met": true
         },
         {
           "id": "AC-6-10",
           "description": "grep -r 'REDIS_' connections.md returns empty",
           "source": "connections.md cleanup verification",
-          "met": false
+          "met": true
         }
       ],
       "metrics_criteria": []

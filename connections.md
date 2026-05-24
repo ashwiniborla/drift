@@ -16,8 +16,6 @@ The Resolved Connection Table must be populated before running the services.
 | Temporal Task Queue | config | B (env-var) | N/A | N/A | `TEMPORAL_TASK_QUEUE` | none | RESOLVED — no pre-creation needed; worker auto-registers on startup |
 | HBase Master RPC | nosql-db | A (local Docker) | localhost | 16000 | `HBASE_CONFIG_BUCKET` (path to hbase-site.xml) | none | RESOLVED — running |
 | HBase ZooKeeper | nosql-db | A (local Docker) | localhost | 2181 | included in hbase-site.xml | none | RESOLVED — running (imok) |
-| Redis Sentinel | cache | A (local Docker — host network) | localhost | 26379 | `REDIS_SENTINELS` | none (no password) | RESOLVED |
-| Redis Master | cache | A (local Docker — host network) | localhost | 6379 | `REDIS_MASTER=mymaster` | none (no password) | RESOLVED |
 | Auth Properties | config-bucket | F (skip / local file) | localhost | N/A | `AUTH_PATH` | none | RESOLVED — use empty local file |
 | AB Config Bucket | config-bucket | F (skip / local file) | localhost | N/A | `AB_CONFIG_BUCKET` | none | RESOLVED — use empty local file |
 | Workflow Properties | config-bucket | F (skip / local file) | localhost | N/A | `WORKFLOW_PROPERTY_PATH` | none | RESOLVED — use empty local file |
@@ -33,11 +31,10 @@ The Resolved Connection Table must be populated before running the services.
 ### How dependencies were found
 
 **Config file scan:**
-- `api/src/main/resources/config/configuration.yaml` — declares: `redisConfiguration` (REDIS_*), `hbasePropertiesPath` (HBASE_CONFIG_BUCKET), `temporalFrontEnd` (TEMPORAL_FRONTEND), `temporalTaskQueue` (TEMPORAL_TASK_QUEUE), `hadoopUserName`, `hadoopLoginUser`, `authPropertiesPath` (AUTH_PATH), `abPropertiesPath` (AB_CONFIG_BUCKET), `workflowPropertiesPath` (WORKFLOW_PROPERTY_PATH)
-- `worker/src/main/resources/config/configuration.yaml` — same set plus `lookupPropertiesPath` (ENUM_STORE_BUCKET)
+- `api/src/main/resources/config/configuration.yaml` — declares: `hbasePropertiesPath` (HBASE_CONFIG_BUCKET), `temporalFrontEnd` (TEMPORAL_FRONTEND), `temporalTaskQueue` (TEMPORAL_TASK_QUEUE), `hadoopUserName`, `hadoopLoginUser`, `authPropertiesPath` (AUTH_PATH), `abPropertiesPath` (AB_CONFIG_BUCKET), `workflowPropertiesPath` (WORKFLOW_PROPERTY_PATH)
+- `worker/src/main/resources/config/configuration.yaml` — same set plus `lookupPropertiesPath` (ENUM_STORE_BUCKET), `callbackConfig`
 
 **Source code scan:**
-- `RedisConfiguration.java` — `sentinels` list, `master` name, `prefix`, `password` — Jedis sentinel pool
 - `DriftEntityModule.java` / `AbstractEntityDao.java` — HBase client via `IConnectionProvider` SPI
 - `WorkflowClientModule.java` — Temporal `WorkflowServiceStubs` connected to `TEMPORAL_FRONTEND`
 
@@ -119,25 +116,7 @@ Then set: `HBASE_CONFIG_BUCKET=file:///tmp/drift-config/hbase-site.xml  # file:/
 
 ⚠️ Local HBase only — never use production HBase tables.
 
-### 3. Redis Sentinel
-Running locally in Docker on **host network** (image: `redis:7-alpine`).
-
-- **Sentinel:** `localhost:26379`
-- **Master name:** `mymaster`
-- **Master:** `localhost:6379`
-- **Password:** none
-
-```bash
-# Verify sentinel
-redis-cli -p 26379 sentinel masters
-
-# Verify master
-redis-cli -p 6379 ping
-```
-
-Use a unique `REDIS_PREFIX` to avoid key collisions with other local services.
-
-### 4. Config Buckets (Auth, AB, Workflow, Enum Store)
+### 3. Config Buckets (Auth, AB, Workflow, Enum Store)
 These are local file paths for dev. Create empty stubs:
 ```bash
 mkdir -p /tmp/drift-config
@@ -166,13 +145,6 @@ HBASE_CONFIG_BUCKET=file:///tmp/drift-config/hbase-site.xml  # file:// prefix re
 # ── Hadoop ────────────────────────────────────────────────────────────────────
 HADOOP_USERNAME=nidhi.b                  # RESOLVED — HBase client identity (no-op for local HBase, non-fatal if blank)
 HADOOP_LOGIN_USER=nidhi.b               # RESOLVED — sets UGI login user; optional for local dev (no Kerberos)
-
-# ── Redis Sentinel ────────────────────────────────────────────────────────────
-# RESOLVED — local Docker containers redis-sentinel + redis-master (host network)
-REDIS_MASTER=mymaster
-REDIS_SENTINELS=localhost:26379
-REDIS_PREFIX=drift-local-nidhi-         # unique prefix to avoid key collisions
-REDIS_PASSWORD=                          # no password on local Redis
 
 # ── Config buckets (local stub files for dev) ─────────────────────────────────
 # RESOLVED — create stubs with: mkdir -p /tmp/drift-config && touch /tmp/drift-config/*.properties

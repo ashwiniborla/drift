@@ -7,17 +7,13 @@ server:
     - type: http
       port: 7201
 
-redisConfiguration:
-  password: ${REDIS_PASSWORD}
-  master: ${REDIS_MASTER}
-  sentinels: ${REDIS_SENTINELS}
-  prefix: ${REDIS_PREFIX}
-  maxTotal: 50
-  maxWaitMillis: 100
-  maxIdle: 25
-  minIdle: 25
-  testOnBorrow: true
-  blockWhenExhausted: true
+callbackConfig:
+  enabled: true
+  timeoutSeconds: 10
+  maxAttempts: 3
+  initialIntervalSeconds: 1
+  backoffCoefficient: 2.0
+  maxIntervalSeconds: 20
 
 cacheRefreshExecutorServiceConfig:
   minThreads: 1
