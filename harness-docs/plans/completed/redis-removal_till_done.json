@@ -2,8 +2,8 @@
   "feature_tag": "redis-removal",
   "created_at": "2026-05-24T00:00:00Z",
   "plan_doc": "harness-docs/plans/active/redis-removal_execution_plan.md",
-  "status": "ALL_SUBTASKS_COMPLETE",
-  "validate_verdict": "PENDING",
+  "status": "DONE",
+  "validate_verdict": "LGTM",
   "jira_epic": "RPROC-18913",
   "jira_plan_story": "RPROC-18975",
   "user_stories": [
@@ -12,7 +12,7 @@
       "title": "Workflow start and resume return 202 immediately with no Redis dependency",
       "as_a": "dev",
       "statement": "drift-api should return 202 Accepted with workflowId and CREATED status immediately when a workflow is started, and 202 with RUNNING when resumed, without any Redis blocking or pub/sub",
-      "demo_script": "curl -X POST http://localhost:8000/v3/workflow/start -H 'Content-Type: application/json' -d '{\"issueDetail\":{...}}' — assert 202 response with body {\"workflowId\":\"...\",\"workflowStatus\":\"CREATED\"} returned in <50ms; curl -X PUT http://localhost:8000/v3/workflow/resume/{id} — assert 202 with {\"workflowId\":\"...\",\"workflowStatus\":\"RUNNING\"}",
+      "demo_script": "curl -X POST http://localhost:8000/v3/workflow/start -H 'Content-Type: application/json' -d '{\"issueDetail\":{...}}' \u2014 assert 202 response with body {\"workflowId\":\"...\",\"workflowStatus\":\"CREATED\"} returned in <50ms; curl -X PUT http://localhost:8000/v3/workflow/resume/{id} \u2014 assert 202 with {\"workflowId\":\"...\",\"workflowStatus\":\"RUNNING\"}",
       "acceptance_tests": [
         "POST /v3/workflow/start returns 202 with workflowId and workflowStatus=CREATED",
         "PUT /v3/workflow/resume/{id} returns 202 with workflowStatus=RUNNING",
@@ -20,10 +20,15 @@
         "callbackUrl=null accepted without validation error",
         "API service starts without redisConfiguration in YAML",
         "No redis.clients.* import anywhere in api module",
-        "publishNode() writes to HBase only — no Redis calls"
+        "publishNode() writes to HBase only \u2014 no Redis calls"
       ],
       "jira_key": "RPROC-18964",
-      "subtask_ids": ["subtask-1", "subtask-2", "subtask-3a", "subtask-3b"],
+      "subtask_ids": [
+        "subtask-1",
+        "subtask-2",
+        "subtask-3a",
+        "subtask-3b"
+      ],
       "status": "STATIC_COMPLETE",
       "pr_number": null,
       "pr_url": null,
@@ -47,7 +52,11 @@
         "Callback failure (all retries exhausted) causes workflow to be marked FAILED"
       ],
       "jira_key": "RPROC-18965",
-      "subtask_ids": ["subtask-4", "subtask-5a", "subtask-5b"],
+      "subtask_ids": [
+        "subtask-4",
+        "subtask-5a",
+        "subtask-5b"
+      ],
       "status": "STATIC_COMPLETE",
       "pr_number": null,
       "pr_url": null,
@@ -57,8 +66,8 @@
       "id": "us-3",
       "title": "Redis fully removed from codebase, dependencies, and config",
       "as_a": "dev",
-      "statement": "drift should build and run with zero Redis/Jedis code, configuration, or Maven dependencies — Redis Sentinel is no longer an infrastructure requirement",
-      "demo_script": "Run mvn clean package -Dgpg.skip=true on the full repo; grep for jedis in all .java files and pom.xml files — both return empty; start worker service and confirm no Redis connection attempts in logs",
+      "statement": "drift should build and run with zero Redis/Jedis code, configuration, or Maven dependencies \u2014 Redis Sentinel is no longer an infrastructure requirement",
+      "demo_script": "Run mvn clean package -Dgpg.skip=true on the full repo; grep for jedis in all .java files and pom.xml files \u2014 both return empty; start worker service and confirm no Redis connection attempts in logs",
       "acceptance_tests": [
         "mvn clean package exits 0 with no Redis-related compile errors",
         "grep -r 'jedis|Jedis' --include='*.java' returns empty across all modules",
@@ -68,7 +77,9 @@
         "connections.md has no REDIS_* entries or Redis Sentinel setup section"
       ],
       "jira_key": "RPROC-18966",
-      "subtask_ids": ["subtask-6"],
+      "subtask_ids": [
+        "subtask-6"
+      ],
       "status": "STATIC_COMPLETE",
       "pr_number": null,
       "pr_url": null,
@@ -92,7 +103,7 @@
       "depends_on": [],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "e978b10",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -101,37 +112,37 @@
         {
           "id": "AC-1-1",
           "description": "WorkflowStartRequest has a new optional callbackUrl: String field; all existing fields unchanged; @JsonIgnoreProperties(ignoreUnknown=true) present for backward-compat deserialization",
-          "source": "PRD FR-3, LLD §2 WorkflowStartRequest",
+          "source": "PRD FR-3, LLD \u00a72 WorkflowStartRequest",
           "met": true
         },
         {
           "id": "AC-1-2",
-          "description": "callbackUrl is nullable — absent means no callback; no @NotNull annotation",
-          "source": "LLD §2 WorkflowStartRequest design notes",
+          "description": "callbackUrl is nullable \u2014 absent means no callback; no @NotNull annotation",
+          "source": "LLD \u00a72 WorkflowStartRequest design notes",
           "met": true
         },
         {
           "id": "AC-1-3",
           "description": "WorkflowStartResponse is a new class in com.flipkart.drift.sdk.model.response with fields workflowId: String and workflowStatus: WorkflowStatus; annotations: @Data @NoArgsConstructor @AllArgsConstructor @Builder @JsonIgnoreProperties(ignoreUnknown=true) @JsonInclude(NON_NULL)",
-          "source": "PRD FR-4, LLD §2 WorkflowStartResponse",
+          "source": "PRD FR-4, LLD \u00a72 WorkflowStartResponse",
           "met": true
         },
         {
           "id": "AC-1-4",
           "description": "WorkflowResumeResponse is a new class with same annotation set as WorkflowStartResponse; fields: workflowId: String, workflowStatus: WorkflowStatus",
-          "source": "PRD FR-6, LLD §2 WorkflowResumeResponse",
+          "source": "PRD FR-6, LLD \u00a72 WorkflowResumeResponse",
           "met": true
         },
         {
           "id": "AC-1-5",
           "description": "WorkflowStartRequest annotations unchanged: @Data @NoArgsConstructor @AllArgsConstructor @JsonIgnoreProperties(ignoreUnknown=true) @EqualsAndHashCode(callSuper=true)",
-          "source": "LLD §2 WorkflowStartRequest",
+          "source": "LLD \u00a72 WorkflowStartRequest",
           "met": true
         },
         {
           "id": "AC-1-6",
-          "description": "WorkflowStartResponse does NOT extend WorkflowResponse — purpose-built async-only model",
-          "source": "HLD §10 D5, LLD §2",
+          "description": "WorkflowStartResponse does NOT extend WorkflowResponse \u2014 purpose-built async-only model",
+          "source": "HLD \u00a710 D5, LLD \u00a72",
           "met": true
         },
         {
@@ -165,7 +176,7 @@
       "depends_on": [],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "e978b10",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -174,31 +185,31 @@
         {
           "id": "AC-2-1",
           "description": "WorkflowState has new field callbackUrl: String (nullable, no @NotNull); all existing fields unchanged; implements Serializable retained",
-          "source": "LLD §2 WorkflowState; LLD §0 component table places WorkflowState in commons",
+          "source": "LLD \u00a72 WorkflowState; LLD \u00a70 component table places WorkflowState in commons",
           "met": true
         },
         {
           "id": "AC-2-2",
-          "description": "WorkflowState annotations: @Data @AllArgsConstructor @NoArgsConstructor @Setter @JsonIgnoreProperties(ignoreUnknown=true) — all present and unchanged",
-          "source": "LLD §2 WorkflowState",
+          "description": "WorkflowState annotations: @Data @AllArgsConstructor @NoArgsConstructor @Setter @JsonIgnoreProperties(ignoreUnknown=true) \u2014 all present and unchanged",
+          "source": "LLD \u00a72 WorkflowState",
           "met": true
         },
         {
           "id": "AC-2-3",
           "description": "Constants.Workflow.ASYNC_AWAIT_CHANNEL (\"+async-await:\") deleted",
-          "source": "HLD §8B, LLD §2 Constants",
+          "source": "HLD \u00a78B, LLD \u00a72 Constants",
           "met": true
         },
         {
           "id": "AC-2-4",
           "description": "Constants.Workflow.DSL_UPDATE_CHANNEL (\"+dsl-update:\") deleted",
-          "source": "HLD §8B, LLD §2 Constants",
+          "source": "HLD \u00a78B, LLD \u00a72 Constants",
           "met": true
         },
         {
           "id": "AC-2-5",
           "description": "RedisStoreException.java file is deleted; grep -r 'RedisStoreException' commons/src/ returns empty",
-          "source": "HLD §8B, LLD §2",
+          "source": "HLD \u00a78B, LLD \u00a72",
           "met": true
         },
         {
@@ -236,10 +247,13 @@
         "api/src/main/java/com/flipkart/drift/api/service/RedisPubSubService.java",
         "api/src/main/java/com/flipkart/drift/api/config/RedisConfiguration.java"
       ],
-      "depends_on": ["subtask-1", "subtask-2"],
+      "depends_on": [
+        "subtask-1",
+        "subtask-2"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "505ee57",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -247,74 +261,74 @@
       "acceptance_criteria": [
         {
           "id": "AC-3a-1",
-          "description": "TemporalService.executeWorkflow() returns WorkflowStartResponse{workflowId, CREATED} immediately — no blocking, no Redis subscription",
-          "source": "PRD FR-1, LLD §2 TemporalService, LLD §4",
+          "description": "TemporalService.executeWorkflow() returns WorkflowStartResponse{workflowId, CREATED} immediately \u2014 no blocking, no Redis subscription",
+          "source": "PRD FR-1, LLD \u00a72 TemporalService, LLD \u00a74",
           "met": true
         },
         {
           "id": "AC-3a-2",
           "description": "TemporalService.resumeWorkflow() sends signal and returns WorkflowResumeResponse{workflowId, RUNNING} immediately",
-          "source": "HLD §3B, LLD §2 TemporalService",
+          "source": "HLD \u00a73B, LLD \u00a72 TemporalService",
           "met": true
         },
         {
           "id": "AC-3a-3",
-          "description": "WorkflowResource.startWorkflow() returns Response.accepted(WorkflowStartResponse).build() — HTTP 202",
-          "source": "HLD §3A, LLD §6 API Contract",
+          "description": "WorkflowResource.startWorkflow() returns Response.accepted(WorkflowStartResponse).build() \u2014 HTTP 202",
+          "source": "HLD \u00a73A, LLD \u00a76 API Contract",
           "met": true
         },
         {
           "id": "AC-3a-4",
-          "description": "WorkflowResource.resumeWorkflow() returns Response.accepted(WorkflowResumeResponse).build() — HTTP 202",
-          "source": "HLD §3B, LLD §6",
+          "description": "WorkflowResource.resumeWorkflow() returns Response.accepted(WorkflowResumeResponse).build() \u2014 HTTP 202",
+          "source": "HLD \u00a73B, LLD \u00a76",
           "met": true
         },
         {
           "id": "AC-3a-5",
-          "description": "callbackUrl validation: null/blank passes; valid http:// and https:// pass; ftp:// -> 400; non-URI -> 400; http:// with no host -> 400; uses java.net.URI.create() — no new dependency",
-          "source": "LLD §4 URL Validation algorithm, LLD §11 Test Scenario 2",
+          "description": "callbackUrl validation: null/blank passes; valid http:// and https:// pass; ftp:// -> 400; non-URI -> 400; http:// with no host -> 400; uses java.net.URI.create() \u2014 no new dependency",
+          "source": "LLD \u00a74 URL Validation algorithm, LLD \u00a711 Test Scenario 2",
           "met": true
         },
         {
           "id": "AC-3a-6",
           "description": "RedisPubSubService.java and RedisConfiguration.java (api) files deleted",
-          "source": "HLD §8C",
+          "source": "HLD \u00a78C",
           "met": true
         },
         {
           "id": "AC-3a-7",
-          "description": "TemporalService constructor: TemporalService(DriftConfiguration, Utility) — RedisPubSubService parameter removed; buildResponseAndReturn() method deleted",
-          "source": "LLD §2 TemporalService",
+          "description": "TemporalService constructor: TemporalService(DriftConfiguration, Utility) \u2014 RedisPubSubService parameter removed; buildResponseAndReturn() method deleted",
+          "source": "LLD \u00a72 TemporalService",
           "met": true
         },
         {
           "id": "AC-3a-8",
           "description": "WorkflowClientModule has no provideJedisPool(), getGenericObjectPoolConfig(), or getJedisSentinelPool() methods; DriftConfiguration has no redisConfiguration field; DriftConfiguration has new workerInvalidationConfig: WorkerInvalidationConfig field (optional, no @NotNull); WorkflowClientModule has @Provides @Singleton getWorkerCacheInvalidationClient() that returns WorkerCacheInvalidationClient using config or defaults",
-          "source": "LLD §2 WorkflowClientModule, DriftConfiguration, §2 WorkerCacheInvalidationClient (FR-3)",
+          "source": "LLD \u00a72 WorkflowClientModule, DriftConfiguration, \u00a72 WorkerCacheInvalidationClient (FR-3)",
           "met": true
         },
         {
           "id": "AC-3a-11",
           "description": "WorkerCacheInvalidationClient new class in com.flipkart.drift.api.client: @Slf4j @Singleton, @Inject constructor takes WorkerInvalidationConfig; invalidate(CacheType, key) fans out HTTP POST to all pod IPs via InetAddress.getAllByName(headlessServiceHost); per-pod errors caught as WARN; best-effort semantics",
-          "source": "LLD §2 WorkerCacheInvalidationClient (FR-3)",
+          "source": "LLD \u00a72 WorkerCacheInvalidationClient (FR-3)",
           "met": true
         },
         {
           "id": "AC-3a-12",
           "description": "WorkerInvalidationConfig new class in com.flipkart.drift.api.config: @Getter @Setter @NoArgsConstructor @AllArgsConstructor @JsonIgnoreProperties(ignoreUnknown=true); fields: headlessServiceHost (default: drift-worker-headless), adminPort (default: 7201), perPodTimeoutMs (default: 2000), enabled (default: true)",
-          "source": "LLD §2 WorkerInvalidationConfig (FR-3)",
+          "source": "LLD \u00a72 WorkerInvalidationConfig (FR-3)",
           "met": true
         },
         {
           "id": "AC-3a-9",
           "description": "TemporalService logs: INFO entry op=executeWorkflow feature=redis-removal workflowId={}; INFO exit with durationMs; ERROR on exception; resumeWorkflow INFO entry",
-          "source": "LLD §12 Logging",
+          "source": "LLD \u00a712 Logging",
           "met": true
         },
         {
           "id": "AC-3a-10",
           "description": "mvn test -pl api -Dtest=TemporalServiceTest,WorkflowResourceTest -Dgpg.skip=true exits 0; coverage TemporalService >= 75%, WorkflowResource >= 75%",
-          "source": "TEST.md 75%+ for api, LLD §11 scenarios 1 and 2",
+          "source": "TEST.md 75%+ for api, LLD \u00a711 scenarios 1 and 2",
           "met": true
         }
       ],
@@ -333,10 +347,13 @@
         "api/src/main/java/com/flipkart/drift/api/service/builder/WorkflowDefinitionService.java",
         "api/src/main/java/com/flipkart/drift/api/service/utils/Utility.java"
       ],
-      "depends_on": ["subtask-1", "subtask-2"],
+      "depends_on": [
+        "subtask-1",
+        "subtask-2"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "cb8e546",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -345,37 +362,37 @@
         {
           "id": "AC-3b-1",
           "description": "NodeDefinitionService.publishNode(): all 4 publishRedisEvent() call sites removed; HBase writes unchanged",
-          "source": "HLD §8C, LLD §2 NodeDefinitionService",
+          "source": "HLD \u00a78C, LLD \u00a72 NodeDefinitionService",
           "met": true
         },
         {
           "id": "AC-3b-2",
           "description": "WorkflowDefinitionService.publishWorkflow(): all 4 publishRedisEvent() call sites removed",
-          "source": "LLD §2 WorkflowDefinitionService",
+          "source": "LLD \u00a72 WorkflowDefinitionService",
           "met": true
         },
         {
           "id": "AC-3b-3",
           "description": "WorkflowDefinitionService.markActive(): 1 publishRedisEvent() call site removed",
-          "source": "LLD §2 WorkflowDefinitionService",
+          "source": "LLD \u00a72 WorkflowDefinitionService",
           "met": true
         },
         {
           "id": "AC-3b-4",
           "description": "Utility.publishRedisEvent() static method deleted; no callers remain",
-          "source": "HLD §8C, LLD §2 Utility",
+          "source": "HLD \u00a78C, LLD \u00a72 Utility",
           "met": true
         },
         {
           "id": "AC-3b-5",
-          "description": "NodeDefinitionService constructor: NodeDefinitionService(NodeDefinitionDao, ObjectMapper, WorkerCacheInvalidationClient) — JedisSentinelPool removed, WorkerCacheInvalidationClient added; publishNode() calls workerCacheInvalidationClient.invalidate(CacheType.NODE, versionKey) and invalidate(CacheType.NODE, latestKey) after each HBase write pair",
-          "source": "LLD §2 NodeDefinitionService (FR-3), LLD §9 Guice wiring",
+          "description": "NodeDefinitionService constructor: NodeDefinitionService(NodeDefinitionDao, ObjectMapper, WorkerCacheInvalidationClient) \u2014 JedisSentinelPool removed, WorkerCacheInvalidationClient added; publishNode() calls workerCacheInvalidationClient.invalidate(CacheType.NODE, versionKey) and invalidate(CacheType.NODE, latestKey) after each HBase write pair",
+          "source": "LLD \u00a72 NodeDefinitionService (FR-3), LLD \u00a79 Guice wiring",
           "met": true
         },
         {
           "id": "AC-3b-6",
-          "description": "WorkflowDefinitionService constructor: WorkflowDefinitionService(WorkflowDefinitionDao, ObjectMapper, NodeDefinitionService, WorkerCacheInvalidationClient) — JedisSentinelPool removed, WorkerCacheInvalidationClient added; publishWorkflow() adds fan-out for version+latest; markActive() adds invalidate(CacheType.WORKFLOW, id)",
-          "source": "LLD §2 WorkflowDefinitionService (FR-3)",
+          "description": "WorkflowDefinitionService constructor: WorkflowDefinitionService(WorkflowDefinitionDao, ObjectMapper, NodeDefinitionService, WorkerCacheInvalidationClient) \u2014 JedisSentinelPool removed, WorkerCacheInvalidationClient added; publishWorkflow() adds fan-out for version+latest; markActive() adds invalidate(CacheType.WORKFLOW, id)",
+          "source": "LLD \u00a72 WorkflowDefinitionService (FR-3)",
           "met": true
         },
         {
@@ -387,7 +404,7 @@
         {
           "id": "AC-3b-8",
           "description": "mvn test -pl api -Dtest=NodeDefinitionServiceTest,WorkflowClientModuleTest -Dgpg.skip=true exits 0; coverage NodeDefinitionService >= 75%",
-          "source": "LLD §11 scenarios 6 and 7",
+          "source": "LLD \u00a711 scenarios 6 and 7",
           "met": true
         }
       ],
@@ -407,10 +424,13 @@
         "worker/src/main/java/com/flipkart/drift/worker/model/callback/CallbackPayload.java",
         "worker/src/main/java/com/flipkart/drift/worker/config/CallbackConfig.java"
       ],
-      "depends_on": ["subtask-1", "subtask-2"],
+      "depends_on": [
+        "subtask-1",
+        "subtask-2"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "9bbb091",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -419,55 +439,55 @@
         {
           "id": "AC-4-1",
           "description": "CallbackActivity is @ActivityInterface(namePrefix = \"callbackActivity\") with single method void sendCallback(String callbackUrl, CallbackPayload payload)",
-          "source": "LLD §2 CallbackActivity, LLD §3",
+          "source": "LLD \u00a72 CallbackActivity, LLD \u00a73",
           "met": true
         },
         {
           "id": "AC-4-2",
-          "description": "CallbackActivityImpl uses java.net.http.HttpClient — no new Maven dependencies; constructor is no-arg; HttpClient initialized as HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()",
-          "source": "HLD §10 D4, LLD §2 CallbackActivityImpl",
+          "description": "CallbackActivityImpl uses java.net.http.HttpClient \u2014 no new Maven dependencies; constructor is no-arg; HttpClient initialized as HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()",
+          "source": "HLD \u00a710 D4, LLD \u00a72 CallbackActivityImpl",
           "met": true
         },
         {
           "id": "AC-4-3",
           "description": "Headers set: Content-Type: application/json; X-Drift-Workflow-Id: {workflowId}; X-Drift-Callback-Event: WORKFLOW_COMPLETED|WORKFLOW_FAILED|WORKFLOW_DELEGATED. Header mapping: COMPLETED->WORKFLOW_COMPLETED, FAILED->WORKFLOW_FAILED, DELEGATED->WORKFLOW_DELEGATED, ASYNC_COMPLETE->WORKFLOW_COMPLETED",
-          "source": "HLD §3C, LLD §2 CallbackActivityImpl, LLD §6",
+          "source": "HLD \u00a73C, LLD \u00a72 CallbackActivityImpl, LLD \u00a76",
           "met": true
         },
         {
           "id": "AC-4-4",
           "description": "HTTP 2xx -> void; HTTP 4xx -> ApplicationFailure.newNonRetryableFailure (non-retryable); HTTP 5xx/IOException/timeout -> Activity.wrap(e) (retryable)",
-          "source": "LLD §2 CallbackActivity, LLD §11 Test Scenario 3",
+          "source": "LLD \u00a72 CallbackActivity, LLD \u00a711 Test Scenario 3",
           "met": true
         },
         {
           "id": "AC-4-5",
           "description": "CallbackPayload has exactly 3 fields: workflowId: String, workflowStatus: WorkflowStatus, errorMessage: String (nullable). Annotations: @Data @NoArgsConstructor @AllArgsConstructor @Builder @JsonIgnoreProperties(ignoreUnknown=true) @JsonInclude(NON_NULL)",
-          "source": "LLD §2 CallbackPayload (3-field spec per PRD clarification)",
+          "source": "LLD \u00a72 CallbackPayload (3-field spec per PRD clarification)",
           "met": true
         },
         {
           "id": "AC-4-6",
           "description": "CallbackConfig has 6 fields with defaults: enabled=true, timeoutSeconds=10, maxAttempts=3, initialIntervalSeconds=1, backoffCoefficient=2.0, maxIntervalSeconds=20",
-          "source": "LLD §2 CallbackConfig, LLD §10",
+          "source": "LLD \u00a72 CallbackConfig, LLD \u00a710",
           "met": true
         },
         {
           "id": "AC-4-7",
-          "description": "ObjectMapper from Constants.MAPPER (shared, thread-safe) — not a new instance per call",
-          "source": "LLD §2 CallbackActivityImpl design notes",
+          "description": "ObjectMapper from Constants.MAPPER (shared, thread-safe) \u2014 not a new instance per call",
+          "source": "LLD \u00a72 CallbackActivityImpl design notes",
           "met": true
         },
         {
           "id": "AC-4-8",
           "description": "Logs: INFO entry op=sendCallback feature=redis-removal callbackUrl={} workflowId={}; INFO 2xx responseCode/durationMs; ERROR 4xx reason=NON_RETRYABLE; ERROR 5xx/exception reason=RETRYABLE",
-          "source": "LLD §12 Logging",
+          "source": "LLD \u00a712 Logging",
           "met": true
         },
         {
           "id": "AC-4-9",
           "description": "mvn test -pl worker -Dtest=CallbackActivityImplTest -Dgpg.skip=true exits 0; tests cover 2xx/4xx/5xx/IOException scenarios; coverage CallbackActivityImpl >= 80%",
-          "source": "LLD §11 Test Scenario 3, TEST.md 80%+",
+          "source": "LLD \u00a711 Test Scenario 3, TEST.md 80%+",
           "met": true
         }
       ],
@@ -476,8 +496,8 @@
           "id": "MC-4-1",
           "metric_name": "callback.attempts",
           "labels": {},
-          "emitted_by": "CallbackActivityImpl.sendCallback() — incremented on every invocation",
-          "source": "LLD §12 Metrics",
+          "emitted_by": "CallbackActivityImpl.sendCallback() \u2014 incremented on every invocation",
+          "source": "LLD \u00a712 Metrics",
           "verification": "Unit test asserts counter is incremented on every sendCallback call (2xx, 4xx, 5xx, IOException cases all increment it)",
           "met": true
         },
@@ -485,8 +505,8 @@
           "id": "MC-4-2",
           "metric_name": "callback.success",
           "labels": {},
-          "emitted_by": "CallbackActivityImpl.sendCallback() — incremented on HTTP 2xx",
-          "source": "LLD §12 Metrics",
+          "emitted_by": "CallbackActivityImpl.sendCallback() \u2014 incremented on HTTP 2xx",
+          "source": "LLD \u00a712 Metrics",
           "verification": "Unit test asserts counter incremented when mocked HttpClient returns 200; NOT incremented on 4xx/5xx/exception",
           "met": true
         },
@@ -494,8 +514,8 @@
           "id": "MC-4-3",
           "metric_name": "callback.failure",
           "labels": {},
-          "emitted_by": "CallbackActivityImpl.sendCallback() — incremented on non-2xx or exception",
-          "source": "LLD §12 Metrics",
+          "emitted_by": "CallbackActivityImpl.sendCallback() \u2014 incremented on non-2xx or exception",
+          "source": "LLD \u00a712 Metrics",
           "verification": "Unit test asserts counter incremented for 4xx, 5xx, and IOException; NOT incremented on 2xx",
           "met": true
         },
@@ -503,8 +523,8 @@
           "id": "MC-4-4",
           "metric_name": "callback.latency",
           "labels": {},
-          "emitted_by": "CallbackActivityImpl.sendCallback() — timer recording start-to-response duration",
-          "source": "LLD §12 Metrics",
+          "emitted_by": "CallbackActivityImpl.sendCallback() \u2014 timer recording start-to-response duration",
+          "source": "LLD \u00a712 Metrics",
           "verification": "Unit test asserts timer is started and stopped on each sendCallback invocation (both success and failure paths)",
           "met": true
         }
@@ -532,10 +552,12 @@
         "worker/src/main/java/com/flipkart/drift/worker/bootstrap/RedisCacheInvalidator.java",
         "worker/src/main/java/com/flipkart/drift/worker/config/RedisConfiguration.java"
       ],
-      "depends_on": ["subtask-4"],
+      "depends_on": [
+        "subtask-4"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "50cbb7d",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T00:00:00Z",
@@ -544,43 +566,43 @@
         {
           "id": "AC-5a-1",
           "description": "WorkerModule.configure() has no bind(JedisPoolAbstract.class); no jedisSentinelPool field; no provideJedisPool() method",
-          "source": "LLD §2 WorkerModule, LLD §9 Guice wiring",
+          "source": "LLD \u00a72 WorkerModule, LLD \u00a79 Guice wiring",
           "met": true
         },
         {
           "id": "AC-5a-2",
-          "description": "DriftWorkerConfiguration has no redisConfiguration field; has new callbackConfig: CallbackConfig field (no @NotNull — optional section with defaults)",
-          "source": "LLD §2 DriftWorkerConfiguration",
+          "description": "DriftWorkerConfiguration has no redisConfiguration field; has new callbackConfig: CallbackConfig field (no @NotNull \u2014 optional section with defaults)",
+          "source": "LLD \u00a72 DriftWorkerConfiguration",
           "met": true
         },
         {
           "id": "AC-5a-3",
           "description": "WorkerApplication.init() has no manage(RedisCacheInvalidator) call; WorkerApplication registers CacheInvalidationTask via environment.admin().addTask(new CacheInvalidationTask(injector.getInstance(NodeDefinitionCache.class), injector.getInstance(WorkflowCache.class)))",
-          "source": "LLD §2 WorkerApplication (FR-3)",
+          "source": "LLD \u00a72 WorkerApplication (FR-3)",
           "met": true
         },
         {
           "id": "AC-5a-9",
           "description": "CacheInvalidationTask new class in com.flipkart.drift.worker.task extends io.dropwizard.servlets.tasks.Task: constructor calls super(\"cache-invalidate\"); execute() accepts type=NODE|WORKFLOW and key params; calls nodeDefinitionCache.invalidate(key) or workflowCache.invalidate(key); validation on missing/invalid params",
-          "source": "LLD §2 CacheInvalidationTask (FR-3)",
+          "source": "LLD \u00a72 CacheInvalidationTask (FR-3)",
           "met": true
         },
         {
           "id": "AC-5a-4",
           "description": "TemporalWorkerManaged.createWorkerFactory() registers injector.getInstance(CallbackActivityImpl.class); does NOT register ReturnControlActivityImpl",
-          "source": "LLD §2 TemporalWorkerManaged",
+          "source": "LLD \u00a72 TemporalWorkerManaged",
           "met": true
         },
         {
           "id": "AC-5a-5",
           "description": "OptionsStore has new static field callbackActivityOptions: ActivityOptions with startToCloseTimeout(Duration.ofSeconds(90)) and retryOptions: maxAttempts=3, initialInterval=1s, maxInterval=20s, backoffCoefficient=2.0; existing options (activityOptions, activityOptionsV1, localActivityOptions) unchanged",
-          "source": "LLD §2 OptionsStore",
+          "source": "LLD \u00a72 OptionsStore",
           "met": true
         },
         {
           "id": "AC-5a-6",
           "description": "ReturnControlActivity.java, ReturnControlActivityImpl.java, RedisCacheInvalidator.java, RedisConfiguration.java (worker) all deleted",
-          "source": "HLD §8D",
+          "source": "HLD \u00a78D",
           "met": true
         },
         {
@@ -611,10 +633,12 @@
         "worker/src/main/java/com/flipkart/drift/worker/workflows/WorkflowNodeExecutor.java",
         "worker/src/test/java/com/flipkart/drift/worker/workflows/GenericWorkflowCallbackTest.java"
       ],
-      "depends_on": ["subtask-5a"],
+      "depends_on": [
+        "subtask-5a"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "d29793d",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T15:10:00Z",
@@ -623,61 +647,61 @@
         {
           "id": "AC-5b-1",
           "description": "GenericWorkflowImpl.initializeWorkflow() calls this.workflowState.setCallbackUrl(workflowStartRequest.getCallbackUrl())",
-          "source": "LLD §2 GenericWorkflowImpl, LLD §11 Test Scenario 8",
+          "source": "LLD \u00a72 GenericWorkflowImpl, LLD \u00a711 Test Scenario 8",
           "met": true
         },
         {
           "id": "AC-5b-2",
           "description": "WorkflowNodeExecutor.invokeCallbackIfPresent(String workflowId, WorkflowState workflowState) is a new private method: returns immediately if callbackUrl is null or blank; builds CallbackPayload{workflowId, workflowStatus, errorMessage}; creates Workflow.newActivityStub(CallbackActivity.class, OptionsStore.callbackActivityOptions); calls stub.sendCallback(callbackUrl, payload)",
-          "source": "LLD §2 WorkflowNodeExecutor, LLD §4 Callback Algorithm",
+          "source": "LLD \u00a72 WorkflowNodeExecutor, LLD \u00a74 Callback Algorithm",
           "met": true
         },
         {
           "id": "AC-5b-3",
-          "description": "CRITICAL: invokeCallbackIfPresent has NO try-catch wrapper. ActivityFailure propagates if all retries exhausted — Temporal marks workflow FAILED. This is identical to any other Temporal activity failure. The stub.sendCallback() call MUST NOT be wrapped in try-catch.",
-          "source": "LLD §4 Callback Algorithm error handling, user instruction",
+          "description": "CRITICAL: invokeCallbackIfPresent has NO try-catch wrapper. ActivityFailure propagates if all retries exhausted \u2014 Temporal marks workflow FAILED. This is identical to any other Temporal activity failure. The stub.sendCallback() call MUST NOT be wrapped in try-catch.",
+          "source": "LLD \u00a74 Callback Algorithm error handling, user instruction",
           "met": true
         },
         {
           "id": "AC-5b-4",
           "description": "invokeCallbackIfPresent called from all 4 terminal handlers: handleCompletedState, handleFailedState, handleAsyncCompleteState, handleDelegatedState",
-          "source": "LLD §2 WorkflowNodeExecutor",
+          "source": "LLD \u00a72 WorkflowNodeExecutor",
           "met": true
         },
         {
           "id": "AC-5b-5",
-          "description": "invokeCallbackIfPresent NOT called from handleWaitingState — WAITING is not terminal",
-          "source": "LLD §2 WorkflowNodeExecutor, LLD §11 Test Scenario 5",
+          "description": "invokeCallbackIfPresent NOT called from handleWaitingState \u2014 WAITING is not terminal",
+          "source": "LLD \u00a72 WorkflowNodeExecutor, LLD \u00a711 Test Scenario 5",
           "met": true
         },
         {
           "id": "AC-5b-6",
           "description": "handleWaitingState retains Workflow.await() predicate; only the ReturnControlActivity stub call is removed",
-          "source": "LLD §2 WorkflowNodeExecutor WAITING state",
+          "source": "LLD \u00a72 WorkflowNodeExecutor WAITING state",
           "met": true
         },
         {
           "id": "AC-5b-7",
           "description": "handleFailedState still throws ApplicationFailure.newNonRetryableFailure(...) after invokeCallbackIfPresent (existing error behavior preserved)",
-          "source": "LLD §2 WorkflowNodeExecutor",
+          "source": "LLD \u00a72 WorkflowNodeExecutor",
           "met": true
         },
         {
           "id": "AC-5b-8",
-          "description": "Workflow.getLogger() used for all log statements inside WorkflowNodeExecutor — NOT @Slf4j (Temporal determinism rule, ARCHITECTURE.md §10)",
+          "description": "Workflow.getLogger() used for all log statements inside WorkflowNodeExecutor \u2014 NOT @Slf4j (Temporal determinism rule, ARCHITECTURE.md \u00a710)",
           "source": "ARCHITECTURE.md, AGENTS.md",
           "met": true
         },
         {
           "id": "AC-5b-9",
           "description": "DEBUG log on skip: 'operation=invokeCallback feature=redis-removal workflowId={} skipped=no_callbackUrl'; INFO log on invoke: 'operation=invokeCallback feature=redis-removal workflowId={} callbackUrl={}'",
-          "source": "LLD §12 Logging",
+          "source": "LLD \u00a712 Logging",
           "met": true
         },
         {
           "id": "AC-5b-10",
-          "description": "mvn test -pl worker -Dgpg.skip=true exits 0; covers LLD §11 scenarios 4 (WorkflowNodeExecutorTest: all terminal state combinations), 5 (WAITING state no ReturnControl), 8 (GenericWorkflowImplTest: callbackUrl propagation); coverage WorkflowNodeExecutor >= 80%, GenericWorkflowImpl >= 80%",
-          "source": "LLD §11, TEST.md 80%+ for worker",
+          "description": "mvn test -pl worker -Dgpg.skip=true exits 0; covers LLD \u00a711 scenarios 4 (WorkflowNodeExecutorTest: all terminal state combinations), 5 (WAITING state no ReturnControl), 8 (GenericWorkflowImplTest: callbackUrl propagation); coverage WorkflowNodeExecutor >= 80%, GenericWorkflowImpl >= 80%",
+          "source": "LLD \u00a711, TEST.md 80%+ for worker",
           "met": true
         }
       ],
@@ -699,10 +723,14 @@
         "api/pom.xml",
         "worker/pom.xml"
       ],
-      "depends_on": ["subtask-3a", "subtask-3b", "subtask-5b"],
+      "depends_on": [
+        "subtask-3a",
+        "subtask-3b",
+        "subtask-5b"
+      ],
       "status": "STATIC_PASS",
       "static_status": "PASS",
-      "validate_status": "PENDING",
+      "validate_status": "PASS",
       "commit_sha": "cf6a4ce",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T15:20:00Z",
@@ -711,43 +739,43 @@
         {
           "id": "AC-6-1",
           "description": "api/src/main/resources/config/configuration.yaml: redisConfiguration block entirely removed (all 10 fields); all other sections unchanged",
-          "source": "LLD §10B File 1",
+          "source": "LLD \u00a710B File 1",
           "met": true
         },
         {
           "id": "AC-6-2",
           "description": "worker/src/main/resources/config/configuration.yaml: redisConfiguration block removed; new callbackConfig block added: enabled: true, timeoutSeconds: 10, maxAttempts: 3, initialIntervalSeconds: 1, backoffCoefficient: 2.0, maxIntervalSeconds: 20",
-          "source": "LLD §10B File 2, LLD §10",
+          "source": "LLD \u00a710B File 2, LLD \u00a710",
           "met": true
         },
         {
           "id": "AC-6-3",
-          "description": "connections.md: Redis Sentinel and Redis Master rows removed from Resolved Connection Table; entire Redis Sentinel .env block removed; Setup Instructions §3 Redis Sentinel section removed",
-          "source": "LLD §10B File 3",
+          "description": "connections.md: Redis Sentinel and Redis Master rows removed from Resolved Connection Table; entire Redis Sentinel .env block removed; Setup Instructions \u00a73 Redis Sentinel section removed",
+          "source": "LLD \u00a710B File 3",
           "met": true
         },
         {
           "id": "AC-6-4",
           "description": "pom.xml root: dependency redis.clients:jedis removed from dependencyManagement; jedis.version property removed",
-          "source": "LLD §10B File 4",
+          "source": "LLD \u00a710B File 4",
           "met": true
         },
         {
           "id": "AC-6-5",
           "description": "api/pom.xml: dependency redis.clients:jedis removed",
-          "source": "LLD §10B File 5",
+          "source": "LLD \u00a710B File 5",
           "met": true
         },
         {
           "id": "AC-6-6",
           "description": "worker/pom.xml: dependency redis.clients:jedis removed",
-          "source": "LLD §10B File 6",
+          "source": "LLD \u00a710B File 6",
           "met": true
         },
         {
           "id": "AC-6-7",
           "description": "mvn clean package -DskipTests -Dgpg.skip=true exits 0 after all 6 changes (compile-time proof no Redis import was missed in any module)",
-          "source": "LLD §2 Constants design notes: compile errors are the safety net",
+          "source": "LLD \u00a72 Constants design notes: compile errors are the safety net",
           "met": true
         },
         {
@@ -771,5 +799,7 @@
       ],
       "metrics_criteria": []
     }
-  ]
+  ],
+  "sonar_gate_passed": "SKIPPED",
+  "browser_ui_passed": "SKIPPED"
 }

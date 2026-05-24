@@ -200,7 +200,6 @@ public class WorkflowNodeExecutor {
     private void handleAsyncCompleteState(String workflowId, ActivityThinResponse activityThinResponse, Workflow workflow, Map<String, String> threadContext) {
         this.workflowState.setView(activityThinResponse.getView());
         this.workflowState.setDisposition(activityThinResponse.getDisposition());
-        // PROBE::redis-removal-workflow-changes::CALL
         invokeCallbackIfPresent(workflowId, this.workflowState);
 
         // Execute post-workflow completion nodes if they exist
@@ -214,7 +213,6 @@ public class WorkflowNodeExecutor {
         if (activityThinResponse.getErrorResponse() != null) {
             this.workflowState.setErrorMessage(activityThinResponse.getErrorResponse().asText());
         }
-        // PROBE::redis-removal-workflow-changes::CALL
         invokeCallbackIfPresent(workflowId, this.workflowState);
         throw ApplicationFailure.newNonRetryableFailure(
                 "Encountered a failure node",
@@ -225,7 +223,6 @@ public class WorkflowNodeExecutor {
     private void handleCompletedState(String workflowId, ActivityThinResponse activityThinResponse, Workflow workflow, Map<String, String> threadContext) {
         this.workflowState.setView(activityThinResponse.getView());
         this.workflowState.setDisposition(activityThinResponse.getDisposition());
-        // PROBE::redis-removal-workflow-changes::CALL
         invokeCallbackIfPresent(workflowId, this.workflowState);
 
         // Execute post-workflow completion nodes if they exist
@@ -253,18 +250,15 @@ public class WorkflowNodeExecutor {
     }
 
     private void handleDelegatedState(String workflowId, ActivityThinResponse activityThinResponse) {
-        // PROBE::redis-removal-workflow-changes::CALL
         invokeCallbackIfPresent(workflowId, this.workflowState);
     }
 
-    // PROBE::redis-removal-workflow-changes::ENTRY
     private void invokeCallbackIfPresent(String workflowId, WorkflowState workflowState) {
         String callbackUrl = workflowState.getCallbackUrl();
         if (callbackUrl == null || callbackUrl.isBlank()) {
-            logger.debug("operation=invokeCallback feature=redis-removal workflowId={} skipped=no_callbackUrl", workflowId);
             return;
         }
-        logger.info("operation=invokeCallback feature=redis-removal workflowId={} callbackUrl={}", workflowId, callbackUrl);
+        logger.info("operation=invokeCallback workflowId={} callbackUrl={}", workflowId, callbackUrl);
         CallbackPayload payload = CallbackPayload.builder()
                 .workflowId(workflowId)
                 .workflowStatus(workflowState.getStatus())
@@ -272,7 +266,6 @@ public class WorkflowNodeExecutor {
                 .build();
         CallbackActivity callbackActivity = io.temporal.workflow.Workflow.newActivityStub(
                 CallbackActivity.class, OptionsStore.callbackActivityOptions);
-        // PROBE::redis-removal-workflow-changes::EXIT
         callbackActivity.sendCallback(callbackUrl, payload);
     }
 

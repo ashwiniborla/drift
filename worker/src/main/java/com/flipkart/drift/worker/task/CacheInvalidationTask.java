@@ -15,7 +15,6 @@ import java.util.Map;
  * Handles POST /tasks/cache-invalidate?type=NODE|WORKFLOW&amp;key=&lt;rowKey&gt;
  *
  * Called by WorkerCacheInvalidationClient (api module) after each DSL publish to HBase.
- * feature=redis-removal
  */
 @Slf4j
 public class CacheInvalidationTask extends Task {
@@ -76,12 +75,11 @@ public class CacheInvalidationTask extends Task {
                     return;
             }
 
-            // PROBE::redis-removal-worker-bootstrap::INFO
-            log.info("operation=cacheInvalidate feature=redis-removal type={} key={} result=INVALIDATED", type, key);
+            log.info("operation=cacheInvalidate type={} key={} result=INVALIDATED", type, key);
             output.println("OK: invalidated " + type + " key=" + key);
 
         } catch (Exception e) {
-            log.error("operation=cacheInvalidate feature=redis-removal type={} key={} error={}", type, key, e.getMessage(), e);
+            log.error("operation=cacheInvalidate type={} key={} error={}", type, key, e.getMessage(), e);
             output.println("ERROR: " + e.getMessage());
         }
     }

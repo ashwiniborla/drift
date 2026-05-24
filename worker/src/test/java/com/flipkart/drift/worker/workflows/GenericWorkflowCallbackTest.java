@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.temporal.client.WorkflowFailedException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -61,10 +63,14 @@ class GenericWorkflowCallbackTest {
 
     static class CallbackStub implements CallbackActivity {
         final List<CallbackPayload> captured = new ArrayList<>();
+        volatile RuntimeException throwOnCall = null;
 
         @Override
         public void sendCallback(String callbackUrl, CallbackPayload payload) {
             captured.add(payload);
+            if (throwOnCall != null) {
+                throw throwOnCall;
+            }
         }
     }
 
@@ -311,5 +317,63 @@ class GenericWorkflowCallbackTest {
         assertEquals(1, callbackStub.captured.size(),
                 "sendCallback should be called once for DELEGATED terminal state");
         assertEquals(WorkflowStatus.DELEGATED, callbackStub.captured.get(0).getWorkflowStatus());
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 6: FAILED workflow with callbackUrl → sendCallback invoked with
+    //         FAILED status BEFORE the workflow throws ApplicationFailure
+    // -----------------------------------------------------------------------
+    @Test
+    void testFailedWorkflow_withCallbackUrl_invokesCallbackBeforeThrow() {
+        fetchWorkflowStub.workflow = buildOneNodeWorkflow(WorkflowStatus.FAILED);
+        successNodeStub.statusToReturn = WorkflowStatus.FAILED;
+        String callbackUrl = "http://callback.example.com/failed";
+
+        WorkflowClient client = testEnv.getWorkflowClient();
+        GenericWorkflow wf = client.newWorkflowStub(GenericWorkflow.class,
+                WorkflowOptions.newBuilder()
+                        .setWorkflowId("wf-failed-cb")
+                        .setTaskQueue(TASK_QUEUE)
+                        .build());
+
+        // handleFailedState throws ApplicationFailure after invoking callback →
+        // the blocking start propagates it as WorkflowFailedException
+        assertThrows(WorkflowFailedException.class, () -> wf.startWorkflow(buildRequest(callbackUrl)));
+
+        assertEquals(1, callbackStub.captured.size(),
+                "sendCallback must be called exactly once even for FAILED terminal state");
+        CallbackPayload payload = callbackStub.captured.get(0);
+        assertEquals(WorkflowStatus.FAILED, payload.getWorkflowStatus(),
+                "Callback payload status must be FAILED");
+    }
+
+    // -----------------------------------------------------------------------
+    // Test 7: Callback activity throws → no try-catch → workflow is marked
+    //         FAILED (verifies the no-try-catch guarantee in invokeCallbackIfPresent)
+    // -----------------------------------------------------------------------
+    @Test
+    void testCallbackFailure_propagatesToWorkflowFailure() {
+        fetchWorkflowStub.workflow = buildOneNodeWorkflow(WorkflowStatus.COMPLETED);
+        successNodeStub.statusToReturn = WorkflowStatus.COMPLETED;
+
+        // Simulate callback target permanently rejecting (non-retryable failure after all retries)
+        callbackStub.throwOnCall = io.temporal.failure.ApplicationFailure
+                .newNonRetryableFailure("callback target returned 400", "CallbackError");
+
+        WorkflowClient client = testEnv.getWorkflowClient();
+        GenericWorkflow wf = client.newWorkflowStub(GenericWorkflow.class,
+                WorkflowOptions.newBuilder()
+                        .setWorkflowId("wf-cb-failure")
+                        .setTaskQueue(TASK_QUEUE)
+                        .build());
+
+        // invokeCallbackIfPresent has NO try-catch → ActivityFailure propagates →
+        // workflow is marked FAILED
+        assertThrows(WorkflowFailedException.class, () -> wf.startWorkflow(buildRequest("http://callback.example.com/400")),
+                "Callback activity failure must propagate and mark the workflow FAILED");
+
+        // sendCallback was still called (it threw, but it was invoked)
+        assertEquals(1, callbackStub.captured.size(),
+                "sendCallback was invoked before it threw");
     }
 }

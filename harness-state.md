@@ -1,12 +1,12 @@
 # Harness State
 
-pipeline-stage: STATIC_VALIDATED
+pipeline-stage: CLEANUP_COMPLETE
 feature-tag: redis-removal
 design-doc: harness-docs/design/active/redis-removal-prd-expanded.md
 hld-doc: harness-docs/design/active/redis-removal-hld.md
 lld-doc: harness-docs/design/active/redis-removal-lld.md
 task-size: LARGE
-last-updated-by: execute
+last-updated-by: cleanup
 plan-doc: harness-docs/plans/active/redis-removal_execution_plan.md
 till-done: harness-docs/plans/active/redis-removal_till_done.json
 plan-revision: 2
@@ -68,3 +68,5 @@ pending-sync:
 | 2026-05-24T08:48:10Z | AWAITING_PLAN_LGTM | planner | Hard stop — awaiting stakeholder LGTM on Confluence page 476842697 before dispatching execute.md |
 | 2026-05-24T13:23:00Z | CONFLUENCE_DOCS | confluence | Updated PRD (474547576 v2), created HLD (476777188), created LLD (476941157) under parent 471664109 (space RET) |
 | 2026-05-24T15:25:00Z | STATIC_VALIDATED | execute | All 7/7 subtasks STATIC_PASS. Commits: e978b10 (subtask-1+2), 505ee57 (subtask-3a), cb8e546 (subtask-3b), 9bbb091 (subtask-4), 50cbb7d (subtask-5a), d29793d (subtask-5b), cf6a4ce (subtask-6) |
+| 2026-05-24T15:45:00Z | VALIDATED | validate | LGTM. Docker stack healthy (VictoriaLogs+Vector). API rebuilt with Java 17, booted successfully without Redis. Verified: POST /v3/workflow/start returns 202 CREATED, PUT /v3/workflow/resume returns 202 RUNNING, ftp:// callbackUrl returns 400, null callbackUrl accepted, feature=redis-removal logs in VictoriaLogs (8 entries, 0 errors). All 7/7 subtasks validate_status=PASS. No jedis/Jedis in .java or pom.xml. No redisConfiguration in YAML. connections.md clean. Worker YAML has callbackConfig block. Metrics criteria verified (4/4). SonarQube SKIPPED (sonar-project-key: SKIP). |
+| 2026-05-24T17:25:00Z | CLEANUP_COMPLETE | cleanup | Stripped all debug artifacts (17 PROBE:: markers, 1 _probeStartMs, 1 timing log, 1 debug skip log, 1 Javadoc feature tag). Converted 17 feature-tagged logs to permanent format. Zero PROBE::/feature tags remain. api: 11/11 tests PASS, worker: 22/22 tests PASS. Full build SUCCESS. Plan archived to harness-docs/plans/completed/. |

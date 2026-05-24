@@ -56,11 +56,9 @@ public class TemporalService {
         return executeWorkflow(workflowStartRequest);
     }
 
-    // PROBE::redis-removal-api-temporal-async::ENTRY
     public WorkflowStartResponse executeWorkflow(WorkflowStartRequest workflowStartRequest) {
         String workflowId = workflowStartRequest.getWorkflowId();
-        long _probeStartMs = System.currentTimeMillis();
-        log.info("feature=redis-removal op=executeWorkflow workflowId={}", workflowId);
+        log.info("op=executeWorkflow workflowId={}", workflowId);
         try {
             GenericWorkflow workflow = client.newWorkflowStub(
                     GenericWorkflow.class,
@@ -73,9 +71,6 @@ public class TemporalService {
             );
             // Non-blocking: WorkflowClient.start() submits the workflow and returns immediately
             WorkflowClient.start(workflow::startWorkflow, workflowStartRequest);
-            log.info("feature=redis-removal op=executeWorkflow workflowId={} durationMs={}", workflowId,
-                    System.currentTimeMillis() - _probeStartMs);
-            // PROBE::redis-removal-api-temporal-async::EXIT
             return WorkflowStartResponse.builder()
                     .workflowId(workflowId)
                     .workflowStatus(WorkflowStatus.CREATED)
@@ -86,19 +81,17 @@ public class TemporalService {
             log.error(WORKFLOW_EXCEPTION, e.getMessage(), e);
             throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
         } catch (Exception e) {
-            log.error("feature=redis-removal op=executeWorkflow workflowId={} error={}", workflowId, e.getMessage(), e);
+            log.error("op=executeWorkflow workflowId={} error={}", workflowId, e.getMessage(), e);
             throw new ApiException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to start workflow: " + e.getMessage());
         }
     }
 
-    // PROBE::redis-removal-api-temporal-async::ENTRY
     public WorkflowResumeResponse resumeWorkflow(WorkflowResumeRequest workflowResumeRequest) {
         try {
-            log.info("feature=redis-removal op=resumeWorkflow workflowId={}", workflowResumeRequest.getWorkflowId());
+            log.info("op=resumeWorkflow workflowId={}", workflowResumeRequest.getWorkflowId());
             workflowResumeRequest.setThreadContext(RequestThreadContext.get().getLegacyThreadContext());
             GenericWorkflow workflow = client.newWorkflowStub(GenericWorkflow.class, workflowResumeRequest.getWorkflowId());
             workflow.resumeWorkflow(workflowResumeRequest);
-            // PROBE::redis-removal-api-temporal-async::EXIT
             return WorkflowResumeResponse.builder()
                     .workflowId(workflowResumeRequest.getWorkflowId())
                     .workflowStatus(WorkflowStatus.RUNNING)
@@ -109,7 +102,7 @@ public class TemporalService {
             log.error(WORKFLOW_EXCEPTION, e.getMessage(), e);
             throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
         } catch (Exception e) {
-            log.error("feature=redis-removal op=resumeWorkflow workflowId={} error={}", workflowResumeRequest.getWorkflowId(), e.getMessage(), e);
+            log.error("op=resumeWorkflow workflowId={} error={}", workflowResumeRequest.getWorkflowId(), e.getMessage(), e);
             throw new ApiException(Response.Status.INTERNAL_SERVER_ERROR, "Failed to resume workflow: " + e.getMessage());
         }
     }

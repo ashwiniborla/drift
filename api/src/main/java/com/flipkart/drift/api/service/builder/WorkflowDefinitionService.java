@@ -219,7 +219,6 @@ public class WorkflowDefinitionService {
         return branchChoices;
     }
 
-    // PROBE::redis-removal-api-services::ENTRY
     public void publishWorkflow(String id) {
         try {
             String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
@@ -240,7 +239,6 @@ public class WorkflowDefinitionService {
                 createWorkflow(versionKey, workflow); // ABC_1
                 workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, versionKey);
                 workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, latestKey);
-                // PROBE::redis-removal-api-services::EXIT
                 return;
             }
             Workflow latestWorkflow = latestWorkflowHB.getWorkflowData();
@@ -304,7 +302,6 @@ public class WorkflowDefinitionService {
         }
     }
 
-    // PROBE::redis-removal-api-services::ENTRY
     public void markActive(String id, Integer versionId) {
         String versionKey = generateRowKey(id, versionId);
         WorkflowHB versionWorkflowHB = getWorkflowHB(versionKey);
@@ -314,7 +311,6 @@ public class WorkflowDefinitionService {
         String activeKey = generateRowKey(id, Version.ACTIVE);
         createWorkflow(activeKey, workflow);
         workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, activeKey);
-        // PROBE::redis-removal-api-services::EXIT
     }
 
     private WorkflowHB getWorkflowHB(String workflowKey) {

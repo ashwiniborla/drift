@@ -62,7 +62,6 @@ public class NodeDefinitionService {
         }
     }
 
-    // PROBE::redis-removal-api-services::ENTRY
     public void publishNode(String id) {
         try {
             String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
@@ -82,7 +81,6 @@ public class NodeDefinitionService {
 
                 workerCacheInvalidationClient.invalidate(CacheType.NODE, versionKey);
                 workerCacheInvalidationClient.invalidate(CacheType.NODE, latestKey);
-                // PROBE::redis-removal-api-services::EXIT
                 return;
             }
             NodeDefinition latestNodeDefinition = latestNodeHB.getNodeData();

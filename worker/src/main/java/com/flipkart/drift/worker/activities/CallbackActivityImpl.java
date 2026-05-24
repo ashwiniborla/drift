@@ -28,10 +28,9 @@ public class CallbackActivityImpl implements CallbackActivity {
     private static final String METRIC_FAILURE = "callback.failure";
     private static final String METRIC_LATENCY = "callback.latency";
 
-    // PROBE::redis-removal-worker-callback::ENTRY
     @Override
     public void sendCallback(String callbackUrl, CallbackPayload payload) {
-        log.info("feature=redis-removal op=sendCallback callbackUrl={} workflowId={}",
+        log.info("op=sendCallback callbackUrl={} workflowId={}",
                 callbackUrl, payload.getWorkflowId());
 
         MetricsRegistry.incrementCounter(METRIC_ATTEMPTS);
@@ -55,19 +54,18 @@ public class CallbackActivityImpl implements CallbackActivity {
 
             if (statusCode >= 200 && statusCode < 300) {
                 MetricsRegistry.incrementCounter(METRIC_SUCCESS);
-                log.info("feature=redis-removal op=sendCallback workflowId={} responseCode={} durationMs={}",
+                log.info("op=sendCallback workflowId={} responseCode={} durationMs={}",
                         payload.getWorkflowId(), statusCode, timerCtx.stop() / 1_000_000);
-                // PROBE::redis-removal-worker-callback::EXIT
             } else if (statusCode >= 400 && statusCode < 500) {
                 MetricsRegistry.incrementCounter(METRIC_FAILURE);
-                log.error("feature=redis-removal op=sendCallback workflowId={} statusCode={} reason=NON_RETRYABLE",
+                log.error("op=sendCallback workflowId={} statusCode={} reason=NON_RETRYABLE",
                         payload.getWorkflowId(), statusCode);
                 timerCtx.stop();
                 throw ApplicationFailure.newNonRetryableFailure(
                         "Callback rejected with HTTP " + statusCode, "CallbackRejected");
             } else {
                 MetricsRegistry.incrementCounter(METRIC_FAILURE);
-                log.error("feature=redis-removal op=sendCallback workflowId={} statusCode={} reason=RETRYABLE",
+                log.error("op=sendCallback workflowId={} statusCode={} reason=RETRYABLE",
                         payload.getWorkflowId(), statusCode);
                 timerCtx.stop();
                 throw Activity.wrap(new RuntimeException("Callback failed with HTTP " + statusCode));
@@ -76,7 +74,7 @@ public class CallbackActivityImpl implements CallbackActivity {
             throw e;
         } catch (Exception e) {
             MetricsRegistry.incrementCounter(METRIC_FAILURE);
-            log.error("feature=redis-removal op=sendCallback workflowId={} reason=RETRYABLE error={}",
+            log.error("op=sendCallback workflowId={} reason=RETRYABLE error={}",
                     payload.getWorkflowId(), e.getMessage(), e);
             timerCtx.stop();
             throw Activity.wrap(e);

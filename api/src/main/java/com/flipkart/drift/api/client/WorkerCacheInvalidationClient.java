@@ -40,10 +40,9 @@ public class WorkerCacheInvalidationClient {
      * @param type the cache type (NODE or WORKFLOW)
      * @param key  the cache key to invalidate (non-null, non-blank)
      */
-    // PROBE::redis-removal-api-temporal-async::ENTRY
     public void invalidate(CacheType type, String key) {
         if (!config.isEnabled()) {
-            log.debug("feature=redis-removal op=cacheInvalidate type={} key={} skipped=disabled", type, key);
+            log.debug("op=cacheInvalidate type={} key={} skipped=disabled", type, key);
             return;
         }
 
@@ -51,7 +50,7 @@ public class WorkerCacheInvalidationClient {
         try {
             podAddresses = InetAddress.getAllByName(config.getHeadlessServiceHost());
         } catch (Exception e) {
-            log.warn("feature=redis-removal op=cacheInvalidate type={} key={} dnsResolutionFailed={}", type, key, e.getMessage());
+            log.warn("op=cacheInvalidate type={} key={} dnsResolutionFailed={}", type, key, e.getMessage());
             return;
         }
 
@@ -67,17 +66,16 @@ public class WorkerCacheInvalidationClient {
                         .build();
                 HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
                 if (response.statusCode() == 200) {
-                    log.debug("feature=redis-removal op=cacheInvalidate podIp={} type={} key={} status=OK",
+                    log.debug("op=cacheInvalidate podIp={} type={} key={} status=OK",
                             podAddress.getHostAddress(), type, key);
                 } else {
-                    log.warn("feature=redis-removal op=cacheInvalidate podIp={} type={} key={} statusCode={}",
+                    log.warn("op=cacheInvalidate podIp={} type={} key={} statusCode={}",
                             podAddress.getHostAddress(), type, key, response.statusCode());
                 }
             } catch (Exception e) {
-                log.warn("feature=redis-removal op=cacheInvalidate podIp={} type={} key={} error={}",
+                log.warn("op=cacheInvalidate podIp={} type={} key={} error={}",
                         podAddress.getHostAddress(), type, key, e.getMessage());
             }
         }
-        // PROBE::redis-removal-api-temporal-async::EXIT
     }
 }
