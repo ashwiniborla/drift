@@ -16,6 +16,8 @@ import com.flipkart.drift.commons.model.node.NodeDefinition;
 import com.flipkart.drift.commons.model.node.Workflow;
 import com.flipkart.drift.commons.model.node.WorkflowNode;
 import com.flipkart.drift.commons.model.temporal.WorkflowState;
+import com.flipkart.drift.worker.activities.CallbackActivity;
+import com.flipkart.drift.worker.model.callback.CallbackPayload;
 import com.flipkart.drift.worker.temporal.OptionsStore;
 import com.flipkart.drift.workflows.GenericWorkflow;
 import com.google.common.collect.Sets;
@@ -198,6 +200,8 @@ public class WorkflowNodeExecutor {
     private void handleAsyncCompleteState(String workflowId, ActivityThinResponse activityThinResponse, Workflow workflow, Map<String, String> threadContext) {
         this.workflowState.setView(activityThinResponse.getView());
         this.workflowState.setDisposition(activityThinResponse.getDisposition());
+        // PROBE::redis-removal-workflow-changes::CALL
+        invokeCallbackIfPresent(workflowId, this.workflowState);
 
         // Execute post-workflow completion nodes if they exist
         if (workflow != null && workflow.getPostWorkflowCompletionNodes() != null && !workflow.getPostWorkflowCompletionNodes().isEmpty()) {
@@ -210,7 +214,8 @@ public class WorkflowNodeExecutor {
         if (activityThinResponse.getErrorResponse() != null) {
             this.workflowState.setErrorMessage(activityThinResponse.getErrorResponse().asText());
         }
-        // TODO subtask-5b: invokeCallbackIfPresent(workflowId, workflowState) before throwing
+        // PROBE::redis-removal-workflow-changes::CALL
+        invokeCallbackIfPresent(workflowId, this.workflowState);
         throw ApplicationFailure.newNonRetryableFailure(
                 "Encountered a failure node",
                 "FAILURE_NODE"
@@ -220,7 +225,8 @@ public class WorkflowNodeExecutor {
     private void handleCompletedState(String workflowId, ActivityThinResponse activityThinResponse, Workflow workflow, Map<String, String> threadContext) {
         this.workflowState.setView(activityThinResponse.getView());
         this.workflowState.setDisposition(activityThinResponse.getDisposition());
-        // TODO subtask-5b: invokeCallbackIfPresent(workflowId, workflowState)
+        // PROBE::redis-removal-workflow-changes::CALL
+        invokeCallbackIfPresent(workflowId, this.workflowState);
 
         // Execute post-workflow completion nodes if they exist
         if (workflow != null && workflow.getPostWorkflowCompletionNodes() != null && !workflow.getPostWorkflowCompletionNodes().isEmpty()) {
@@ -247,7 +253,27 @@ public class WorkflowNodeExecutor {
     }
 
     private void handleDelegatedState(String workflowId, ActivityThinResponse activityThinResponse) {
-        // TODO subtask-5b: invokeCallbackIfPresent(workflowId, workflowState)
+        // PROBE::redis-removal-workflow-changes::CALL
+        invokeCallbackIfPresent(workflowId, this.workflowState);
+    }
+
+    // PROBE::redis-removal-workflow-changes::ENTRY
+    private void invokeCallbackIfPresent(String workflowId, WorkflowState workflowState) {
+        String callbackUrl = workflowState.getCallbackUrl();
+        if (callbackUrl == null || callbackUrl.isBlank()) {
+            logger.debug("operation=invokeCallback feature=redis-removal workflowId={} skipped=no_callbackUrl", workflowId);
+            return;
+        }
+        logger.info("operation=invokeCallback feature=redis-removal workflowId={} callbackUrl={}", workflowId, callbackUrl);
+        CallbackPayload payload = CallbackPayload.builder()
+                .workflowId(workflowId)
+                .workflowStatus(workflowState.getStatus())
+                .errorMessage(workflowState.getErrorMessage())
+                .build();
+        CallbackActivity callbackActivity = io.temporal.workflow.Workflow.newActivityStub(
+                CallbackActivity.class, OptionsStore.callbackActivityOptions);
+        // PROBE::redis-removal-workflow-changes::EXIT
+        callbackActivity.sendCallback(callbackUrl, payload);
     }
 
     private void updateWorkflowState(ActivityThinResponse response, WorkflowNode currentNode) {

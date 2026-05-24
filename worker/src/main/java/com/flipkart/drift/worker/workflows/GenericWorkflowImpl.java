@@ -122,6 +122,7 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
         this.workflowState.setWorkflowId(io.temporal.workflow.Workflow.getInfo().getWorkflowId());
         this.workflowState.setStatus(WorkflowStatus.CREATED);
         this.workflowState.setIssueDetail(workflowStartRequest.getIssueDetail());
+        this.workflowState.setCallbackUrl(workflowStartRequest.getCallbackUrl());
         io.temporal.workflow.Workflow.newActivityStub(WorkflowContextManagerActivity.class, OptionsStore.activityOptions)
                 .persistWorkflowState(workflowStartRequest, io.temporal.workflow.Workflow.getInfo().getWorkflowId());
     }
