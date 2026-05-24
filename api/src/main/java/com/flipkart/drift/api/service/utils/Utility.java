@@ -2,8 +2,7 @@ package com.flipkart.drift.api.service.utils;
 
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisSentinelPool;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,7 +22,7 @@ public class Utility {
      * @return generated workflow ID
      */
     public String generateWorkflowId(String externalIncidentId, boolean isIncidentCreationAllowed) {
-       
+
         if (isIncidentCreationAllowed) {
             return WORKFLOW_ID_PREFIX + externalIncidentId;
         }
@@ -39,17 +38,4 @@ public class Utility {
         int randomNumber = ThreadLocalRandom.current().nextInt(RANDOM_ID_BOUND);
         return WORKFLOW_ID_PREFIX + timestamp + String.format(RANDOM_ID_FORMAT, randomNumber);
     }
-
-    public static Long publishRedisEvent(JedisSentinelPool jedisSentinelPool, String channel, String message) {
-        Jedis jedis = jedisSentinelPool.getResource();
-        log.info("Publishing redis event to {}, msg: {}", channel, message);
-        Long status = jedis.publish(channel, message);
-        jedis.close();
-        return status;
-    }
-
 }
-
-
-
-

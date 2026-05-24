@@ -14,8 +14,6 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DriftConfiguration extends Configuration {
     @NotNull
-    private RedisConfiguration redisConfiguration;
-    @NotNull
     private ExecutorServiceConfig cacheRefreshExecutorServiceConfig;
     @NotNull
     private StaticCacheRefreshConfig staticCacheRefreshConfig;
@@ -31,5 +29,8 @@ public class DriftConfiguration extends Configuration {
     private String hadoopUserName;
     @NotNull
     private String hadoopLoginUser;
-}
 
+    // Optional: worker cache invalidation config for FR-3 fan-out
+    // If absent from YAML, WorkflowClientModule falls back to new WorkerInvalidationConfig() defaults
+    private WorkerInvalidationConfig workerInvalidationConfig;
+}

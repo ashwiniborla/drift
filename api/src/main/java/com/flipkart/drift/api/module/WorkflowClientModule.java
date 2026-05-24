@@ -1,11 +1,12 @@
 package com.flipkart.drift.api.module;
 
 import com.codahale.metrics.MetricRegistry;
+import com.flipkart.drift.api.client.WorkerCacheInvalidationClient;
 import com.flipkart.drift.api.config.DriftConfiguration;
+import com.flipkart.drift.api.config.WorkerInvalidationConfig;
 import com.flipkart.drift.persistence.dao.ConnectionType;
 import com.flipkart.drift.persistence.dao.IConnectionProvider;
 import com.flipkart.drift.api.exception.JerseyViolationInformativeExceptionMapper;
-import com.flipkart.drift.api.config.RedisConfiguration;
 import com.flipkart.drift.api.exception.mapper.ApiExceptionMapper;
 import com.google.inject.*;
 import com.google.inject.name.Names;
@@ -13,61 +14,21 @@ import com.netflix.config.DynamicProperty;
 import io.dropwizard.setup.Environment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.security.UserGroupInformation;
-import redis.clients.jedis.JedisSentinelPool;
-
-import java.util.*;
 
 @Slf4j
 public class WorkflowClientModule extends AbstractModule {
-    private final RedisConfiguration redisConfiguration;
-    private final JedisSentinelPool jedisSentinelPool;
     private final Environment environment;
     private final DriftConfiguration driftConfiguration;
 
-
     public WorkflowClientModule(DriftConfiguration driftConfiguration, Environment environment, MetricRegistry metricRegistry) {
-        this.redisConfiguration = driftConfiguration.getRedisConfiguration();
         this.environment = environment;
         this.driftConfiguration = driftConfiguration;
-        this.jedisSentinelPool = provideJedisPool();
-    }
-
-    private JedisSentinelPool provideJedisPool() {
-        try {
-            final RedisConfiguration redisConfiguration = this.redisConfiguration;
-            String hosts = redisConfiguration.getSentinels();
-            StringTokenizer strTkn = new StringTokenizer(hosts, ",");
-            List<String> hostList = new ArrayList<>();
-            while (strTkn.hasMoreTokens())
-                hostList.add(strTkn.nextToken());
-            Set<String> sentinels = new HashSet<>(hostList);
-            GenericObjectPoolConfig<?> genericObjectPoolConfig = getGenericObjectPoolConfig(redisConfiguration);
-            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig, redisConfiguration.getPassword());
-        } catch (Exception e) {
-            log.error("Failed to Connected to RedisDao Server {}", e.getMessage(), e);
-            return null;
-            // TODO : Clean this up ... Change made so that bootstrap shouldn't be failing on redis failure
-//            throw new RedisStoreException(Response.Status.INTERNAL_SERVER_ERROR, "Unable to init redis config", e.getMessage());
-        }
-    }
-
-    private static GenericObjectPoolConfig<?> getGenericObjectPoolConfig(RedisConfiguration redisConfiguration) {
-        GenericObjectPoolConfig<?> genericObjectPoolConfig = new GenericObjectPoolConfig<>();
-        genericObjectPoolConfig.setTimeBetweenEvictionRunsMillis(-1);
-        genericObjectPoolConfig.setMaxTotal(redisConfiguration.getMaxTotal());
-        genericObjectPoolConfig.setTestOnBorrow(redisConfiguration.isTestOnBorrow());
-        genericObjectPoolConfig.setMaxWaitMillis(redisConfiguration.getMaxWaitMillis());
-        genericObjectPoolConfig.setBlockWhenExhausted(redisConfiguration.isBlockWhenExhausted());
-        genericObjectPoolConfig.setMaxIdle(redisConfiguration.getMaxIdle());
-        genericObjectPoolConfig.setMinIdle(redisConfiguration.getMinIdle());
-        return genericObjectPoolConfig;
     }
 
     private void addExceptionMappers() {
@@ -170,8 +131,11 @@ public class WorkflowClientModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public JedisSentinelPool getJedisSentinelPool() {
-        return this.jedisSentinelPool;
+    public WorkerCacheInvalidationClient getWorkerCacheInvalidationClient() {
+        WorkerInvalidationConfig config = driftConfiguration.getWorkerInvalidationConfig() != null
+                ? driftConfiguration.getWorkerInvalidationConfig()
+                : new WorkerInvalidationConfig();
+        return new WorkerCacheInvalidationClient(config);
     }
 
     @Provides
@@ -179,6 +143,4 @@ public class WorkflowClientModule extends AbstractModule {
     public DriftConfiguration getDriftConfiguration() {
         return this.driftConfiguration;
     }
-
 }
-
