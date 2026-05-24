@@ -703,7 +703,7 @@
       "status": "STATIC_PASS",
       "static_status": "PASS",
       "validate_status": "PENDING",
-      "commit_sha": null,
+      "commit_sha": "cf6a4ce",
       "started_at": "2026-05-24T00:00:00Z",
       "completed_at": "2026-05-24T15:20:00Z",
       "test_command": "mvn clean package -DskipTests -Dgpg.skip=true -Dattach.sources.skip=true -Dattach.javadoc.skip=true",
