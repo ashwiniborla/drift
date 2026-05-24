@@ -2,6 +2,7 @@ package com.flipkart.drift.api.service.builder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flipkart.drift.api.client.WorkerCacheInvalidationClient;
 import com.flipkart.drift.api.service.utils.WorkflowGraphNode;
 import com.flipkart.drift.commons.exception.ApiException;
 import com.flipkart.drift.commons.model.enums.NodeType;
@@ -23,9 +24,7 @@ import guru.nidi.graphviz.engine.GraphvizJdkEngine;
 import guru.nidi.graphviz.model.Graph;
 import guru.nidi.graphviz.model.Node;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.JedisSentinelPool;
 
-import static com.flipkart.drift.api.service.utils.Utility.publishRedisEvent;
 import static guru.nidi.graphviz.model.Factory.graph;
 import static guru.nidi.graphviz.model.Factory.node;
 import static guru.nidi.graphviz.model.Link.to;
@@ -36,7 +35,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.flipkart.drift.commons.utils.Constants.Workflow.DSL_UPDATE_CHANNEL;
+import static com.flipkart.drift.api.client.WorkerCacheInvalidationClient.CacheType;
 import static com.flipkart.drift.commons.utils.Utility.*;
 
 @Slf4j
@@ -44,17 +43,16 @@ public class WorkflowDefinitionService {
 
     public static final String WORKFLOW_EVENT_ID = "WORKFLOW";
     private final WorkflowDefinitionDao workflowDefinitionDao;
-    private final JedisSentinelPool jedisSentinelPool;
     private final NodeDefinitionService nodeDefinitionService;
-
+    private final WorkerCacheInvalidationClient workerCacheInvalidationClient;
 
     @Inject
     public WorkflowDefinitionService(WorkflowDefinitionDao workflowDefinitionDao, ObjectMapper objectMapper,
-                                     JedisSentinelPool jedisSentinelPool,
-                                     NodeDefinitionService nodeDefinitionService) {
+                                     NodeDefinitionService nodeDefinitionService,
+                                     WorkerCacheInvalidationClient workerCacheInvalidationClient) {
         this.workflowDefinitionDao = workflowDefinitionDao;
-        this.jedisSentinelPool = jedisSentinelPool;
         this.nodeDefinitionService = nodeDefinitionService;
+        this.workerCacheInvalidationClient = workerCacheInvalidationClient;
     }
 
     public Workflow addWorkflow(Workflow workflowData) {
@@ -221,7 +219,7 @@ public class WorkflowDefinitionService {
         return branchChoices;
     }
 
-
+    // PROBE::redis-removal-api-services::ENTRY
     public void publishWorkflow(String id) {
         try {
             String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
@@ -240,9 +238,9 @@ public class WorkflowDefinitionService {
 
                 String versionKey = generateRowKey(id, version);
                 createWorkflow(versionKey, workflow); // ABC_1
-                publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + versionKey);
-                publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + latestKey);
-
+                workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, versionKey);
+                workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, latestKey);
+                // PROBE::redis-removal-api-services::EXIT
                 return;
             }
             Workflow latestWorkflow = latestWorkflowHB.getWorkflowData();
@@ -254,8 +252,8 @@ public class WorkflowDefinitionService {
             createWorkflow(versionKey, workflow); // ABC_2 abc_3
 
             updateWorkflowInHBase(latestKey, workflow); //ABC_LATEST->Data of ABC_2 abc3
-            publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + versionKey);
-            publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + latestKey);
+            workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, versionKey);
+            workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, latestKey);
 
         } catch (Exception e) {
             throw new ApiException("Error while publishing workflow in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
@@ -283,7 +281,6 @@ public class WorkflowDefinitionService {
         }
     }
 
-
     private void updateWorkflowInHBase(String workflowKey, Workflow workflowData) {
         try {
             WorkflowHB workflowHB = new WorkflowHB();
@@ -307,6 +304,7 @@ public class WorkflowDefinitionService {
         }
     }
 
+    // PROBE::redis-removal-api-services::ENTRY
     public void markActive(String id, Integer versionId) {
         String versionKey = generateRowKey(id, versionId);
         WorkflowHB versionWorkflowHB = getWorkflowHB(versionKey);
@@ -315,8 +313,8 @@ public class WorkflowDefinitionService {
 
         String activeKey = generateRowKey(id, Version.ACTIVE);
         createWorkflow(activeKey, workflow);
-        publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + activeKey);
-
+        workerCacheInvalidationClient.invalidate(CacheType.WORKFLOW, activeKey);
+        // PROBE::redis-removal-api-services::EXIT
     }
 
     private WorkflowHB getWorkflowHB(String workflowKey) {
@@ -330,6 +328,4 @@ public class WorkflowDefinitionService {
             throw new ApiException("Error while fetching workflow from WorkflowHB in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
         }
     }
-
-
 }
