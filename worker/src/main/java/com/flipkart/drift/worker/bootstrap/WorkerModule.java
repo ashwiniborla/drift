@@ -9,7 +9,6 @@ import com.flipkart.drift.persistence.dao.IConnectionProvider;
 import com.flipkart.drift.worker.Utility.ABServiceInitializer;
 import com.flipkart.drift.worker.Utility.SchedulerInitializer;
 import com.flipkart.drift.worker.config.*;
-import com.flipkart.drift.commons.exception.RedisStoreException;
 import com.flipkart.drift.worker.executor.WaitTypeExecutor.AbsoluteWaitExecutor;
 import com.flipkart.drift.worker.executor.WaitTypeExecutor.OnEventExecutor;
 import com.flipkart.drift.worker.executor.WaitTypeExecutor.SchedulerWaitExecutor;
@@ -23,18 +22,13 @@ import com.google.inject.name.Names;
 import com.netflix.config.DynamicProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.security.UserGroupInformation;
-import redis.clients.jedis.JedisPoolAbstract;
-import redis.clients.jedis.JedisSentinelPool;
 
-import javax.ws.rs.core.Response;
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -43,39 +37,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class WorkerModule extends AbstractModule {
     private final DriftWorkerConfiguration driftWorkerConfiguration;
-    private final JedisSentinelPool jedisSentinelPool;
 
     public WorkerModule(DriftWorkerConfiguration driftWorkerConfiguration) {
         this.driftWorkerConfiguration = driftWorkerConfiguration;
-        this.jedisSentinelPool = provideJedisPool();
-    }
-
-    private JedisSentinelPool provideJedisPool() {
-        try {
-            final RedisConfiguration redisConfiguration = driftWorkerConfiguration.getRedisConfiguration();
-            String hosts = redisConfiguration.getSentinels();
-            StringTokenizer strTkn = new StringTokenizer(hosts, ",");
-            List<String> hostList = new ArrayList<>();
-            while (strTkn.hasMoreTokens()) hostList.add(strTkn.nextToken());
-            Set<String> sentinels = new HashSet<>(hostList);
-            GenericObjectPoolConfig<?> genericObjectPoolConfig = getGenericObjectPoolConfig(redisConfiguration);
-            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig, redisConfiguration.getPassword());
-        } catch (Exception e) {
-            log.error("Failed to Connected to RedisDao Server " + e.getMessage(), e);
-            throw new RedisStoreException(Response.Status.INTERNAL_SERVER_ERROR, "Unable to init redis config", e.getMessage());
-        }
-    }
-
-    private static GenericObjectPoolConfig<?> getGenericObjectPoolConfig(RedisConfiguration redisConfiguration) {
-        GenericObjectPoolConfig<?> genericObjectPoolConfig = new GenericObjectPoolConfig<>();
-        genericObjectPoolConfig.setTimeBetweenEvictionRunsMillis(-1);
-        genericObjectPoolConfig.setMaxTotal(redisConfiguration.getMaxTotal());
-        genericObjectPoolConfig.setTestOnBorrow(redisConfiguration.isTestOnBorrow());
-        genericObjectPoolConfig.setMaxWaitMillis(redisConfiguration.getMaxWaitMillis());
-        genericObjectPoolConfig.setBlockWhenExhausted(redisConfiguration.isBlockWhenExhausted());
-        genericObjectPoolConfig.setMaxIdle(redisConfiguration.getMaxIdle());
-        genericObjectPoolConfig.setMinIdle(redisConfiguration.getMinIdle());
-        return genericObjectPoolConfig;
     }
 
     public static class ConnectionProvider implements IConnectionProvider {
@@ -165,7 +129,6 @@ public class WorkerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(JedisPoolAbstract.class).toInstance(this.jedisSentinelPool);
         bind(DriftWorkerConfiguration.class).toInstance(driftWorkerConfiguration);
         bind(StringResolver.class).to(MustacheStringResolver.class);
         bind(Connection.class).annotatedWith(Names.named(ConnectionType.HOT.name())).toProvider(ConnectionProviderWorker.class).asEagerSingleton();
@@ -184,15 +147,14 @@ public class WorkerModule extends AbstractModule {
     private InstrumentedExecutorService provideCacheRefreshThreadPool() {
         ExecutorServiceConfig executorServiceConfig = driftWorkerConfiguration.getCacheRefreshExecutorServiceConfig();
 
-        ExecutorService executorService = new ThreadPoolExecutor(executorServiceConfig.getMinThreads(),// core pool size
-                executorServiceConfig.getMaxThreads(),// maximum pool size
-                5L,// keep-alive time
-                TimeUnit.SECONDS,// keep-alive time unit
-                new LinkedBlockingQueue<>(executorServiceConfig.getQueueSize()),// work queue
-                new ThreadPoolExecutor.CallerRunsPolicy()// rejected execution handler
+        ExecutorService executorService = new ThreadPoolExecutor(executorServiceConfig.getMinThreads(),
+                executorServiceConfig.getMaxThreads(),
+                5L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(executorServiceConfig.getQueueSize()),
+                new ThreadPoolExecutor.CallerRunsPolicy()
         );
 
-        // Wrapping with InstrumentedExecutorService to add metrics
         return new InstrumentedExecutorService(executorService, MetricsRegistry.INSTANCE.getRegistry(), "ScanThreadPool");
     }
 
@@ -208,12 +170,6 @@ public class WorkerModule extends AbstractModule {
         return driftWorkerConfiguration.getCacheMaxEntriesConfig();
     }
 
-    /**
-     * Provide ABServiceInitializer as a singleton.
-     * ABServiceInitializer is completely agnostic of provider implementations.
-     * It uses SPI to discover and initialize the appropriate provider.
-     * Providers read their own configuration from DynamicProperty.
-     */
     @Provides
     @Singleton
     public ABServiceInitializer provideABServiceInitializer() {
@@ -225,6 +181,4 @@ public class WorkerModule extends AbstractModule {
     public SchedulerInitializer provideSchedulerInitializer() {
         return new SchedulerInitializer();
     }
-
 }
-

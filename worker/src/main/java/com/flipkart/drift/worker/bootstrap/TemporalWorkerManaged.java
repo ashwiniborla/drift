@@ -71,7 +71,7 @@ public class TemporalWorkerManaged implements Managed {
         worker.registerActivitiesImplementations(injector.getInstance(HttpNodeNodeActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(GroovyNodeNodeActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(BranchNodeNodeActivityImpl.class));
-        worker.registerActivitiesImplementations(injector.getInstance(ReturnControlActivityImpl.class));
+        worker.registerActivitiesImplementations(injector.getInstance(CallbackActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(SuccessNodeNodeActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(FailureNodeNodeActivityImpl.class));
         worker.registerActivitiesImplementations(injector.getInstance(InstructionNodeActivityImpl.class));

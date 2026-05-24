@@ -1,6 +1,9 @@
 package com.flipkart.drift.worker.bootstrap;
 
 import com.flipkart.drift.persistence.bootstrap.DriftEntityModule;
+import com.flipkart.drift.persistence.cache.NodeDefinitionCache;
+import com.flipkart.drift.persistence.cache.WorkflowCache;
+import com.flipkart.drift.worker.task.CacheInvalidationTask;
 import com.flipkart.drift.worker.util.AuthNTokenGenerator;
 import com.flipkart.drift.worker.config.DriftWorkerConfiguration;
 import com.flipkart.drift.worker.resources.DriftWorkerResource;
@@ -91,7 +94,10 @@ public class WorkerApplication extends Application<DriftWorkerConfiguration> {
         injector = Guice.createInjector(new WorkerModule(driftWorkerConfiguration), new DriftEntityModule());
         // Register worker factory as a managed component for graceful shutdown
         environment.lifecycle().manage(new TemporalWorkerManaged(injector, driftWorkerConfiguration, metricsScope));
-        environment.lifecycle().manage(injector.getInstance(RedisCacheInvalidator.class));
+        // Register CacheInvalidationTask on admin port 7201 (Dropwizard admin connector)
+        environment.admin().addTask(new CacheInvalidationTask(
+                injector.getInstance(NodeDefinitionCache.class),
+                injector.getInstance(WorkflowCache.class)));
         environment.jersey().register(injector.getInstance(DriftWorkerResource.class));
     }
 

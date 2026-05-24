@@ -37,6 +37,17 @@ public class OptionsStore {
             .setRetryOptions(activityRetryOptionsV1)
             .build();
 
+    public static final RetryOptions callbackActivityRetryOptions = RetryOptions.newBuilder()
+            .setInitialInterval(Duration.ofSeconds(1))
+            .setMaximumInterval(Duration.ofSeconds(20))
+            .setBackoffCoefficient(2.0)
+            .setMaximumAttempts(3)
+            .build();
+    public static final ActivityOptions callbackActivityOptions = ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(Duration.ofSeconds(90))
+            .setRetryOptions(callbackActivityRetryOptions)
+            .build();
+
     private OptionsStore() {
     }
 }

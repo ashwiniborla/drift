@@ -14,8 +14,6 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DriftWorkerConfiguration extends Configuration {
     @NotNull
-    private RedisConfiguration redisConfiguration;
-    @NotNull
     private ExecutorServiceConfig cacheRefreshExecutorServiceConfig;
     @NotNull
     private StaticCacheRefreshConfig staticCacheRefreshConfig;
@@ -48,4 +46,8 @@ public class DriftWorkerConfiguration extends Configuration {
 
     @NotNull
     private String abPropertiesPath;
+
+    // Optional callback configuration for HTTP callbacks after workflow completion
+    // If absent from YAML, defaults from CallbackConfig class will be used
+    private CallbackConfig callbackConfig;
 }
