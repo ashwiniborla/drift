@@ -28,4 +28,5 @@ public class WorkflowStartRequest extends WorkflowRequest {
     @Deprecated
     private Set<OrderDetail> orderDetails;
     private Map<String, Object> config;
+    private String callbackUrl;
 }

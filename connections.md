@@ -11,15 +11,18 @@ The Resolved Connection Table must be populated before running the services.
 
 | Service | Type | Access Mode | Host | Port | Config Key | Auth | Status |
 |---------|------|------------|------|------|------------|------|--------|
-| Temporal Frontend | grpc-api | B (discovered-endpoint) | (set TEMPORAL_FRONTEND) | 7233 | `TEMPORAL_FRONTEND` | none | PENDING |
-| Temporal Task Queue | config | B (env-var) | N/A | N/A | `TEMPORAL_TASK_QUEUE` | none | PENDING |
-| HBase | nosql-db | D (port-forward) | (ask team for staging endpoint) | 16000 | `HBASE_CONFIG_BUCKET` (path to hbase-site.xml) | kerberos/hadoop-user | PENDING |
-| Redis Sentinel | cache | B (discovered-endpoint) | (set REDIS_SENTINELS) | 26379 | `REDIS_SENTINELS`, `REDIS_MASTER`, `REDIS_PREFIX`, `REDIS_PASSWORD` | password | PENDING |
-| Auth Properties | config-bucket | F (skip / local file) | localhost | N/A | `AUTH_PATH` | none | PENDING |
-| AB Config Bucket | config-bucket | F (skip / local file) | localhost | N/A | `AB_CONFIG_BUCKET` | none | PENDING |
-| Workflow Properties | config-bucket | F (skip / local file) | localhost | N/A | `WORKFLOW_PROPERTY_PATH` | none | PENDING |
-| Enum Store Bucket | config-bucket | F (skip / local file) | localhost | N/A | `ENUM_STORE_BUCKET` | none | PENDING |
-| Hadoop Identity | config | B (env-var) | N/A | N/A | `HADOOP_USERNAME`, `HADOOP_LOGIN_USER` | none | PENDING |
+| Temporal Frontend | grpc-api | A (local Docker) | localhost | 7233 | `TEMPORAL_FRONTEND` | none | RESOLVED |
+| Temporal UI | http | A (local Docker) | localhost | 8080 | N/A | none | RESOLVED |
+| Temporal Task Queue | config | B (env-var) | N/A | N/A | `TEMPORAL_TASK_QUEUE` | none | RESOLVED — no pre-creation needed; worker auto-registers on startup |
+| HBase Master RPC | nosql-db | A (local Docker) | localhost | 16000 | `HBASE_CONFIG_BUCKET` (path to hbase-site.xml) | none | RESOLVED — running |
+| HBase ZooKeeper | nosql-db | A (local Docker) | localhost | 2181 | included in hbase-site.xml | none | RESOLVED — running (imok) |
+| Redis Sentinel | cache | A (local Docker — host network) | localhost | 26379 | `REDIS_SENTINELS` | none (no password) | RESOLVED |
+| Redis Master | cache | A (local Docker — host network) | localhost | 6379 | `REDIS_MASTER=mymaster` | none (no password) | RESOLVED |
+| Auth Properties | config-bucket | F (skip / local file) | localhost | N/A | `AUTH_PATH` | none | RESOLVED — use empty local file |
+| AB Config Bucket | config-bucket | F (skip / local file) | localhost | N/A | `AB_CONFIG_BUCKET` | none | RESOLVED — use empty local file |
+| Workflow Properties | config-bucket | F (skip / local file) | localhost | N/A | `WORKFLOW_PROPERTY_PATH` | none | RESOLVED — use empty local file |
+| Enum Store Bucket | config-bucket | F (skip / local file) | localhost | N/A | `ENUM_STORE_BUCKET` | none | RESOLVED — use empty local file |
+| Hadoop Identity | config | B (env-var) | N/A | N/A | `HADOOP_USERNAME`, `HADOOP_LOGIN_USER` | none | RESOLVED — HBase auth identity; optional for local (no Kerberos); set to any username or leave blank |
 | VictoriaLogs | observability | A (local Docker) | localhost | 9428 | N/A (docker-compose.yml) | none | RESOLVED |
 | Vector | observability | A (local Docker) | localhost | N/A | N/A (docker-compose.yml) | none | RESOLVED |
 
@@ -56,79 +59,129 @@ The Resolved Connection Table must be populated before running the services.
 ## Setup Instructions
 
 ### 1. Temporal Frontend
-Drift requires a running Temporal server. For local dev, either:
-- **Option A:** Use an existing staging Temporal — set `TEMPORAL_FRONTEND=<host>:<port>` in `.env`
-- **Option B:** Run Temporal locally:
-  ```bash
-  # Using Temporal CLI
-  temporal server start-dev
-  # Default: localhost:7233
-  ```
+Running locally in Docker (image: `temporalio/server:1.31.0`).
+
+```bash
+# Start (if not running)
+docker start temporal temporal-postgresql temporal-elasticsearch temporal-ui
+
+# Verify
+curl -s http://localhost:8080   # Temporal UI
+```
+
+- **gRPC endpoint:** `localhost:7233`
+- **UI:** `http://localhost:8080`
+- **Task Queue:** set `TEMPORAL_TASK_QUEUE` in `.env` — use any name e.g. `drift-local`
 
 ### 2. HBase
-HBase is required for persisting node/workflow definitions and workflow context.
-- **Recommended:** Port-forward from a staging/dev HBase cluster (never production).
-- `HBASE_CONFIG_BUCKET` should point to a local `hbase-site.xml` file, e.g.:
-  ```
-  HBASE_CONFIG_BUCKET=/Users/nidhi.b/.drift/config/hbase-site.xml
-  ```
-- Contact the infrastructure team for the staging HBase endpoint.
+Running locally in Docker (image: `dajobe/hbase`). Currently **stopped** — start before booting the app.
 
-  ⚠️ WRITABLE DATA STORE — always use a staging/dev HBase table, never production.
+```bash
+# Start HBase
+docker start hbase
+
+# Verify (wait ~15s for HBase to initialize)
+curl -s http://localhost:16010/master-status | grep -o "Master.*running"
+```
+
+Ports (all bound to localhost):
+| Port | Service |
+|------|---------|
+| 2181 | ZooKeeper (used by HBase client) |
+| 16000 | HBase Master RPC |
+| 16010 | HBase Master Web UI |
+| 16020 | RegionServer RPC |
+| 16030 | RegionServer Web UI |
+
+Generate `hbase-site.xml` for local use:
+```bash
+mkdir -p /tmp/drift-config
+cat > /tmp/drift-config/hbase-site.xml <<'EOF'
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>localhost</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>
+    <value>2181</value>
+  </property>
+  <property>
+    <name>hbase.master</name>
+    <value>localhost:16000</value>
+  </property>
+</configuration>
+EOF
+```
+
+Then set: `HBASE_CONFIG_BUCKET=file:///tmp/drift-config/hbase-site.xml  # file:// prefix required — Archaius URLConfigurationSource expects a URL`
+
+⚠️ Local HBase only — never use production HBase tables.
 
 ### 3. Redis Sentinel
-- **Recommended:** Use an existing staging Redis Sentinel cluster.
-- Format: `REDIS_SENTINELS=host1:26379,host2:26379,host3:26379`
-- Use a unique `REDIS_PREFIX` for your local dev to avoid colliding with staging data.
+Running locally in Docker on **host network** (image: `redis:7-alpine`).
+
+- **Sentinel:** `localhost:26379`
+- **Master name:** `mymaster`
+- **Master:** `localhost:6379`
+- **Password:** none
+
+```bash
+# Verify sentinel
+redis-cli -p 26379 sentinel masters
+
+# Verify master
+redis-cli -p 6379 ping
+```
+
+Use a unique `REDIS_PREFIX` to avoid key collisions with other local services.
 
 ### 4. Config Buckets (Auth, AB, Workflow, Enum Store)
-These are S3/GCS/local-file paths to properties files. For local dev:
-- Create empty properties files if the features are not needed:
-  ```bash
-  mkdir -p /tmp/drift-config
-  touch /tmp/drift-config/auth.properties
-  touch /tmp/drift-config/ab.properties
-  touch /tmp/drift-config/workflow.properties
-  touch /tmp/drift-config/enum.properties
-  ```
-- Then set:
-  ```
-  AUTH_PATH=/tmp/drift-config/auth.properties
-  AB_CONFIG_BUCKET=/tmp/drift-config/ab.properties
-  WORKFLOW_PROPERTY_PATH=/tmp/drift-config/workflow.properties
-  ENUM_STORE_BUCKET=/tmp/drift-config/enum.properties
-  ```
+These are local file paths for dev. Create empty stubs:
+```bash
+mkdir -p /tmp/drift-config
+touch /tmp/drift-config/auth.properties
+touch /tmp/drift-config/ab.properties
+touch /tmp/drift-config/workflow.properties
+touch /tmp/drift-config/enum.properties
+```
 
 ---
 
 ## .env Template
 
-Copy to `.env` and fill in values:
+Copy to `.env` and fill in values. Items marked `# RESOLVED` are confirmed from running containers.
+
 ```bash
-# Temporal
-TEMPORAL_FRONTEND=localhost:7233
-TEMPORAL_TASK_QUEUE=drift-task-queue
+# ── Temporal ─────────────────────────────────────────────────────────────────
+TEMPORAL_FRONTEND=localhost:7233          # RESOLVED — docker container temporal:7233
+TEMPORAL_TASK_QUEUE=drift-local          # RESOLVED — any name works; worker auto-registers it on startup
 
-# HBase (path to hbase-site.xml)
-HBASE_CONFIG_BUCKET=/Users/nidhi.b/.drift/config/hbase-site.xml
+# ── HBase (path to hbase-site.xml) ───────────────────────────────────────────
+# RESOLVED — local Docker container 'hbase' (dajobe/hbase); run `docker start hbase` first
+# Generate hbase-site.xml using the command in Setup Instructions §2 above
+HBASE_CONFIG_BUCKET=file:///tmp/drift-config/hbase-site.xml  # file:// prefix required — Archaius URLConfigurationSource expects a URL
 
-# Hadoop
-HADOOP_USERNAME=nidhi.b
-HADOOP_LOGIN_USER=nidhi.b
+# ── Hadoop ────────────────────────────────────────────────────────────────────
+HADOOP_USERNAME=nidhi.b                  # RESOLVED — HBase client identity (no-op for local HBase, non-fatal if blank)
+HADOOP_LOGIN_USER=nidhi.b               # RESOLVED — sets UGI login user; optional for local dev (no Kerberos)
 
-# Redis Sentinel
+# ── Redis Sentinel ────────────────────────────────────────────────────────────
+# RESOLVED — local Docker containers redis-sentinel + redis-master (host network)
 REDIS_MASTER=mymaster
 REDIS_SENTINELS=localhost:26379
-REDIS_PREFIX=drift-local-dev-
-REDIS_PASSWORD=
+REDIS_PREFIX=drift-local-nidhi-         # unique prefix to avoid key collisions
+REDIS_PASSWORD=                          # no password on local Redis
 
-# Config buckets (local files for dev)
+# ── Config buckets (local stub files for dev) ─────────────────────────────────
+# RESOLVED — create stubs with: mkdir -p /tmp/drift-config && touch /tmp/drift-config/*.properties
 AUTH_PATH=/tmp/drift-config/auth.properties
 AB_CONFIG_BUCKET=/tmp/drift-config/ab.properties
 WORKFLOW_PROPERTY_PATH=/tmp/drift-config/workflow.properties
 ENUM_STORE_BUCKET=/tmp/drift-config/enum.properties
 
-# JVM sizing
+# ── JVM sizing ────────────────────────────────────────────────────────────────
 JVM_XMS=256m
 JVM_XMX=1g
 ```

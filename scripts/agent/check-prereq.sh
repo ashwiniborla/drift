@@ -8,6 +8,16 @@ REPO_ROOT="/Users/nidhi.b/IdeaProjects/drift"
 PASS=0
 FAIL=1
 
+# ─── macOS compat: 'timeout' is GNU coreutils, not available by default ───────
+if ! command -v timeout &>/dev/null; then
+  if command -v gtimeout &>/dev/null; then
+    timeout() { gtimeout "$@"; }
+  else
+    # Fallback: run command without a timeout
+    timeout() { shift; "$@"; }
+  fi
+fi
+
 echo "=== Drift Pre-flight Checks ==="
 
 # ─── Step 1: Fix known ~/.docker/config.json 'credsStore' key bug ────────────
@@ -64,7 +74,7 @@ if ! command -v java &>/dev/null; then
   echo "[error] Java not found. Install Java 17: brew install openjdk@17" >&2
   exit $FAIL
 fi
-JAVA_VER=$(java -version 2>&1 | head -1 | grep -oP '(?<=version ")[0-9]+')
+JAVA_VER=$(java -version 2>&1 | head -1 | sed -E 's/.*"([0-9]+).*/\1/')
 if [ "${JAVA_VER:-0}" -lt 17 ]; then
   echo "[error] Java 17+ required. Found: $(java -version 2>&1 | head -1)" >&2
   echo "        Install: brew install openjdk@17" >&2

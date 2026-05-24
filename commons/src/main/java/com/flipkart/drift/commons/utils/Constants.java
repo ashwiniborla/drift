@@ -9,8 +9,6 @@ public class Constants {
     }
 
     public static final class Workflow {
-        public static final String ASYNC_AWAIT_CHANNEL = "+async-await:";
-        public static final String DSL_UPDATE_CHANNEL = "+dsl-update:";
         public static final String GLOBAL = "_global";
         public static final String HTTP_RESPONSE = "_response";
         public static final String ENUM_STORE = "_enum_store";

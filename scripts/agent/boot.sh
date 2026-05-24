@@ -42,7 +42,7 @@ if [ "$APP" = "api" ]; then
   MODULE="api"
   MAIN_CLASS=""  # uses fat JAR with manifest main
   CONFIG_FILE="$REPO_ROOT/api/src/main/resources/config/configuration.yaml"
-  JAR_PATTERN="$REPO_ROOT/api/target/*-shaded.jar"
+  JAR_PATTERN="$REPO_ROOT/api/target/api-*.jar"
   APP_PORT=8000
   ADMIN_PORT=8001
   JVM_XMS="${JVM_XMS:-256m}"
@@ -58,7 +58,7 @@ else
   MODULE="worker"
   MAIN_CLASS="com.flipkart.drift.worker.bootstrap.WorkerApplication"
   CONFIG_FILE="$REPO_ROOT/worker/src/main/resources/config/configuration.yaml"
-  JAR_PATTERN="$REPO_ROOT/worker/target/*-shaded.jar"
+  JAR_PATTERN="$REPO_ROOT/worker/target/worker-*.jar"
   APP_PORT=7200
   ADMIN_PORT=7201
   JVM_XMS="${JVM_XMS:-256m}"
@@ -93,7 +93,7 @@ fi
 JAR_FILE=""
 for f in $JAR_PATTERN; do
   # Skip *-tests.jar and *-sources.jar
-  if [[ "$f" != *"-tests.jar" && "$f" != *"-sources.jar" && -f "$f" ]]; then
+  if [[ "$f" != *"-tests.jar" && "$f" != *"-sources.jar" && "$f" != */original-* && -f "$f" ]]; then
     JAR_FILE="$f"
     break
   fi
@@ -102,10 +102,10 @@ done
 if [ -z "$JAR_FILE" ]; then
   echo "[boot] JAR not found at $JAR_PATTERN. Building $MODULE..."
   cd "$REPO_ROOT"
-  mvn clean package -pl "$MODULE" -am -DskipTests -Dgpg.skip=true \
+  mvn package -pl "$MODULE" -am -DskipTests -Dgpg.skip=true \
     -Dattach.sources.skip=true -Dattach.javadoc.skip=true
   for f in $JAR_PATTERN; do
-    if [[ "$f" != *"-tests.jar" && "$f" != *"-sources.jar" && -f "$f" ]]; then
+    if [[ "$f" != *"-tests.jar" && "$f" != *"-sources.jar" && "$f" != */original-* && -f "$f" ]]; then
       JAR_FILE="$f"
       break
     fi

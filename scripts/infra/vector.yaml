@@ -1,58 +1,115 @@
-# Vector configuration — tails Drift service log files and forwards to VictoriaLogs
+# Vector configuration — tails Drift service log files and forwards to VictoriaLogs.
+#
+# Pipeline:
+#   /tmp/drift-logs/api.log    \
+#                               -> enrich (service label) -> parse JSON -> VictoriaLogs
+#   /tmp/drift-logs/worker.log /
+#
+# Query logs (once running):
+#   curl 'http://localhost:9428/select/logsql/query?query=service:api&limit=50'
+#   curl 'http://localhost:9428/select/logsql/query?query=level:ERROR&limit=20'
+
+# ─── Sources ────────────────────────────────────────────────────────────────────
 
 sources:
   drift_api_logs:
     type: file
     include:
       - /tmp/drift-logs/api.log
+    # beginning: re-read from line 0 on each container restart.
+    # Switch to "end" once the pipeline is stable to tail only new lines.
     read_from: beginning
-    encoding:
-      codec: text
 
   drift_worker_logs:
     type: file
     include:
       - /tmp/drift-logs/worker.log
     read_from: beginning
-    encoding:
-      codec: text
+
+# ─── Transforms ─────────────────────────────────────────────────────────────────
 
 transforms:
-  add_api_label:
+  # Label and parse API logs
+  enrich_api:
     type: remap
     inputs:
       - drift_api_logs
     source: |
+      # Save the raw line before any mutation
+      raw = string!(.message)
+
+      # Try to parse the raw line as JSON (Spring Boot / logstash-logback-encoder).
+      # parse_json is fallible — use the two-value assignment form to handle errors.
+      parsed, parse_err = parse_json(raw)
+      if parse_err == null && is_object(parsed) {
+        # merge with object!() is infallible once we've confirmed parsed is an object
+        . = merge(., object!(parsed))
+
+        # Normalise field names across logstash-logback-encoder / Spring JSON variants:
+        #   logstash-logback-encoder: level, message, logger_name, stack_trace
+        #   Spring default JSON:      @level, @message
+        if !exists(.level)   && exists(."@level")   { .level   = del(."@level") }
+        if !exists(.message) && exists(."@message") { .message = del(."@message") }
+        if exists(.level) { .level = upcase(to_string!(.level)) }
+      }
+
+      # _msg is the indexed message body in VictoriaLogs; must always be set
+      ._msg = string(.message) ?? raw
+
+      # Stream labels — re-set after merge so JSON fields can't overwrite them
       .service = "api"
       .env = "local"
 
-  add_worker_label:
+  # Label and parse Worker logs
+  enrich_worker:
     type: remap
     inputs:
       - drift_worker_logs
     source: |
+      raw = string!(.message)
+
+      parsed, parse_err = parse_json(raw)
+      if parse_err == null && is_object(parsed) {
+        . = merge(., object!(parsed))
+        if !exists(.level)   && exists(."@level")   { .level   = del(."@level") }
+        if !exists(.message) && exists(."@message") { .message = del(."@message") }
+        if exists(.level) { .level = upcase(to_string!(.level)) }
+      }
+
+      ._msg = string(.message) ?? raw
       .service = "worker"
       .env = "local"
 
-sinks:
-  victorialogs_api:
-    type: http
-    inputs:
-      - add_api_label
-    uri: http://victorialogs:9428/insert/jsonline
-    encoding:
-      codec: json
-    request:
-      headers:
-        VL-Stream-Fields: service,env
+# ─── Sink: VictoriaLogs ─────────────────────────────────────────────────────────
 
-  victorialogs_worker:
+sinks:
+  victorialogs:
     type: http
     inputs:
-      - add_worker_label
+      - enrich_api
+      - enrich_worker
     uri: http://victorialogs:9428/insert/jsonline
+    method: post
+    # framing: newline_delimited is required for VictoriaLogs /insert/jsonline.
+    # Without this, Vector's http sink sends a JSON array per batch; VictoriaLogs
+    # expects one JSON object per line (NDJSON) and returns HTTP 400 for arrays.
+    framing:
+      method: newline_delimited
     encoding:
       codec: json
+    batch:
+      max_events: 500
+      timeout_secs: 1
     request:
+      retry_attempts: 5
+      retry_initial_backoff_secs: 1
       headers:
-        VL-Stream-Fields: service,env
+        # VL-Stream-Fields: fields VictoriaLogs partitions log streams by (like Loki labels).
+        # These must be low-cardinality. They become the fast-path filter fields in LogQL.
+        VL-Stream-Fields: "service,env,level"
+        # VL-Msg-Field: tells VictoriaLogs which field is the human-readable message body.
+        # Without this, VictoriaLogs stores the entire JSON blob as _msg.
+        VL-Msg-Field: "_msg"
+        # VL-Time-Field: tells VictoriaLogs which field is the event timestamp.
+        # Vector sets .timestamp from file metadata; logstash-logback-encoder sets .@timestamp.
+        VL-Time-Field: "timestamp"

@@ -1,14 +1,17 @@
-version: "3.9"
-
 # Drift local observability stack.
-# app-runtime: local — only Vector + VictoriaLogs run here.
+# app-runtime: local — only Vector + VictoriaLogs run in Docker.
 # The API (port 8000) and Worker (port 7200) run as native JVM processes via boot.sh.
+#
+# Start:   bash scripts/infra/start.sh
+# Stop:    bash scripts/infra/stop.sh
+# Status:  bash scripts/infra/status.sh
+# Logs:    bash scripts/agent/query-logs.sh 'service:api'
 
 services:
 
-  # ─── VictoriaLogs — log storage and query ───────────────────────────────────
+  # ─── VictoriaLogs — log storage and LogQL query engine ──────────────────────
   victorialogs:
-    image: victoriametrics/victoria-logs:v0.28.0
+    image: victoriametrics/victoria-logs:v1.50.0
     container_name: drift-victorialogs
     command:
       - "-storageDataPath=/vlogs"
@@ -19,25 +22,45 @@ services:
     volumes:
       - victorialogs-data:/vlogs
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9428/health || exit 1"]
-      interval: 10s
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9428/health | grep -q OK || exit 1"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
+    labels:
+      service.name: "victorialogs"
+      service.type: "observability"
 
-  # ─── Vector — log shipper from app stdout to VictoriaLogs ────────────────────
+  # ─── Vector — log shipper: tails /tmp/drift-logs/*.log → VictoriaLogs ───────
+  # NOTE: On macOS, Docker Desktop does not resolve /tmp (symlink) to /private/tmp.
+  # The volume mount uses /private/tmp/drift-logs (the real path) so the bind works.
+  # start.sh creates /private/tmp/drift-logs so this mount is always satisfied.
   vector:
     image: timberio/vector:0.39.0-alpine
     container_name: drift-vector
     volumes:
       - ./scripts/infra/vector.yaml:/etc/vector/vector.yaml:ro
-      - /tmp/drift-logs:/tmp/drift-logs:ro
+      # macOS: /tmp is a symlink to /private/tmp; Docker Desktop requires the real path
+      - /private/tmp/drift-logs:/tmp/drift-logs:ro
     depends_on:
       victorialogs:
         condition: service_healthy
     environment:
       VECTOR_LOG: warn
+    healthcheck:
+      # Vector exposes no HTTP health endpoint by default; check the process is alive.
+      # BusyBox pgrep on Alpine does not support -x (exact match against argv[0]),
+      # so we use plain `pgrep vector` which matches the /proc/<pid>/status Name field.
+      test: ["CMD-SHELL", "pgrep vector > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
     restart: unless-stopped
+    labels:
+      service.name: "vector"
+      service.type: "observability"
 
 volumes:
   victorialogs-data:

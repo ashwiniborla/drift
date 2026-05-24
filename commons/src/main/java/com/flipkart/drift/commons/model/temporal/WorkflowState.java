@@ -25,4 +25,5 @@ public class WorkflowState implements Serializable {
     private View view;
     private String currentNodeRef;
     private IssueDetail issueDetail;
+    private String callbackUrl;
 }
