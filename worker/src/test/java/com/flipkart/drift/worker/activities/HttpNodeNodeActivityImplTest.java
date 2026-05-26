@@ -70,10 +70,18 @@ class HttpNodeNodeActivityImplTest {
         assertNonRetryableApplicationFailure(422);
     }
 
+    // -------------------------------------------------------------------------
+    // Retryable 4xx (408, 429) — must NOT produce a non-retryable ApplicationFailure
+    // -------------------------------------------------------------------------
+
     @Test
-    void executeNode_httpClientError429_throwsNonRetryableApplicationFailure() {
-        // 429 is classified as non-retryable (no Retry-After awareness in Drift)
-        assertNonRetryableApplicationFailure(429);
+    void executeNode_httpServerError408_isNotNonRetryableApplicationFailure() {
+        assertNotNonRetryableApplicationFailure(408);
+    }
+
+    @Test
+    void executeNode_httpServerError429_isNotNonRetryableApplicationFailure() {
+        assertNotNonRetryableApplicationFailure(429);
     }
 
     // -------------------------------------------------------------------------

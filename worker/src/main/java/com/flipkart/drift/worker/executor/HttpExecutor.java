@@ -130,8 +130,11 @@ public class HttpExecutor {
                 log.error("HTTP error code: {}, headers: {}", code, response.headers());
                 // Record failure metric
                 requestScope.counter("http_requests_failure").inc(1);
-                if (code >= 400 && code < 500) {
-                    // 4xx — client error: non-retryable
+                if (code == 408 || code == 429) {
+                    // 408 Request Timeout / 429 Too Many Requests — transient, retryable despite being 4xx
+                    throw new HttpServerErrorException("HTTP server error: " + code, code);
+                } else if (code >= 400 && code < 500) {
+                    // other 4xx — client error: non-retryable
                     throw new HttpClientErrorException("HTTP client error: " + code, code);
                 } else {
                     // 5xx (and any unexpected non-2xx code) — server error: retryable

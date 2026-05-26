@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
 class HttpExecutorTest {
 
     // -------------------------------------------------------------------------
-    // 4xx tests — all should throw HttpClientErrorException
+    // 4xx tests — non-retryable codes throw HttpClientErrorException
     // -------------------------------------------------------------------------
 
     @Test
@@ -54,13 +54,22 @@ class HttpExecutorTest {
     }
 
     @Test
-    void execute_429Response_throwsHttpClientErrorException() throws Exception {
-        verifyClientErrorThrown(429);
+    void execute_499Response_throwsHttpClientErrorException() throws Exception {
+        verifyClientErrorThrown(499);
+    }
+
+    // -------------------------------------------------------------------------
+    // Retryable 4xx — 408 and 429 throw HttpServerErrorException
+    // -------------------------------------------------------------------------
+
+    @Test
+    void execute_408Response_throwsHttpServerErrorException() throws Exception {
+        verifyServerErrorThrown(408);
     }
 
     @Test
-    void execute_499Response_throwsHttpClientErrorException() throws Exception {
-        verifyClientErrorThrown(499);
+    void execute_429Response_throwsHttpServerErrorException() throws Exception {
+        verifyServerErrorThrown(429);
     }
 
     // -------------------------------------------------------------------------
