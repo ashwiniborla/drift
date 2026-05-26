@@ -1,0 +1,14 @@
+{
+  "id": "prepare_alternate_phone_smart",
+  "name": "Prepare: Alternate Phone Smart Response",
+  "type": "GROOVY",
+  "parameters": [],
+  "version": "1",
+  "transformer": {
+    "value": {
+      "type": "STRING",
+      "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change_smart/prepare_alternate_phone_smart_response.groovy').text; evaluate(script);"
+    },
+    "type": "SCRIPT"
+  }
+}

@@ -1,0 +1,14 @@
+{
+    "id": "elixir_slice_order_from_oxford",
+    "name": "Elixir: Slice Order Details from Oxford Response",
+    "type": "GROOVY",
+    "parameters": ["dataVariable"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/get_post_fulfillment_data_by_tracking_id.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

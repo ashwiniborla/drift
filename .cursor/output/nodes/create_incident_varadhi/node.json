@@ -1,0 +1,62 @@
+{
+  "id": "create_incident_varadhi",
+  "name": "Create Incident IMSv2 via varadhi",
+  "type": "HTTP",
+  "parameters": [
+    "incidentType",
+    "issueId",
+    "statusWithTypeId",
+    "dispositionId",
+    "queueId",
+    "customFields",
+    "csTenant",
+    "imsTenant",
+    "imsUsername",
+    "imsClientId",
+    "csChannel",
+    "csOrganization"
+  ],
+  "version": "1",
+  "httpComponents": {
+    "url": {
+      "value": {
+        "type": "STRING",
+        "data": "return (_enum_store?.clients?.get('varadhi.ch.host') ?: '').toString().trim() + '/queues/imsV2_Async_queue_prod/messages'"
+      },
+      "type": "SCRIPT"
+    },
+    "headers": {
+      "value": {
+        "type": "STRING",
+        "data": "headers=[:]\nheaders['X_RESTBUS_HTTP_METHOD']='POST'\nheaders['X_RESTBUS_PRODUCER_APP_ID']='fk-cs-ims'\nheaders['X_RESTBUS_MESSAGE_ID']=java.util.UUID.randomUUID().toString()\nheaders['X_RESTBUS_GROUP_ID']=headers['X_RESTBUS_MESSAGE_ID']\nheaders['X_RESTBUS_HTTP_URI']=\"http://${_enum_store?.clients?.get('imsv2.ch.host')}/incidents/\"\nheaders['X_RESTBUS_CONTENT_TYPE']='application/json; charset=utf-8'\nheaders['x_cs_tenant']=_global.nodeParameters.csTenant\nheaders['x_ims_username']=_global.nodeParameters.imsUsername\nheaders['x_ims_tenant']=_global.nodeParameters.imsTenant\nheaders['x_cs_channel']=_global.nodeParameters.csChannel\nheaders['x_cs_organization']=_global.nodeParameters.csOrganization\nheaders['x_ims_client_id']=_global.nodeParameters.imsClientId\nheaders['X-PERF-TEST']='false'\nreturn headers"
+      },
+      "type": "SCRIPT"
+    },
+    "queryParams": {
+      "value": {
+        "type": "STRING",
+        "data": "return [:];"
+      },
+      "type": "SCRIPT"
+    },
+    "body": {
+      "value": {
+        "type": "STRING",
+        "data": "def orderDetailsRequest = _global.orderDetails.collect { od ->\n    [orderId: od.orderId, orderDetails: [orderId: od.orderId, orderItemId: od.orderItemId ?: null, orderItemUnitId: od.orderItemUnitId, sellerId: null, trackingId: od.trackingId ?: null]]\n}\nbody=[:]\nbody['incidentType']=_global.nodeParameters.incidentType\nbody['incidentDataRequest']=[\n    'incidentType': _global.nodeParameters.incidentType,\n    'issue': ['id': _global.nodeParameters.issueId as Integer],\n    'statusWithType': ['id': _global.nodeParameters.statusWithTypeId as Integer],\n    'disposition': ['id': _global.nodeParameters.dispositionId as Integer],\n    'queue': ['id': _global.nodeParameters.queueId as Integer],\n    'customerDetailsRequest': ['customerId': _global.customer?.customerId],\n    'orderDetailsRequest': orderDetailsRequest,\n    'incidentThreadRequests': [],\n    'incidentCustomFieldsRequest': ['customFields': _global.nodeParameters.customFields ?: [:]]\n]\nbody['workflowRequest']=null\nreturn body;"
+      },
+      "type": "SCRIPT"
+    },
+    "method": "POST",
+    "contentType": "application/json",
+    "targetClientId": "prod-varadhi"
+  },
+  "transformerComponents": {
+    "transformer": {
+      "value": {
+        "type": "STRING",
+        "data": "return _response;"
+      },
+      "type": "SCRIPT"
+    }
+  }
+}

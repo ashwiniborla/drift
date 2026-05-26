@@ -1,0 +1,7 @@
+{
+    "id": "default_failure",
+    "name": "Default failure node",
+    "type": "FAILURE",
+    "version": "1",
+    "error": "Workflow completed by running default_failure"
+}

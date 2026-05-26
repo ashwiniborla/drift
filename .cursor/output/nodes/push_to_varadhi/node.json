@@ -1,0 +1,49 @@
+{
+    "id": "push_to_varadhi",
+    "name": "Push to Varadhi",
+    "type": "HTTP",
+    "parameters": ["groupId", "messageId", "httpUri", "method", "extraHeaders", "body", "name", "isQueue"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "def baseUrl = (_enum_store?.clients?.get('varadhi.ch.host') ?: '').toString().trim()\ndef destinationName = (_global?.nodeParameters?.name ?: '').toString().trim()\ndef isQueueRaw = _global?.nodeParameters?.isQueue\nif (!baseUrl) {\n    throw new IllegalArgumentException(\"varadhi.ch.host is missing in enum store.\")\n}\nif (!destinationName) {\n    throw new IllegalArgumentException(\"node parameter 'name' is required for push_to_varadhi.\")\n}\nif (isQueueRaw == null) {\n    throw new IllegalArgumentException(\"node parameter 'isQueue' is required and must be true or false.\")\n}\ndef isQueue\nif (isQueueRaw instanceof Boolean) {\n    isQueue = isQueueRaw\n} else {\n    def normalized = isQueueRaw.toString().trim().toLowerCase()\n    if (normalized == 'true') {\n        isQueue = true\n    } else if (normalized == 'false') {\n        isQueue = false\n    } else {\n        throw new IllegalArgumentException(\"node parameter 'isQueue' must be true or false.\")\n    }\n}\ndef pathType = isQueue ? 'queues' : 'topics'\nreturn baseUrl + '/' + pathType + '/' + destinationName + '/messages'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]\nheaders['Content-Type'] = 'application/json'\nheaders['Accept'] = 'application/json'\nheaders['x_perf_test'] = (_global?.global_params?.threadContext?.perfFlag ?: 'false').toString()\nheaders['x_ims_client_id'] = (_global?.global_params?.threadContext?.clientId ?: '').toString()\nheaders['x_ims_tenant'] = (_global?.global_params?.threadContext?.tenant ?: '').toString()\nheaders['x_ims_username'] = (_global?.global_params?.threadContext?.userName ?: '').toString()\nheaders['X_RESTBUS_MESSAGE_ID'] = (_global?.nodeParameters?.messageId ?: java.util.UUID.randomUUID().toString()).toString()\ndef groupId = _global?.nodeParameters?.groupId\nif (groupId != null && !groupId.toString().trim().isEmpty()) {\n    headers['X_RESTBUS_GROUP_ID'] = groupId.toString()\n}\nheaders['X_RESTBUS_HTTP_URI'] = (_global?.nodeParameters?.httpUri ?: '').toString()\nheaders['X_RESTBUS_HTTP_METHOD'] = (_global?.nodeParameters?.method ?: 'POST').toString()\ndef extraHeaders = _global?.nodeParameters?.extraHeaders\nif (extraHeaders instanceof Map) {\n    extraHeaders.each { k, v -> headers[k.toString()] = v?.toString() ?: '' }\n}\nreturn headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "return _global?.nodeParameters?.body"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "targetClientId": "prod-varadhi"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "return _response"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

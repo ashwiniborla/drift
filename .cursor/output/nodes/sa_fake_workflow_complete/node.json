@@ -1,0 +1,40 @@
+{
+    "id": "sa_fake_workflow_complete",
+    "name": "sa_fake_workflow_complete",
+    "type": "INSTRUCTION",
+    "parameters": ["inputOptions"],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "sa_workflow_complete_screen"
+            }
+        }
+    },
+    "disposition": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "SA_WORKFLOW_COMPLETE"
+            }
+        }
+    },
+    "workflowStatus": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "COMPLETED"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "description": "SA fake workflow completion (dynamic incidentId via prepare_sa_fake_workflow_complete)",
+            "possibleDynamicValues": "nodeParameters.inputOptions"
+        }
+    ]
+}

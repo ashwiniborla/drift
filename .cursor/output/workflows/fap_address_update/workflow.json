@@ -1,0 +1,47 @@
+{
+    "id": "fap_address_update",
+    "comment": "Shared sub-workflow: creates a new User Service contact with the new phone numbers and confirms the address change with Chore. Requires get_user_svc_auth_token and ask_alternate_phone context to be present in _global (provided by the parent workflow). Ends at fap_address_update_success (rewired by parent flattener).",
+    "startNode": "create_new_address",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "create_new_address": {
+            "instanceName": "create_new_address",
+            "resourceId": "create_new_address",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "userSvcAuthToken": "$.get_user_svc_auth_token.access_token"
+            },
+            "nextNode": "chore_confirm_address",
+            "end": false
+        },
+        "chore_confirm_address": {
+            "instanceName": "chore_confirm_address",
+            "resourceId": "chore_confirm_address",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "fieldsUpdatedV2": "SECONDARY_PHONE_NUMBER"
+            },
+            "nextNode": "fap_address_update_success",
+            "end": false
+        },
+        "fap_address_update_success": {
+            "instanceName": "fap_address_update_success",
+            "resourceId": "fap_address_update_success",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

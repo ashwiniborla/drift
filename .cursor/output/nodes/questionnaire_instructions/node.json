@@ -1,0 +1,22 @@
+{
+  "id": "questionnaire_instructions",
+  "name": "Questionnaire instructions",
+  "type": "INSTRUCTION",
+  "parameters": ["inputOptions"],
+  "version": "1",
+  "layoutId": {
+    "attribute": {
+      "type": "STATIC",
+      "value": {
+        "type": "STRING",
+        "data": "elixir_questionnaire_screen"
+      }
+    }
+  },
+  "inputOptions": [
+    {
+      "description": "Resolved at runtime from prepare_questionnaire_instructions output",
+      "possibleDynamicValues": "nodeParameters.inputOptions"
+    }
+  ]
+}

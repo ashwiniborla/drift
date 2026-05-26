@@ -1,0 +1,8 @@
+{
+  "id": "did_success",
+  "name": "DID Workflow Success",
+  "type": "SUCCESS",
+  "version": "1",
+  "comment": "DID workflow completed successfully",
+  "executionMode": "SYNC"
+}

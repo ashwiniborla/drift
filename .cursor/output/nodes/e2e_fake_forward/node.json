@@ -1,0 +1,13 @@
+{
+    "id": "e2e_fake_forward",
+    "name": "E2E Fake Forward (Delay in Delivery)",
+    "type": "GROOVY",
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/e2e_order_delivery_workflow/e2e_fake_forward.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "id": "branch_chore_eligible",
+    "name": "Branch: Is Address Change Chore-Eligible?",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.chore_eligibility?.isEligible == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "chore_feasibility"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return !_global?.chore_eligibility?.isEligible"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_eligibility_success"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

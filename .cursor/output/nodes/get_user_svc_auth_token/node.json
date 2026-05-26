@@ -1,0 +1,49 @@
+{
+    "id": "get_user_svc_auth_token",
+    "name": "User Service: Get OAuth Access Token",
+    "type": "HTTP",
+    "parameters": [],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('user_svc.auth.ch.host') ?: '').toString() + '/oauth/token'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['Authorization'] = 'Basic ' + (_enum_store?.credentials?.get('user_svc.auth.token') ?: '').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return ['grant_type': 'client_credentials']"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "cacheTtl": 1200
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "if (_response == null) throw new Exception('User Service OAuth token response is null'); def token = _response?.access_token?.toString(); if (!token) throw new Exception('access_token missing in OAuth response: ' + _response); return [access_token: token]"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

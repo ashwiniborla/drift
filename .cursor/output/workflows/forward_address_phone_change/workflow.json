@@ -1,0 +1,103 @@
+{
+    "id": "forward_address_phone_change",
+    "comment": "Non-smart alternate phone number update sub - workflow for forward delivery orders. Can be used standalone or as a SUB_WORKFLOW in other workflows. Uses fap_eligibility_check and fap_address_update as inlined sub-workflows. On failure (eligibility/feasibility), shows fap_end_instruction via default_failure. On success, prepare_fap_success_instruction then branch: if questionnaire postScreensRequired.location, non-terminal success (odRedirection false) then address_phone_change_success; else terminal success (odRedirection true). Please note this needs to be used as sub workflow only",
+    "startNode": "fap_eligibility_fetch_oxford",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "fap_eligibility_fetch_oxford": {
+            "instanceName": "fap_eligibility_fetch_oxford",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+                "useCase": "default"
+            },
+            "nextNode": "sub_eligibility",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "sub_eligibility": {
+            "instanceName": "sub_eligibility",
+            "resourceId": "sub_fap_eligibility_check",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "branch_feasibility",
+            "end": false
+        },
+        "branch_feasibility": {
+            "instanceName": "branch_feasibility",
+            "resourceId": "branch_feasibility",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "prepare_alternate_phone_response": {
+            "instanceName": "prepare_alternate_phone_response",
+            "resourceId": "prepare_alternate_phone_response",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "ask_alternate_phone",
+            "end": false
+        },
+        "ask_alternate_phone": {
+            "instanceName": "ask_alternate_phone",
+            "resourceId": "ask_alternate_phone",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_alternate_phone_response.inputOptions"
+            },
+            "nextNode": "evaluate_alternate_phone_response",
+            "end": false
+        },
+        "evaluate_alternate_phone_response": {
+            "instanceName": "evaluate_alternate_phone_response",
+            "resourceId": "evaluate_alternate_phone_response",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "branch_save_phone",
+            "end": false
+        },
+        "branch_save_phone": {
+            "instanceName": "branch_save_phone",
+            "resourceId": "branch_save_phone",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "sub_address_update": {
+            "instanceName": "sub_address_update",
+            "resourceId": "sub_fap_address_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "prepare_fap_success_instruction",
+            "end": false
+        },
+        "prepare_fap_success_instruction": {
+            "instanceName": "prepare_fap_success_instruction",
+            "resourceId": "prepare_fap_success_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "odRedirect": false
+            },
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "fap_end_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

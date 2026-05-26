@@ -1,0 +1,13 @@
+{
+    "id": "sub_fap_eligibility_check",
+    "name": "Sub-workflow: FAP Eligibility Check",
+    "type": "SUB_WORKFLOW",
+    "version": "1",
+    "subWorkflowId": "fap_eligibility_check",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": true,
+        "includeLastNode": false,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

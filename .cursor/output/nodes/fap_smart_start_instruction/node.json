@@ -1,0 +1,36 @@
+{
+    "id": "fap_smart_start_instruction",
+    "name": "FAP Smart Action: Start Instruction",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "fap_smart_start_screen"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "id": "fap_smart_start_placeholder",
+            "description": "Placeholder — contracts to be provided",
+            "tags": {
+                "values": [
+                    "sa.static_text"
+                ]
+            },
+            "instructions": [
+                {
+                    "templateId": "text_to_display",
+                    "templateVariables": {
+                        "title": "Address Phone Change",
+                        "messageToShow": "Initiating alternate phone number update workflow."
+                    }
+                }
+            ]
+        }
+    ]
+}

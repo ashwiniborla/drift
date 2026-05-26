@@ -1,0 +1,11 @@
+{
+  "incidentId": "IN<INCIDENT_ID>",
+  "workflowId": "WF-IN<INCIDENT_ID>",
+  "viewResponse": {
+    "selectedOptions": {
+      "cancel_reason_selection": "found_better_coverage",
+      "continue_button_widget": "continue"
+    }
+  },
+  "params": {}
+}

@@ -1,0 +1,29 @@
+{
+    "id": "e2e_use_case_branch",
+    "name": "E2E Use Case Branch by Issue ID",
+    "type": "BRANCH",
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.params?.issueId?.toString() == '26366'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "e2e_fake_forward"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.params?.issueId?.toString() == '26368'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "e2e_fake_reverse"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

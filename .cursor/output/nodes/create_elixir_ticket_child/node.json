@@ -1,0 +1,14 @@
+{
+    "id": "create_elixir_ticket_child",
+    "name": "Create elixir ticket child",
+    "type": "CHILD",
+    "parameters": [
+        "issueId",
+        "elixirEntityReferenceType",
+        "incidentId"
+    ],
+    "version": "1",
+    "executionMode": "ASYNC",
+    "childWorkflowId": "create_elixir_ticket_workflow",
+    "childWorkflowVersion": "LATEST"
+}

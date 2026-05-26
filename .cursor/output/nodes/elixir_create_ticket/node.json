@@ -1,0 +1,49 @@
+{
+    "id": "elixir_create_ticket",
+    "name": "Elixir create ticket",
+    "type": "HTTP",
+    "parameters": ["incidentId", "issueId", "elixirEntityReferenceType", "elixirEntityReferenceId", "elixirEntityType", "workflowId"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('varadhi.ch.host') ?: '').toString() + '/queues/' + (_enum_store?.elixir?.get('publishQueue') ?: '').toString() + '/messages'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def uuid = java.util.UUID.randomUUID().toString(); def headers = [:]; headers['Content-Type'] = 'application/json'; headers['x_perf_test'] = (_global?.global_params?.threadContext?.perfFlag ?: 'false').toString(); headers['x_ims_client_id'] = (_global?.global_params?.threadContext?.clientId ?: '').toString(); headers['x_ims_tenant'] = (_global?.global_params?.threadContext?.tenant ?: '').toString(); headers['x_ims_username'] = (_global?.global_params?.threadContext?.userName ?: '').toString(); headers['X_RESTBUS_MESSAGE_ID'] = uuid; headers['X_RESTBUS_GROUP_ID'] = (_global?.params?.incidentId ?: '').toString(); headers['X_RESTBUS_HTTP_URI'] = 'http://10.83.46.255/messages'; headers['X_RESTBUS_HTTP_METHOD'] = 'POST'; headers['X_CLIENT_ID'] = 'CX'; headers['X_REQUEST_ID'] = uuid; headers['X_TENANT_ID'] = 'ELIXIR_FK'; return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/build_create_elixir_ticket_body.groovy').text; evaluate(script);"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "targetClientId": "http://10.24.0.209:80"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/build_elixir_ticket_transformer.groovy').text; evaluate(script);"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

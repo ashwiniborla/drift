@@ -1,0 +1,14 @@
+{
+    "id": "prepare_elixir_ticket_update",
+    "name": "prepare_elixir_ticket_update",
+    "type": "GROOVY",
+    "parameters": ["elixirTicketId", "updateType", "persona", "persona_id", "asset_type", "id_type"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/prepare_elixir_ticket_update.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "id": "prepare_fap_success_instruction",
+    "name": "Prepare FAP success instruction",
+    "type": "GROOVY",
+    "parameters": ["odRedirect"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/prepare_fap_success_instruction.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

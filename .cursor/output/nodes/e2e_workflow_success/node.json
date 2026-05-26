@@ -1,0 +1,8 @@
+{
+    "id": "e2e_workflow_success",
+    "name": "E2E Order Delivery Workflow Success",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "E2E order delivery workflow completed successfully",
+    "executionMode": "SYNC"
+}

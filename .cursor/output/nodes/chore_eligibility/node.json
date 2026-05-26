@@ -1,0 +1,49 @@
+{
+    "id": "chore_eligibility",
+    "name": "Chore: Check Address Change Eligibility",
+    "type": "HTTP",
+    "parameters": [],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('chore.ch.host') ?: '').toString() + '/api/v3/eligibility/addressChangeEligibility'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['Content-Type'] = 'application/json'; headers['x-client-id'] = 'self_serve'; headers['X-PERF-TEST'] = (_global?.threadContext?.perfFlag ?: 'false').toString(); headers['X-FEATURE-FLAG'] = 'ELIXIR'; return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "def orderId = _global?.orderDetails?.getAt(0)?.orderId?.toString(); def unitIds = (_global?.check_minions_eligibility?.eligibleUnitIds ?: []); return [orderVersion: -1, orderId: orderId, orderItemUnitIds: unitIds]"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "targetClientId": "fk-chore-service"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/transform_chore_eligibility.groovy').text; return evaluate(script)"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

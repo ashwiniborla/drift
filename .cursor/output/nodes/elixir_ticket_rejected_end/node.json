@@ -1,0 +1,8 @@
+{
+    "id": "elixir_ticket_rejected_end",
+    "name": "Elixir ticket rejected end",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Elixir ticket was rejected; workflow ends gracefully.",
+    "executionMode": "SYNC"
+}

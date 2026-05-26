@@ -1,0 +1,14 @@
+{
+    "id": "prepare_elixir_ticket_metadata",
+    "name": "Prepare Elixir Ticket Metadata",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def preparedElxrTkt = _global?.prepare_create_ticket_details?.elxrTkt\ndef elxrTkt = preparedElxrTkt ?: _global?.elixir_filter_incidents?.firstElixirDetails\ndef notesText = preparedElxrTkt != null ? 'Elixir ticket requested' : 'Elixir ticket re requested'\nreturn [elxrTkt: elxrTkt, notesText: notesText]"
+        },
+        "type": "SCRIPT"
+    }
+}

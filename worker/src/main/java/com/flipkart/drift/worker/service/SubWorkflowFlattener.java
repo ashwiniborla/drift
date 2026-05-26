@@ -98,7 +98,7 @@ public class SubWorkflowFlattener {
         WorkflowNode subWorkflowNode = entry.getValue();
 
         SubWorkflowNode subWorkflowDefinition = (SubWorkflowNode) subWorkflowNode.getNodeDefinition();
-        SubWorkflowConfig config = subWorkflowDefinition.getEffectiveConfig();
+        SubWorkflowConfig config = subWorkflowDefinition.getConfig();
 
         warnIfIsolationNotImplemented(subWorkflowNodeName, subWorkflowDefinition, config, path);
 

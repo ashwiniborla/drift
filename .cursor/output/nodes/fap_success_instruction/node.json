@@ -1,0 +1,22 @@
+{
+    "id": "fap_success_instruction",
+    "name": "FAP success instruction",
+    "type": "INSTRUCTION",
+    "parameters": ["inputOptions", "layoutId"],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "SCRIPT",
+            "value": {
+                "type": "STRING",
+                "data": "return _global.nodeParameters.layoutId"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "description": "Resolved at runtime from prepare_fap_success_instruction output",
+            "possibleDynamicValues": "nodeParameters.inputOptions"
+        }
+    ]
+}

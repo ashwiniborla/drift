@@ -1,0 +1,155 @@
+{
+    "id": "fake_workflow",
+    "comment": "This will handle cases for both forward and fake. This can be used as both SubWorkflow and Making workflow.",
+    "startNode": "fake_workflow_fetch_oxford",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "fake_workflow_fetch_oxford": {
+            "instanceName": "fake_workflow_fetch_oxford",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_reporting",
+                "useCase": "reporting"
+            },
+            "nextNode": "fake_check_similarity_and_create_incident",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "fake_check_similarity_and_create_incident": {
+            "instanceName": "fake_check_similarity_and_create_incident",
+            "resourceId": "check_similarity_and_create_incident",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "workflow_id": "$.workflowId",
+                "issue_detail": "$.issueDetail",
+                "queue_detail": "$.queueDetail",
+                "customer": "$.customer",
+                "order_details": "$.orderDetails",
+                "override_issue_id": "$.process_fake_workflow_details.issueConfig.fakeIssueId"
+            },
+            "nextNode": "fake_incident_created_check",
+            "end": false
+        },
+        "fake_incident_created_check": {
+            "instanceName": "fake_incident_created_check",
+            "resourceId": "fake_incident_created_check",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "create_elixir_ticket_child": {
+            "instanceName": "create_elixir_ticket_child",
+            "resourceId": "create_elixir_ticket_child",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "issueId":  "$.fake_check_similarity_and_create_incident.issueDetail.id",
+                "elixirEntityReferenceType":  "TRACKING_ID",
+                "incidentId": "$.fake_check_similarity_and_create_incident.incident_id"
+            },
+            "nextNode": "run_e2e_fake_workflows",
+            "end": false
+        },
+        "run_e2e_fake_workflows": {
+            "instanceName": "run_e2e_fake_workflows",
+            "resourceId": "run_e2e_fake_workflows",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.fake_check_similarity_and_create_incident.incident_id",
+                "issueId": "$.fake_check_similarity_and_create_incident.issueDetail.id"
+            },
+            "nextNode": "fake_client_check",
+            "end": false
+        },
+        "fake_client_check": {
+            "instanceName": "fake_client_check",
+            "resourceId": "fake_client_check",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "prepare_fake_workflow_show_instructions": {
+            "instanceName": "prepare_fake_workflow_show_instructions",
+            "resourceId": "prepare_fake_workflow_show_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_reporting"
+            },
+            "nextNode": "fake_workflow_show_instructions",
+            "end": false
+        },
+        "fake_workflow_show_instructions": {
+            "instanceName": "fake_workflow_show_instructions",
+            "resourceId": "fake_workflow_show_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "add_notes_instruction",
+            "end": false
+        },
+        "add_notes_instruction": {
+            "instanceName": "add_notes_instruction",
+            "resourceId": "add_notes_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "update_incident",
+            "end": false
+        },
+        "update_incident": {
+            "instanceName": "update_incident",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.fake_check_similarity_and_create_incident.incident_id",
+                "notesText": "$.add_notes_instruction:viewResponse.selectedOptions.agent_notes"
+            },
+            "nextNode": "prepare_sa_fake_workflow_complete",
+            "end": false
+        },
+        "prepare_sa_fake_workflow_complete": {
+            "instanceName": "prepare_sa_fake_workflow_complete",
+            "resourceId": "prepare_sa_fake_workflow_complete",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "sa_fake_workflow_complete",
+            "end": false
+        },
+        "sa_fake_workflow_complete": {
+            "instanceName": "sa_fake_workflow_complete",
+            "resourceId": "sa_fake_workflow_complete",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_sa_fake_workflow_complete.inputOptions"
+            },
+            "end": true
+        },
+        "fake_workflow_success": {
+            "instanceName": "fake_workflow_success",
+            "resourceId": "fake_workflow_success",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

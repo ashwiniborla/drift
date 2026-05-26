@@ -1,0 +1,120 @@
+{
+  "incidentId": "IN<INCIDENT_ID>",
+  "workflowId": "WF-IN<INCIDENT_ID>",
+  "workflowStatus": "WAITING",
+  "view": {
+    "layoutId": "cancel_order_reason_picker",
+    "inputOptions": [
+      {
+        "id": "order_product_image",
+        "description": "Product / brand logo",
+        "tags": { "values": ["ss.static_text"] },
+        "instructions": [
+          {
+            "templateId": "static_text",
+            "templateVariables": {
+              "imageUrl": "<acko_logo_url>"
+            }
+          }
+        ]
+      },
+      {
+        "id": "order_product_title",
+        "description": "Product title",
+        "tags": { "values": ["ss.static_text"] },
+        "instructions": [
+          {
+            "templateId": "static_text",
+            "templateVariables": {
+              "text": "Acko motor insurance"
+            }
+          }
+        ]
+      },
+      {
+        "id": "order_product_subtitle",
+        "description": "Product subtitle / tag",
+        "tags": { "values": ["ss.static_text"] },
+        "instructions": [
+          {
+            "templateId": "static_text",
+            "templateVariables": {
+              "text": "4 Wheeler"
+            }
+          }
+        ]
+      },
+      {
+        "id": "order_price",
+        "description": "Order price",
+        "tags": { "values": ["ss.static_text"] },
+        "instructions": [
+          {
+            "templateId": "static_text",
+            "templateVariables": {
+              "text": "₹970"
+            }
+          }
+        ]
+      },
+      {
+        "id": "cancel_reason_heading",
+        "description": "Select a reason to proceed for cancellation",
+        "tags": { "values": ["ss.static_text"] },
+        "instructions": [
+          {
+            "templateId": "iris_static_message",
+            "templateVariables": {
+              "irisKey": "select_cancellation_reason",
+              "defaultText": "Select a reason to proceed for cancellation"
+            }
+          }
+        ]
+      },
+      {
+        "id": "cancel_reason_selection",
+        "description": "Cancellation reason (single-select)",
+        "tags": { "values": ["ss.dropdown", "ss.next_request_data"] },
+        "possibleValues": [
+          {
+            "displayValue": "Found a better coverage option elsewhere",
+            "metaData": { "irisKey": "cancel_reason_better_coverage" },
+            "value": "found_better_coverage"
+          },
+          {
+            "displayValue": "Changed my mind about the need for this policy",
+            "metaData": { "irisKey": "cancel_reason_changed_mind" },
+            "value": "changed_mind"
+          },
+          {
+            "displayValue": "Policy terms were unclear or confusing",
+            "metaData": { "irisKey": "cancel_reason_unclear_terms" },
+            "value": "unclear_terms"
+          },
+          {
+            "displayValue": "I was not able to complete KYC online",
+            "metaData": { "irisKey": "cancel_reason_kyc_failed" },
+            "value": "kyc_failed"
+          },
+          {
+            "displayValue": "My reason are not listed here",
+            "metaData": { "irisKey": "cancel_reason_other" },
+            "value": "other"
+          }
+        ]
+      },
+      {
+        "id": "continue_button_widget",
+        "description": "Continue",
+        "tags": { "values": ["ss.button_widget", "ss.next_request_data"] },
+        "possibleValues": [
+          {
+            "displayValue": "Continue",
+            "metaData": { "irisKey": "continue_button" },
+            "value": "continue"
+          }
+        ]
+      }
+    ]
+  }
+}

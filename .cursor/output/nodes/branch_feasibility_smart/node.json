@@ -1,0 +1,20 @@
+{
+    "id": "branch_feasibility_smart",
+    "name": "Branch: Is Address Change Feasible? (Smart Action)",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.chore_feasibility?.isFeasible == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_alternate_phone_smart"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

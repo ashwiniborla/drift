@@ -1,6 +1,7 @@
 package com.flipkart.drift.api.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.flipkart.drift.commons.exception.ApiException;
 import com.flipkart.drift.commons.model.node.NodeDefinition;
 import com.flipkart.drift.api.service.builder.NodeDefinitionService;
 import com.google.inject.Inject;
@@ -74,6 +75,22 @@ public class NodeDefinitionResource {
             return Response.ok().build();
         } catch (Exception e) {
             log.error("Error publishing node", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Timed
+    public Response deleteNode(@NotEmpty @NotNull @PathParam("id") String id) {
+        try {
+            nodeDefinitionService.deleteNode(id);
+            return Response.noContent().build();
+        } catch (ApiException e) {
+            log.warn("Delete node failed: {}", e.getMessage());
+            return Response.status(e.getStatus()).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            log.error("Error deleting node", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
     }

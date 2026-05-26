@@ -1,0 +1,18 @@
+{
+    "id": "elixir_waiting_for_response",
+    "name": "Elixir waiting for response",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "inputOptions": [
+        {
+            "id": "elixir_pfd_k7n2",
+            "description": "Post-fulfillment tracking (dynamic; from prepare_elixir_waiting_for_response_display)",
+            "tags": {
+                "values": ["imsv2.info"]
+            },
+            "instructions": [],
+            "possibleDynamicValues": "prepare_elixir_waiting_for_response_display.inputOptions"
+        }
+    ]
+}

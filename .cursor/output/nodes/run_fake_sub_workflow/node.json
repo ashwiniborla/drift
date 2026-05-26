@@ -1,0 +1,14 @@
+{
+    "id": "run_fake_sub_workflow",
+    "name": "Run fake sub workflow",
+    "type": "SUB_WORKFLOW",
+    "parameters": [],
+    "version": "1",
+    "subWorkflowId": "fake_workflow",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": false,
+        "includeLastNode": false,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

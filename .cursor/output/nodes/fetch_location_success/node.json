@@ -1,0 +1,8 @@
+{
+    "id": "fetch_location_success",
+    "name": "Fetch Location Workflow Completed",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Fetch location workflow completed",
+    "executionMode": "SYNC"
+}

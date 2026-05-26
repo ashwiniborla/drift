@@ -1,0 +1,30 @@
+{
+  "id": "did_check_location_instruction_available",
+  "name": "did_check_location_instruction_available",
+  "type": "BRANCH",
+  "parameters": [],
+  "version": "1",
+  "choices": [
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "def locationInstruction = _global.prepare_location_instruction\nreturn locationInstruction == null || (locationInstruction instanceof Collection && locationInstruction.isEmpty()) || (locationInstruction instanceof Map && locationInstruction.isEmpty()) || (locationInstruction instanceof String && locationInstruction.trim().isEmpty())"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "prepare_did_end_instructions"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "return true"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "show_location_instruction"
+    }
+  ],
+  "defaultNode": "prepare_did_end_instructions"
+}

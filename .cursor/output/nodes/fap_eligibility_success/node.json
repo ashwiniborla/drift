@@ -1,0 +1,8 @@
+{
+    "id": "fap_eligibility_success",
+    "name": "FAP Eligibility Check - Success",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Eligibility and feasibility checks passed",
+    "executionMode": "SYNC"
+}

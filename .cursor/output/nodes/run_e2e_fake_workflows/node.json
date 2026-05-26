@@ -1,0 +1,10 @@
+{
+    "id": "run_e2e_fake_workflows",
+    "name": "Run e2e fake workflows",
+    "type": "CHILD",
+    "parameters": ["incidentId"],
+    "version": "1",
+    "executionMode": "ASYNC",
+    "childWorkflowId": "e2e_order_delivery_workflow",
+    "childWorkflowVersion": "LATEST"
+}

@@ -1,0 +1,20 @@
+{
+    "id": "elixir_check_allowed",
+    "name": "Elixir check allowed",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.elixir_get_order_details?.allowed == true && _global?.elixir_get_order_details?.hub_allowed == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_filter_incidents"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

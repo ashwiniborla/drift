@@ -1,0 +1,303 @@
+{
+    "id": "create_elixir_ticket_workflow",
+    "comment": "Workflow for creating elixir tickets. Fetches order from Oxford, extracts post-fulfillment data, and will be extended with more states.",
+    "startNode": "create_elixir_ticket_branch_skip_incident_entry",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "postWorkflowCompletionNodes": ["complete_elixir_child_workflow"],
+    "states": {
+        "create_elixir_ticket_branch_skip_incident_entry": {
+            "instanceName": "create_elixir_ticket_branch_skip_incident_entry",
+            "resourceId": "create_elixir_ticket_branch_skip_incident_entry",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "create_elixir_ticket_branch_skip_incident_after_create": {
+            "instanceName": "create_elixir_ticket_branch_skip_incident_after_create",
+            "resourceId": "create_elixir_ticket_branch_skip_incident_after_create",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "register_elixir_child_workflow": {
+            "instanceName": "register_elixir_child_workflow",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "childWorkflowAction": "add",
+                "workflowId": "$.workflowId",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version"
+            },
+            "nextNode": "elixir_fetch_order_oxford",
+            "end": false
+        },
+        "elixir_fetch_order_oxford": {
+            "instanceName": "elixir_fetch_order_oxford",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+                "useCase": "default"
+            },
+            "nextNode": "elixir_slice_order_from_oxford",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "elixir_slice_order_from_oxford": {
+            "instanceName": "elixir_slice_order_from_oxford",
+            "resourceId": "elixir_slice_order_from_oxford",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default"
+            },
+            "nextNode": "elixir_check_allowed",
+            "contextOverrideKey": "elixir_get_order_details",
+            "end": false
+        },
+        "elixir_check_allowed": {
+            "instanceName": "elixir_check_allowed",
+            "resourceId": "elixir_check_allowed",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "elixir_filter_incidents": {
+            "instanceName": "elixir_filter_incidents",
+            "resourceId": "elixir_filter_incidents",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "tenant": "$.threadContext.tenant",
+                "issueId": "$.params.issueId"
+            },
+            "nextNode": "prepare_create_ticket_details",
+            "end": false
+        },
+        "prepare_create_ticket_details": {
+            "instanceName": "prepare_create_ticket_details",
+            "resourceId": "prepare_create_ticket_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "issueId": "$.params.issueId",
+                "elixirEntityReferenceType": "$.params.elixirEntityReferenceType",
+                "elixirEntityReferenceId": "$.elixir_get_order_details.postFulfillmentData.trackingId",
+                "elixirEntityType": "$.elixir_get_order_details.itemType",
+                "workflowId": "$.workflowId"
+            },
+            "nextNode": "elixir_check_filter_count",
+            "end": false
+        },
+        "elixir_check_filter_count": {
+            "instanceName": "elixir_check_filter_count",
+            "resourceId": "elixir_check_filter_count",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "elixir_create_ticket": {
+            "instanceName": "elixir_create_ticket",
+            "resourceId": "push_to_varadhi",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "groupId": "$.prepare_create_ticket_details.groupId",
+                "messageId": "$.prepare_create_ticket_details.messageId",
+                "httpUri": "$.prepare_create_ticket_details.httpUri",
+                "method": "$.prepare_create_ticket_details.method",
+                "extraHeaders": "$.prepare_create_ticket_details.extraHeaders",
+                "body": "$.prepare_create_ticket_details.body",
+                "name": "$.prepare_create_ticket_details.queueName",
+                "isQueue": true
+            },
+            "nextNode": "create_elixir_ticket_branch_skip_incident_after_create",
+            "end": false
+        },
+        "update_incident_elixir_requested": {
+            "instanceName": "update_incident_elixir_requested",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "elxrTkt": "$.prepare_create_ticket_details.elxrTkt",
+                "notesText": "$.prepare_create_ticket_details.notesText"
+            },
+            "nextNode": "prepare_elixir_waiting_for_response_display",
+            "end": false
+        },
+        "prepare_elixir_waiting_for_response_display": {
+            "instanceName": "prepare_elixir_waiting_for_response_display",
+            "resourceId": "prepare_elixir_waiting_for_response_display",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "elixir_waiting_for_response",
+            "end": false
+        },
+        "elixir_waiting_for_response": {
+            "instanceName": "elixir_waiting_for_response",
+            "resourceId": "elixir_waiting_for_response",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "prepare_elixir_response_update",
+            "end": false
+        },
+        "prepare_elixir_response_update": {
+            "instanceName": "prepare_elixir_response_update",
+            "resourceId": "prepare_elixir_response_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "update_incident_elixir_response",
+            "end": false
+        },
+        "update_incident_elixir_response": {
+            "instanceName": "update_incident_elixir_response",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "elxrTkt": "$.prepare_elixir_response_update.elxrTicket",
+                "threads": "$.prepare_elixir_response_update.threads"
+            },
+            "nextNode": "elixir_check_ticket_status",
+            "end": false
+        },
+        "elixir_check_ticket_status": {
+            "instanceName": "elixir_check_ticket_status",
+            "resourceId": "elixir_check_ticket_status",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "elixir_waiting_for_updates": {
+            "instanceName": "elixir_waiting_for_updates",
+            "resourceId": "elixir_waiting_for_updates",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "prepare_elixir_action_update",
+            "end": false
+        },
+        "elixir_ticket_rejected_end": {
+            "instanceName": "elixir_ticket_rejected_end",
+            "resourceId": "elixir_ticket_rejected_end",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "prepare_elixir_action_update": {
+            "instanceName": "prepare_elixir_action_update",
+            "resourceId": "prepare_elixir_action_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "update_incident_elixir_action",
+            "end": false
+        },
+        "update_incident_elixir_action": {
+            "instanceName": "update_incident_elixir_action",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "elxrTkt": "$.prepare_elixir_action_update.elxrTkt",
+                "threads": "$.prepare_elixir_action_update.threads",
+                "childWorkflowAction": "$.prepare_elixir_action_update.childWfAction",
+                "childWorkflowName": "$.prepare_elixir_action_update.childWorkflowName",
+                "childWorkflowVersion": "$.prepare_elixir_action_update.childWorkflowVersion"
+            },
+            "nextNode": "elixir_action_branch",
+            "end": false
+        },
+        "elixir_action_branch": {
+            "instanceName": "elixir_action_branch",
+            "resourceId": "elixir_action_branch",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "elixir_prepare_reach_out_instructions": {
+            "instanceName": "elixir_prepare_reach_out_instructions",
+            "resourceId": "elixir_prepare_reach_out_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "elixir_push_reach_out_topic",
+            "end": false
+        },
+        "elixir_push_reach_out_topic": {
+            "instanceName": "elixir_push_reach_out_topic",
+            "resourceId": "push_to_varadhi",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "messageId": "$.params.incidentId",
+                "method": "POST",
+                "extraHeaders": "$.elixir_prepare_reach_out_instructions.extraHeaders",
+                "body": "$.elixir_prepare_reach_out_instructions.body",
+                "name": "$.elixir_prepare_reach_out_instructions.topicName",
+                "isQueue": false
+            },
+            "nextNode": "elixir_waiting_for_updates",
+            "end": false
+        },
+        "elixir_ticket_created_end": {
+            "instanceName": "elixir_ticket_created_end",
+            "resourceId": "elixir_ticket_created_end",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "complete_elixir_child_workflow": {
+            "instanceName": "complete_elixir_child_workflow",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "childWorkflowAction": "update",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version",
+                "workflowId": "$.workflowId",
+                "childWorkflowCompleted": true
+            },
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "elixir_incidents_found_end": {
+            "instanceName": "elixir_incidents_found_end",
+            "resourceId": "elixir_incidents_found_end",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

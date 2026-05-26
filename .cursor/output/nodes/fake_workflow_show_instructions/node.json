@@ -1,0 +1,21 @@
+{
+    "id": "fake_workflow_show_instructions",
+    "name": "Fake workflow show instructions",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "elixir_fake_attempt"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "possibleDynamicValues": "prepare_fake_workflow_show_instructions"
+        }
+    ]
+}

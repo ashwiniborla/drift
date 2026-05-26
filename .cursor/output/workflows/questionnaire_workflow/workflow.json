@@ -1,0 +1,248 @@
+{
+    "id": "questionnaire_workflow",
+    "comment": "Handles questionnaire for fake; takes actions accordingly. After user responds, validates the selection, creates a questionnaire incident, updates it as solved with questionnaireData, and optionally triggers FakeWorkflow.",
+    "startNode": "questionnaire_workflow_fetch_oxford",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "questionnaire_workflow_fetch_oxford": {
+            "instanceName": "questionnaire_workflow_fetch_oxford",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+                "useCase": "default"
+            },
+            "nextNode": "prepare_current_address",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "prepare_current_address": {
+            "instanceName": "prepare_current_address",
+            "resourceId": "sub_prepare_current_address",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "process_fake_workflow_details",
+            "end": false
+        },
+        "process_fake_workflow_details": {
+            "instanceName": "process_fake_workflow_details",
+            "resourceId": "process_fake_workflow_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "issueId": "$.issueDetail.issueId",
+                "undeliveredType": "$.params.undeliveredType"
+            },
+            "nextNode": "questionnaire_questions_check",
+            "end": false
+        },
+        "questionnaire_questions_check": {
+            "instanceName": "questionnaire_questions_check",
+            "resourceId": "questionnaire_questions_check",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "questions": "$.process_fake_workflow_details.questions"
+            },
+            "end": false
+        },
+        "prepare_questionnaire_instructions": {
+            "instanceName": "prepare_questionnaire_instructions",
+            "resourceId": "prepare_questionnaire_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "questions": "$.process_fake_workflow_details.questions"
+            },
+            "nextNode": "questionnaire_instructions",
+            "end": false
+        },
+        "questionnaire_instructions": {
+            "instanceName": "questionnaire_instructions",
+            "resourceId": "questionnaire_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_questionnaire_instructions.inputOptions"
+            },
+            "nextNode": "validate_questionnaire_response",
+            "end": false
+        },
+        "validate_questionnaire_response": {
+            "instanceName": "validate_questionnaire_response",
+            "resourceId": "validate_questionnaire_response",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "questions": "$.process_fake_workflow_details.questions",
+                "questionnaireType": "$.process_fake_workflow_details.questionnaireType"
+            },
+            "nextNode": "create_questionnaire_incident",
+            "end": false
+        },
+        "create_questionnaire_incident": {
+            "instanceName": "create_questionnaire_incident",
+            "resourceId": "check_similarity_and_create_incident",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "workflow_id": "$.workflowId",
+                "issue_detail": "$.issueDetail",
+                "queue_detail": "$.queueDetail",
+                "customer": "$.customer",
+                "order_details": "$.orderDetails"
+            },
+            "nextNode": "update_questionnaire_incident",
+            "end": false
+        },
+        "update_questionnaire_incident": {
+            "instanceName": "update_questionnaire_incident",
+            "resourceId": "update_questionnaire_incident",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.create_questionnaire_incident.incident_id",
+                "statusId": "2",
+                "questionnaireData": "$.validate_questionnaire_response.questionnaireData"
+            },
+            "nextNode": "check_fake_workflow_required",
+            "end": false
+        },
+        "check_fake_workflow_required": {
+            "instanceName": "check_fake_workflow_required",
+            "resourceId": "check_fake_workflow_required",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "run_fake_sub_workflow": {
+            "instanceName": "run_fake_sub_workflow",
+            "resourceId": "run_fake_sub_workflow",
+            "resourceVersion": "SNAPSHOT",
+            "type": "SUBWORKFLOW",
+            "parameters": {},
+            "nextNode": "check_alternate_phone_number_required",
+            "end": false
+        },
+        "check_alternate_phone_number_required": {
+            "instanceName": "check_alternate_phone_number_required",
+            "resourceId": "check_alternate_phone_number_required",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "phoneNumberRequired": "$.validate_questionnaire_response.selectedQuestionConfig.postScreensRequired.phone"
+            },
+            "end": false
+        },
+        "collect_phone_number": {
+            "instanceName": "collect_phone_number",
+            "resourceId": "collect_phone_number",
+            "resourceVersion": "SNAPSHOT",
+            "type": "SUBWORKFLOW",
+            "parameters": {},
+            "nextNode": "check_location_screen_required",
+            "end": false
+        },
+        "check_location_screen_required": {
+            "instanceName": "check_location_screen_required",
+            "resourceId": "check_location_screen_required",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "locationRequired": "$.validate_questionnaire_response.selectedQuestionConfig.postScreensRequired.location",
+                "phoneChangeSuccess": "$.chore_confirm_address.isSuccess"
+
+            },
+            "end": false
+        },
+        "fap_success_instruction_continue": {
+            "instanceName": "fap_success_instruction_continue",
+            "resourceId": "fap_success_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_fap_success_instruction.inputOptions",
+                "layoutId": "$.prepare_fap_success_instruction.layoutId"
+            },
+            "nextNode": "collect_location",
+            "end": false
+        },
+        "fap_success_instruction_terminal": {
+            "instanceName": "fap_success_instruction_terminal",
+            "resourceId": "fap_success_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_fap_success_instruction.inputOptions",
+                "layoutId": "$.prepare_fap_success_instruction.layoutId"
+            },
+            "end": true
+        },
+        "fap_failure_instruction_terminal": {
+            "instanceName": "fap_failure_instruction_terminal",
+            "resourceId": "phone_number_update_failed",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "collect_location": {
+            "instanceName": "collect_location",
+            "resourceId": "sub_fetch_location",
+            "resourceVersion": "SNAPSHOT",
+            "type": "SUBWORKFLOW",
+            "parameters": {},
+            "nextNode": "check_location_instruction_available",
+            "end": false
+        },
+        "check_location_instruction_available": {
+            "instanceName": "check_location_instruction_available",
+            "resourceId": "check_location_instruction_available",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "show_location_instruction": {
+            "instanceName": "show_location_instruction",
+            "resourceId": "show_location_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_location_instruction.inputOptions"
+            },
+            "end": true
+        },
+        "prepare_questionnaire_end_instructions": {
+            "instanceName": "prepare_questionnaire_end_instructions",
+            "resourceId": "prepare_questionnaire_end_instructions",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "questionnaire_end_instruction",
+            "end": false
+        },
+        "questionnaire_end_instruction": {
+            "instanceName": "questionnaire_end_instruction",
+            "resourceId": "questionnaire_end_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_questionnaire_end_instructions.inputOptions"
+            },
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

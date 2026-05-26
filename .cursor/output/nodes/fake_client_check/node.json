@@ -1,0 +1,30 @@
+{
+    "id": "fake_client_check",
+    "name": "Fake client check",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.threadContext?.clientId == 'sa'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_fake_workflow_show_instructions"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.threadContext?.clientId != 'sa'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fake_workflow_success"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

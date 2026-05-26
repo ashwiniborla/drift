@@ -1,0 +1,8 @@
+{
+    "id": "fap_address_update_success",
+    "name": "FAP Address Update - Success",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Address created and chore confirmed",
+    "executionMode": "SYNC"
+}

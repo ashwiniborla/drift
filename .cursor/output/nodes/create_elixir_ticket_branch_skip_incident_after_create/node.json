@@ -1,0 +1,30 @@
+{
+    "id": "create_elixir_ticket_branch_skip_incident_after_create",
+    "name": "create_elixir_ticket_branch_skip_incident_after_create",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.params?.ignore_incident_update == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_elixir_waiting_for_response_display"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.params?.ignore_incident_update != true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "update_incident_elixir_requested"
+        }
+    ],
+    "defaultNode": "update_incident_elixir_requested"
+}

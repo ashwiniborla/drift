@@ -1,0 +1,56 @@
+{
+    "id": "fap_end_instruction",
+    "name": "FAP Workflow: End Instruction",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "phone_number_updated_failure"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "id": "phone_number_updated_failure_message",
+            "description": "Phone number updated failure message",
+            "tags": {
+                "values": [
+                    "ss.static_text"
+                ]
+            },
+            "instructions": [
+                {
+                    "templateId": "iris_static_message",
+                    "templateVariables": {
+                        "irisKey": "elixir.phone_confirmation.success_message",
+                        "defaultText": "Your phone number has been updated successfully",
+                        "odRedirection": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "phone_number_updated_failure_okay_button",
+            "description": "Okay",
+            "tags": {
+                "values": [
+                    "ss.button_widget",
+                    "ss.next_request_data"
+                ]
+            },
+            "possibleValues": [
+                {
+                    "value": "okay",
+                    "displayValue": "Okay",
+                    "metaData": {
+                        "irisKey": "elixir.button.okay"
+                    }
+                }
+            ]
+        }
+    ]
+}

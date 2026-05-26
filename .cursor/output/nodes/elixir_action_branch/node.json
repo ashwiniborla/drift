@@ -1,0 +1,40 @@
+{
+    "id": "elixir_action_branch",
+    "name": "Elixir action branch",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.prepare_elixir_action_update?.error == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_waiting_for_updates"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.prepare_elixir_action_update?.action == 'CLOSED'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_ticket_created_end"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "def a = _global?.prepare_elixir_action_update?.action; return a == 'OTHERS' || a == 'ALT_PH_NUMBER_REQUIRED'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_prepare_reach_out_instructions"
+        }
+    ],
+    "defaultNode": "elixir_waiting_for_updates"
+}

@@ -1,0 +1,13 @@
+{
+    "id": "sub_prepare_current_address",
+    "name": "Sub Workflow: Prepare Current Address",
+    "type": "SUB_WORKFLOW",
+    "version": "1",
+    "subWorkflowId": "prepare_current_address",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": true,
+        "includeLastNode": false,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

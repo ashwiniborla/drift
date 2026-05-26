@@ -1,0 +1,8 @@
+{
+    "id": "fake_workflow_success",
+    "name": "Fake workflow completed successfully",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Fake workflow completed successfully",
+    "executionMode": "SYNC"
+}

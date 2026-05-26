@@ -1,0 +1,20 @@
+{
+  "id": "questionnaire_questions_check",
+  "name": "Questionnaire questions check",
+  "type": "BRANCH",
+  "parameters": ["questions"],
+  "version": "1",
+  "choices": [
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "def q = _global?.nodeParameters?.questions\nif (q == null) return false\nif (q instanceof Map && q.containsKey('questions')) {\n  def qList = q.questions\n  return qList != null && (qList instanceof List) && !qList.isEmpty()\n}\nreturn true"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "prepare_questionnaire_instructions"
+    }
+  ],
+  "defaultNode": "default_failure"
+}

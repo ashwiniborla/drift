@@ -1,0 +1,23 @@
+{
+    "id": "show_location_instruction",
+    "name": "Show Location Instruction",
+    "type": "INSTRUCTION",
+    "parameters": ["inputOptions"],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "value": {
+                "type": "STRING",
+                "data": "confirm_delivery_location_screen"
+            },
+            "type": "STATIC"
+        }
+    },
+    "inputOptions": [
+        {
+            "id": "location_screen_content",
+            "description": "Dynamic location screen content",
+            "possibleDynamicValues": "nodeParameters.inputOptions"
+        }
+    ]
+}

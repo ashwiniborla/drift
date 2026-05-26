@@ -1,0 +1,1009 @@
+{
+  "id": "WF-26031700521889779090",
+  "workflowId": "WF-26031700521889779090",
+  "context": {
+    "incidentId": "",
+    "workflowId": "WF-26031700521889779090",
+    "parentWorkflowId": null,
+    "threadContext": {
+      "clientId": "cs",
+      "perfFlag": "false",
+      "userName": "cs",
+      "tenant": "cs"
+    },
+    "params": {
+      "workflowId": "questionnaire_workflow",
+      "version": "SNAPSHOT",
+      "undeliveredType": "RFR"
+    },
+    "issueDetail": {
+      "issueId": "1111",
+      "issueName": "Token of apology"
+    },
+    "queueDetail": null,
+    "customer": {
+      "customerId": "ACC14018777512395717"
+    },
+    "orderDetails": [
+      {
+        "orderId": "OD436837524973794100",
+        "orderItemId": "436837524973794100000",
+        "orderItemUnitId": "436837524973794100000",
+        "trackingId": "FMPC5792411756"
+      }
+    ],
+    "global_params": {
+      "threadContext": {
+        "clientId": "cs",
+        "perfFlag": "false",
+        "userName": "cs",
+        "tenant": "cs"
+      }
+    },
+    "nodeParameters": {},
+    "process_fake_workflow_details": {
+      "undeliveredType": "RFR",
+      "questions": {
+        "title": {
+          "iris": {
+            "irisKey": "elixir.question.title",
+            "default": "Help us schedule your next delivery attempt"
+          }
+        },
+        "subTitle": {
+          "iris": {
+            "irisKey": "elixir.question.subtitle",
+            "default": "To help us plan, could you let us know your preference for the recent reschedule request"
+          }
+        },
+        "questions": [
+          {
+            "key": "yes_i_requested_it",
+            "isFakeWorkflowRequired": false,
+            "postScreensRequired": {
+              "phone": false,
+              "location": true
+            },
+            "displayName": {
+              "iris": {
+                "irisKey": "elixir.question.answer.yes_i_requested_it",
+                "default": "Yes I requested it"
+              }
+            }
+          },
+          {
+            "key": "no_i_didnt_reschedule",
+            "isFakeWorkflowRequired": true,
+            "postScreensRequired": {
+              "phone": true,
+              "location": true
+            },
+            "displayName": {
+              "iris": {
+                "irisKey": "elixir.question.answer.no_i_didnt_reschedule",
+                "default": "No I didnt reschedule"
+              }
+            }
+          }
+        ]
+      },
+      "issueConfig": {
+        "flowDirection": "FORWARD",
+        "fakeIssueId": 2111,
+        "similarIssueIds": [
+          2111,
+          3267
+        ]
+      },
+      "questionnaireType": "fake_forward_rfr"
+    },
+    "questionnaire_questions_check": {
+      "nextNode": "prepare_questionnaire_instructions"
+    },
+    "prepare_questionnaire_instructions": {
+      "inputOptions": [
+        {
+          "id": "question_header",
+          "description": "Header",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "enum": "request_assistance_title",
+                "defaultText": "Request assistance"
+              }
+            }
+          ]
+        },
+        {
+          "id": "question_title",
+          "description": "Title",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "irisKey": "elixir.question.title",
+                "defaultText": "Help us schedule your next delivery attempt"
+              }
+            }
+          ]
+        },
+        {
+          "id": "question_subtitle",
+          "description": "Subtitle",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "irisKey": "elixir.question.subtitle",
+                "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+              }
+            }
+          ]
+        },
+        {
+          "id": "elixir_questionnaire_preference",
+          "description": "Single select preference",
+          "tags": {
+            "values": [
+              "ss.single_select"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Yes I requested it",
+              "metaData": {
+                "templateId": "iris_static_message",
+                "templateVariables": {
+                  "irisKey": "elixir.question.answer.yes_i_requested_it",
+                  "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+                }
+              },
+              "value": "yes_i_requested_it"
+            },
+            {
+              "displayValue": "No I didnt reschedule",
+              "metaData": {
+                "templateId": "iris_static_message",
+                "templateVariables": {
+                  "irisKey": "elixir.question.answer.no_i_didnt_reschedule",
+                  "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+                }
+              },
+              "value": "no_i_didnt_reschedule"
+            }
+          ]
+        },
+        {
+          "id": "raise",
+          "description": "Raise to delivery team",
+          "tags": {
+            "values": [
+              "ss.button_widget"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Raise to delivery team",
+              "metaData": null,
+              "value": "submit"
+            }
+          ]
+        },
+        {
+          "id": "close",
+          "description": "Close",
+          "tags": {
+            "values": [
+              "ss.button_widget"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Close",
+              "metaData": null,
+              "value": "close"
+            }
+          ]
+        }
+      ]
+    },
+    "questionnaire_instructions": {
+      "inputOptions": [
+        {
+          "id": "question_header",
+          "description": "Header",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "enum": "request_assistance_title",
+                "defaultText": "Request assistance"
+              }
+            }
+          ]
+        },
+        {
+          "id": "question_title",
+          "description": "Title",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "irisKey": "elixir.question.title",
+                "defaultText": "Help us schedule your next delivery attempt"
+              }
+            }
+          ]
+        },
+        {
+          "id": "question_subtitle",
+          "description": "Subtitle",
+          "tags": {
+            "values": [
+              "ss.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "iris_static_message",
+              "templateVariables": {
+                "irisKey": "elixir.question.subtitle",
+                "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+              }
+            }
+          ]
+        },
+        {
+          "id": "elixir_questionnaire_preference",
+          "description": "Single select preference",
+          "tags": {
+            "values": [
+              "ss.single_select"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Yes I requested it",
+              "metaData": {
+                "templateId": "iris_static_message",
+                "templateVariables": {
+                  "irisKey": "elixir.question.answer.yes_i_requested_it",
+                  "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+                }
+              },
+              "value": "yes_i_requested_it"
+            },
+            {
+              "displayValue": "No I didnt reschedule",
+              "metaData": {
+                "templateId": "iris_static_message",
+                "templateVariables": {
+                  "irisKey": "elixir.question.answer.no_i_didnt_reschedule",
+                  "defaultText": "To help us plan, could you let us know your preference for the recent reschedule request"
+                }
+              },
+              "value": "no_i_didnt_reschedule"
+            }
+          ]
+        },
+        {
+          "id": "raise",
+          "description": "Raise to delivery team",
+          "tags": {
+            "values": [
+              "ss.button_widget"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Raise to delivery team",
+              "metaData": null,
+              "value": "submit"
+            }
+          ]
+        },
+        {
+          "id": "close",
+          "description": "Close",
+          "tags": {
+            "values": [
+              "ss.button_widget"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Close",
+              "metaData": null,
+              "value": "close"
+            }
+          ]
+        }
+      ],
+      "layoutId": "elixir_questionnaire_screen"
+    },
+    "questionnaire_instructions:viewResponse": {
+      "selectedOptions": {
+        "elixir_questionnaire_preference": "no_i_didnt_reschedule"
+      }
+    },
+    "validate_questionnaire_response": {
+      "isValid": true,
+      "selectedOptionKey": "no_i_didnt_reschedule",
+      "selectedQuestionConfig": {
+        "key": "no_i_didnt_reschedule",
+        "isFakeWorkflowRequired": true,
+        "postScreensRequired": {
+          "phone": true,
+          "location": true
+        },
+        "displayName": {
+          "iris": {
+            "irisKey": "elixir.question.answer.no_i_didnt_reschedule",
+            "default": "No I didnt reschedule"
+          }
+        }
+      },
+      "isFakeWorkflowRequired": true,
+      "nextWorkflow": null,
+      "questionnaireType": "fake_forward_rfr",
+      "questionnaireData": {
+        "questionnaireType": "fake_forward_rfr",
+        "response": "no_i_didnt_reschedule",
+        "createdAt": "2026-03-17T00:52:35.508+0530"
+      }
+    },
+    "create_questionnaire_incident": {
+      "incident_id": "IN26031700523654063586",
+      "duplicateIncidentFound": false,
+      "issueDetail": {
+        "id": 1111,
+        "name": "Order status"
+      }
+    },
+    "update_questionnaire_incident": {
+      "incidentId": "IN26031700523654063586"
+    },
+    "check_fake_workflow_required": {
+      "nextNode": "fake_check_similarity_and_create_incident"
+    },
+    "fake_check_similarity_and_create_incident": {
+      "incident_id": "IN26031700523840161827",
+      "duplicateIncidentFound": false,
+      "issueDetail": {
+        "id": 2111,
+        "name": "Could not change the address for Out for Delivery Shipments-ESC"
+      }
+    },
+    "fake_incident_created_check": {
+      "nextNode": "create_elixir_ticket_child"
+    },
+    "create_elixir_ticket_child": {
+      "issueId": 2111,
+      "elixirEntityReferenceType": "TRACKING_ID",
+      "elixirEntityFlow": "FORWARD",
+      "incidentId": "IN26031700523840161827"
+    },
+    "run_e2e_fake_workflows": {
+      "incidentId": "IN26031700523840161827"
+    },
+    "fake_client_check": {
+      "nextNode": "check_alternate_phone_number_required"
+    },
+    "check_alternate_phone_number_required": {
+      "nextNode": "fetch_order_oxford"
+    },
+    "fetch_order_oxford": {
+      "units": {
+        "436837524973794100000": {
+          "createdAt": 1771519944178,
+          "status": "SHIPPED",
+          "id": "436837524973794100000",
+          "subStatus": "UNDEL_ATTEMPT_LGT",
+          "offers": [],
+          "type": "physical",
+          "itemExternalId": "436837524973794100",
+          "rolledUpStatus": "RETURNED",
+          "policyData": [
+            {
+              "type": "RETURN_POLICY",
+              "data": [
+                "no_returns"
+              ]
+            }
+          ],
+          "policyInfo": {
+            "returnPolicyInfo": {
+              "policyId": "no_returns_ehc:cohort1:v1",
+              "description": "No Returns Allowed",
+              "returnFeeDecision": "DISABLE"
+            }
+          },
+          "adjustments": [
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 7.0,
+                "currency": "INR",
+                "inrValue": 7.0
+              },
+              "offerReferenceId": "pf:001",
+              "referenceId": "pf:001"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 91.0,
+                "currency": "INR",
+                "inrValue": 91.0
+              },
+              "offerReferenceId": "iks:001",
+              "referenceId": "iks:001"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 9.0,
+                "currency": "INR",
+                "inrValue": 9.0
+              },
+              "offerReferenceId": "cod:001",
+              "referenceId": "cod:001"
+            }
+          ],
+          "chores": [
+            {
+              "changeRequestId": "CU103684505942663603",
+              "choreType": "RETURN",
+              "status": "COMPLETED",
+              "meta": {
+                "type": "RETURN",
+                "returnId": "1031792269093631608762368",
+                "reason": "ORC_validated with customer",
+                "subReason": "ORC_validated with customer",
+                "comments": "",
+                "returnType": "COURIER_RETURN",
+                "action": "wait_refund",
+                "customerWillShip": false,
+                "channel": "TERMINATOR",
+                "userLogin": "TERMINATOR",
+                "associatedUnits": [
+                  "436837524973794100001"
+                ],
+                "amount": 395.0,
+                "amountWithCurrency": [
+                  {
+                    "value": 395.0,
+                    "currency": "INR",
+                    "inrValue": 395.0
+                  }
+                ],
+                "refundAmount": [
+                  {
+                    "value": 395.0,
+                    "currency": "INR",
+                    "inrValue": 395.0
+                  }
+                ],
+                "refundMode": "back_to_source",
+                "refundTat": 144,
+                "derivedReturnStatus": "COMPLETED",
+                "inducedBy": "CUSTOMER",
+                "policyViolationMeta": {}
+              },
+              "createdAt": 1771595279489,
+              "updatedAt": 1771998174170,
+              "changeActions": [
+                {
+                  "actionType": "APPROVE",
+                  "eligibility": false,
+                  "reason": "NOT_A_CUSTOMER_RETURN"
+                },
+                {
+                  "actionType": "OVERRIDE",
+                  "eligibility": false,
+                  "reason": "PICKUP_ALREADY_DONE"
+                },
+                {
+                  "actionType": "REJECT",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_STATUS"
+                },
+                {
+                  "actionType": "CANCEL",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_TYPE"
+                },
+                {
+                  "actionType": "DELIVERY_CONFIRMATION",
+                  "eligibility": false,
+                  "reason": "NOT_A_CUSTOMER_RETURN"
+                }
+              ],
+              "changeRequests": []
+            }
+          ],
+          "statusHistories": [
+            {
+              "timestamp": 1771519944243,
+              "status": "APPROVED",
+              "createdBy": "ae-event"
+            },
+            {
+              "timestamp": 1771528943000,
+              "status": "READY_TO_SHIP",
+              "createdBy": "ORDER_ITEM_UNIT_READY_TO_SHIP"
+            },
+            {
+              "timestamp": 1771528945000,
+              "status": "DISPATCHED",
+              "createdBy": "ORDER_ITEM_UNIT_DISPATCHED"
+            },
+            {
+              "timestamp": 1771530197000,
+              "status": "SHIPPED",
+              "createdBy": "ORDER_ITEM_UNIT_SHIPPED"
+            },
+            {
+              "timestamp": 1771577645000,
+              "status": "OUT_FOR_DELIVERY",
+              "createdBy": "OUT_FOR_DELIVERY"
+            },
+            {
+              "timestamp": 1771595131000,
+              "status": "UNDEL_ATTEMPT_LGT",
+              "createdBy": "UNDEL_ATTEMPT_LGT"
+            }
+          ],
+          "postFulfillmentData": {
+            "shipmentId": "S989495784093",
+            "trackingId": "FMPC5792411756",
+            "courierName": "flipkartlogistics-cod",
+            "location": "malur_bts"
+          },
+          "promiseDataBag": {
+            "promiseType": "UN_SLOTTED",
+            "fulfillmentSpeed": "\"PREMIUM\"",
+            "fulfillmentHasSlots": "false",
+            "fulfillmentPromised": "true",
+            "omsPromisData": "{\"from\":1,\"to\":1,\"speed\":\"PREMIUM\",\"holidays\":{}}",
+            "pickupPromiseDate": 0,
+            "promisedDateFrom": 1771608600000,
+            "promisedDateTo": 1771608600000,
+            "updatedPromisedDateFrom": 0,
+            "updatedPromisedDateTo": 1771677485000,
+            "slaMessageType": "TIME",
+            "promiseRefId": "hyd$FLIPKARTOD4368375249737941-RX-00$45335f17395c7fcd9864d87a2dab6e3c",
+            "promiseRefVersion": "0",
+            "promiseChangeReason": "{\"reason\":\"FlipkartTriggered\",\"subreason\":\"confidence_event_orchestration\"}",
+            "sla": 1
+          },
+          "unitChangeActions": [
+            {
+              "actionType": "CHANGE_SECONDARY_PHONE_NUMBER",
+              "eligibility": true,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_SLOT",
+              "eligibility": false,
+              "reason": "NO_SLOTS_AVAILABLE"
+            },
+            {
+              "actionType": "CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "PICK_LIST_CREATED"
+            },
+            {
+              "actionType": "POST_DISPATCH_CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_PAYMENT",
+              "eligibility": false,
+              "reason": "RETURN_ALREADY_PROCESSED"
+            },
+            {
+              "actionType": "RETURN",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "RE_OPEN_RETURN",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_DELIVERY_SLOT",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_LOCKIN",
+              "eligibility": false,
+              "reason": "CANCELLATION_IN_PROGRESS"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_NON_LOCKIN",
+              "eligibility": false,
+              "reason": "CANCELLATION_IN_PROGRESS"
+            },
+            {
+              "actionType": "FEE_WAIVER",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PRICE_MATCH",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            }
+          ],
+          "isPrexo": false,
+          "paymentCategoryInfo": {
+            "PREPAID": {
+              "amounts": [],
+              "transactionIds": []
+            },
+            "POSTPAID": {
+              "amounts": [
+                {
+                  "value": 395.0,
+                  "currency": "INR",
+                  "inrValue": 395.0
+                }
+              ],
+              "transactionIds": [
+                "PZT2602192222EUSNU01"
+              ]
+            }
+          },
+          "unitType": "OrderItemUnit",
+          "flow": "FORWARD",
+          "toParty": {
+            "accountId": "ACC14018777512395717",
+            "deliveryAddressId": "CNTCT1A296286EF69407F99D4D0502",
+            "billingAddressId": "CNTCT1A296286EF69407F99D4D0502",
+            "deliveryMode": "NORMAL"
+          },
+          "fromParty": {
+            "accountId": "2wxw9h1edbiboze8"
+          },
+          "productData": {
+            "sellerId": "2wxw9h1edbiboze8",
+            "title": "Involve One Musk Organic Leak Proof Car Perfume",
+            "listingId": "LSTAIRDZFFZA7MHS4XQEZ7ULE",
+            "productId": "AIRDZFFZA7MHS4XQ",
+            "categoryId": "56088",
+            "listingType": "current",
+            "serviceProfile": "FBF",
+            "mrp": {
+              "value": 449.0,
+              "currency": "INR",
+              "inrValue": 449.0
+            },
+            "listPrice": {
+              "value": 288.0,
+              "currency": "INR",
+              "inrValue": 288.0
+            },
+            "listPriceMultiCurrency": [
+              {
+                "value": 288.0,
+                "currency": "INR",
+                "inrValue": 288.0
+              }
+            ],
+            "anchorPrice": {
+              "value": 369.0,
+              "currency": "INR"
+            },
+            "marketPlace": "FLIPKART",
+            "paymentFlowIdentifier": "FORWARD",
+            "itemDataType": "oiuZuluData",
+            "paymentCollectionStatus": "COMPLETED"
+          },
+          "childUnits": {
+            "436837524973794100001": {
+              "createdAt": 1771595279488,
+              "status": "COMPLETED",
+              "id": "436837524973794100001",
+              "offers": [],
+              "type": "physical",
+              "itemExternalId": "436837524973794100",
+              "unitSubType": "PICKUP",
+              "rolledUpStatus": "COMPLETED",
+              "adjustments": [],
+              "chores": [],
+              "statusHistories": [
+                {
+                  "timestamp": 1771595279483,
+                  "status": "APPROVED",
+                  "createdBy": "TERMINATOR",
+                  "reason": "ORC_validated with customer",
+                  "subReason": "ORC_validated with customer"
+                },
+                {
+                  "timestamp": 1771595280000,
+                  "status": "PICKED",
+                  "createdBy": "ORDER_ITEM_UNIT_PICKED",
+                  "reason": "ORC_validated with customer",
+                  "subReason": "ORC_validated with customer",
+                  "comments": ""
+                },
+                {
+                  "timestamp": 1771998173059,
+                  "status": "COMPLETED",
+                  "createdBy": "ORDER_ITEM_UNIT_COMPLETED",
+                  "reason": "ORC_validated with customer",
+                  "subReason": "ORC_validated with customer",
+                  "comments": ""
+                }
+              ],
+              "postFulfillmentData": {
+                "shipmentId": "S989495784093",
+                "trackingId": "FMPC5792411756",
+                "courierName": "flipkartlogistics-cod"
+              },
+              "promiseDataBag": {
+                "pickupPromiseDate": 0,
+                "promisedDateFrom": 0,
+                "promisedDateTo": 0,
+                "updatedPromisedDateFrom": 0,
+                "updatedPromisedDateTo": 0,
+                "sla": 0
+              },
+              "isPrexo": false,
+              "paymentCategoryInfo": {},
+              "unitType": "OrderItemUnit",
+              "flow": "RETURN",
+              "toParty": {
+                "accountId": "2wxw9h1edbiboze8",
+                "deliveryAddressId": "malur_bts"
+              },
+              "fromParty": {
+                "accountId": "ACC14018777512395717",
+                "deliveryAddressId": "CNTCT1A296286EF69407F99D4D0502",
+                "billingAddressId": "CNTCT1A296286EF69407F99D4D0502",
+                "deliveryMode": "NORMAL"
+              },
+              "productData": {
+                "sellerId": "2wxw9h1edbiboze8",
+                "title": "Involve One Musk Organic Leak Proof Car Perfume",
+                "listingId": "LSTAIRDZFFZA7MHS4XQEZ7ULE",
+                "productId": "AIRDZFFZA7MHS4XQ",
+                "categoryId": "56088",
+                "listingType": "current",
+                "serviceProfile": "FBF",
+                "mrp": {
+                  "value": 449.0,
+                  "currency": "INR",
+                  "inrValue": 449.0
+                },
+                "listPrice": {
+                  "value": 288.0,
+                  "currency": "INR",
+                  "inrValue": 288.0
+                },
+                "listPriceMultiCurrency": [
+                  {
+                    "value": 288.0,
+                    "currency": "INR",
+                    "inrValue": 288.0
+                  }
+                ],
+                "anchorPrice": {
+                  "value": 369.0,
+                  "currency": "INR"
+                },
+                "marketPlace": "FLIPKART",
+                "paymentFlowIdentifier": "FORWARD",
+                "itemDataType": "oiuZuluData",
+                "paymentCollectionStatus": "COMPLETED"
+              },
+              "childUnits": {}
+            }
+          }
+        }
+      },
+      "targetUnitIds": [
+        "436837524973794100000"
+      ]
+    },
+    "check_minions_eligibility": {
+      "eligibleUnitIds": [
+        "436837524973794100000"
+      ],
+      "deliveryAddressId": "CNTCT1A296286EF69407F99D4D0502",
+      "isEligible": true
+    },
+    "branch_minions_eligible": {
+      "nextNode": "chore_eligibility"
+    },
+    "chore_eligibility": {
+      "choreId": "CU103703494947375241",
+      "actionableUnitIds": [
+        "436837524973794100000"
+      ],
+      "isEligible": true
+    },
+    "branch_chore_eligible": {
+      "nextNode": "get_user_svc_auth_token"
+    },
+    "get_user_svc_auth_token": {
+      "access_token": "eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOlsibG9naW4iLCJ1c2VyIl0sInNjb3BlIjpbInVzZXIuY250LndyaXRlIiwidXNlci5jbnQuYmF0Y2giLCJ1c2VyLmFjYy5yZWFkIiwidXNlci5jbnQucmVhZCIsImxvZ2luLmd1ZXN0IiwidXNlci5pbnNpZ2h0IiwidXNlci5hY2MuYmF0Y2giLCJsb2dpbi5pZGVudGlmaWVycy5yZWFkIl0sImV4cCI6MTc3Mzc1MTIxNCwiYXV0aG9yaXRpZXMiOlsiUk9MRV9DTElFTlQiXSwianRpIjoiZjUzYmI0OWEtMDBlOC00Y2Q4LTlhZDYtM2QyNjBiMzYzOTNiIiwiY2xpZW50X2lkIjoiZjkwNDViNGE2MDc2NDhmMGJhNTZjNGRkMDlkZDQ3MzgifQ.f4xrSo7QxHIKna9buXkXk9Q5GyudZbYw_62-gDgo5UwM0d_BRBTOlPXm7bnUoloDxB1SJOi5Y0iLWbreU7EItcpxLE8FvMNmjoMMJX2KViCbuwSLRKkEH-E7VLIYWeaft93DnJwbQMCEKcInNYlfmiMyho7TTnWKnLc9Mbvqz8Dl7T55aizzF23UkBGddEBqCkbNbb3pdRLZ3Sz735YKAH1IQYbJQ1jWA928H3WQ9sIEJAIPV5p0xvrdOmVOSWdgpdrKpDBgSP2X5CmYhQ25EgAP4_84iomh9VfL8S3RO6o4yeyxhOY8WWbyunojTchDDsWxkYfow-iDM9GXwUnhjA"
+    },
+    "get_current_address": {
+      "id": "CNTCT1A296286EF69407F99D4D0502",
+      "creatingChannel": "flipkart",
+      "accountId": "ACC14018777512395717",
+      "name": {
+        "id": "CNTCT1A296286EF69407F99D4D0502",
+        "input": "Manav Chawla"
+      },
+      "communications": [
+        {
+          "id": "COMM1011F7446BEB45919661039E65",
+          "type": "mobile",
+          "input": "9943777561"
+        }
+      ],
+      "address": {
+        "addressType": "user_generated",
+        "accountId": "ACC14018777512395717",
+        "addressId": "PHYFBA17CF683E94AC2B17E7A054DB",
+        "active": true,
+        "addressLine1": {
+          "input": "201 inner space leafy Blocks"
+        },
+        "addressLine2": {
+          "input": "Owners Court Layout, Habitat Celeste, Kasavanahalli"
+        },
+        "landmark": {
+          "input": "Near shell petrol pump"
+        },
+        "city": {
+          "input": "Bengaluru"
+        },
+        "pincode": {
+          "input": "560035"
+        },
+        "state": {
+          "input": "Karnataka"
+        },
+        "stateCode": {
+          "input": "IN-KA"
+        },
+        "country": {
+          "input": "IN"
+        },
+        "location": {
+          "latitude": 12.8991044,
+          "longitude": 77.6730251,
+          "isHighConfidence": true,
+          "updatedAt": 1773572840000,
+          "driftThreshold": 199.0
+        },
+        "addressCreationSourceType": "PHYSICAL",
+        "locationTypeTag": "Home"
+      },
+      "meta": {
+        "lastUsedTime": 1773494084,
+        "usedCount": 12
+      },
+      "creationDate": "2022-10-10 22:42:50",
+      "lastModified": "2026-03-16 00:00:00",
+      "active": false
+    },
+    "chore_feasibility": {
+      "actionableUnitIds": [
+        "437034938022169100000"
+      ],
+      "nonActionableUnitIds": [],
+      "isFeasible": true
+    },
+    "branch_feasibility": {
+      "nextNode": "ask_alternate_phone"
+    },
+    "ask_alternate_phone": {
+      "inputOptions": [
+        {
+          "id": "current_address_info",
+          "description": "Display current delivery address and phone info",
+          "tags": {
+            "values": [
+              "sa.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "text_to_display",
+              "templateVariables": {
+                "title": "Current Delivery Address",
+                "messageToShow": "Verify the current delivery details with the customer before updating the phone number."
+              }
+            }
+          ]
+        },
+        {
+          "id": "new_contact_input",
+          "description": "Enter new primary phone number for delivery",
+          "tags": {
+            "values": [
+              "sa.free_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "take_notes_template"
+            }
+          ]
+        },
+        {
+          "id": "alt_contact_input",
+          "description": "Enter alternate phone number (optional)",
+          "tags": {
+            "values": [
+              "sa.free_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "take_notes_template"
+            }
+          ]
+        },
+        {
+          "id": "confirm_phone_button",
+          "description": "Confirm phone number update",
+          "tags": {
+            "values": [
+              "sa.button_widget"
+            ]
+          },
+          "possibleValues": [
+            {
+              "displayValue": "Update Phone Number",
+              "metaData": {},
+              "value": "CONFIRM"
+            },
+            {
+              "displayValue": "Cancel",
+              "metaData": {},
+              "value": "CANCEL"
+            }
+          ]
+        }
+      ],
+      "layoutId": "alternate_phone_input"
+    }
+  },
+  "createdAt": null,
+  "updatedAt": null
+}

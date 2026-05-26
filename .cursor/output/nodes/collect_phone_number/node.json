@@ -1,0 +1,14 @@
+{
+    "id": "collect_phone_number",
+    "name": "Collect phone number",
+    "type": "SUB_WORKFLOW",
+    "parameters": [],
+    "version": "1",
+    "subWorkflowId": "forward_address_phone_change",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": false,
+        "includeLastNode": true,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

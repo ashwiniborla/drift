@@ -1,0 +1,20 @@
+{
+    "id": "check_alternate_phone_number_required",
+    "name": "Check alternate phone number required",
+    "type": "BRANCH",
+    "parameters": ["phoneNumberRequired"],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.nodeParameters?.phoneNumberRequired == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "collect_phone_number"
+        }
+    ],
+    "defaultNode": "check_location_screen_required"
+}

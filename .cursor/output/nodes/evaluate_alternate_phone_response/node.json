@@ -1,0 +1,14 @@
+{
+    "id": "evaluate_alternate_phone_response",
+    "name": "Evaluate Alternate Phone Response",
+    "type": "GROOVY",
+    "version": "1",
+    "parameters": [],
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/evaluate_alternate_phone_response.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

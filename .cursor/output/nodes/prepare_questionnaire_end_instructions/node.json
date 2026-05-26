@@ -1,0 +1,14 @@
+{
+    "id": "prepare_questionnaire_end_instructions",
+    "name": "Prepare questionnaire end instructions",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/fake_questionnaire/prepare_questionnaire_end_instructions.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

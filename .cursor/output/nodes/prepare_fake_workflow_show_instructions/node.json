@@ -1,0 +1,14 @@
+{
+    "id": "prepare_fake_workflow_show_instructions",
+    "name": "Prepare fake workflow show instructions",
+    "type": "GROOVY",
+    "parameters": ["dataVariable"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/fake_workflow/prepare_fake_workflow_show_instructions.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

@@ -1,0 +1,49 @@
+{
+    "id": "e2e_fetch_order_details",
+    "name": "E2E Fetch Order Details from Oxford",
+    "type": "HTTP",
+    "parameters": ["dataVariable", "useCase"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('oxford.ch.host') ?: '').toString() + '/oxford/variables/resolved'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['X-CLIENT-USECASE'] = _global?.nodeParameters?.useCase; headers['Content-Type'] = 'application/json'; headers['X-PERF-TEST'] = (_global?.threadContext?.perfFlag ?: 'false').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "def orderId = _global?.orderDetails?.getAt(0)?.orderId?.toString(); return [pivotNameToValueMap: [ORDER: orderId]]"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "targetClientId": "oxford"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "return _response"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

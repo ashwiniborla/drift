@@ -1,0 +1,8 @@
+{
+    "id": "questionnaire_success",
+    "name": "Questionnaire workflow completed successfully",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Questionnaire workflow completed successfully",
+    "executionMode": "SYNC"
+}

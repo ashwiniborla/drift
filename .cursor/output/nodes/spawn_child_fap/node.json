@@ -1,0 +1,10 @@
+{
+    "id": "spawn_child_fap",
+    "name": "Spawn Child: Forward Address Phone Change",
+    "type": "CHILD",
+    "parameters": [],
+    "version": "1",
+    "executionMode": "ASYNC",
+    "childWorkflowId": "forward_address_phone_change",
+    "childWorkflowVersion": "LATEST"
+}

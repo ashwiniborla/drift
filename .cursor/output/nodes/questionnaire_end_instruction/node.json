@@ -1,0 +1,22 @@
+{
+    "id": "questionnaire_end_instruction",
+    "name": "Questionnaire end instruction",
+    "type": "INSTRUCTION",
+    "parameters": ["inputOptions"],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "request_raised_to_delivery_team_end"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "description": "Resolved at runtime from prepare_questionnaire_end_instructions output",
+            "possibleDynamicValues": "nodeParameters.inputOptions"
+        }
+    ]
+}

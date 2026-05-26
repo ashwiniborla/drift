@@ -1,0 +1,48 @@
+{
+    "id": "create_new_address",
+    "name": "User Service: Create New Contact with Updated Phone",
+    "type": "HTTP",
+    "parameters": ["userSvcAuthToken"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "def base = (_enum_store?.clients?.get('user_svc.ch.host') ?: '').toString(); def customerId = _global?.customer?.customerId?.toString(); return base + '/userservice/v5/user/' + customerId + '/contact' "
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['X-Client-ID'] = 'cs'; headers['Content-Type'] = 'application/json'; headers['X-PERF-TEST'] = (_global?.threadContext?.perfFlag ?: 'false').toString(); headers['Authorization'] = 'Bearer ' + (_global?.nodeParameters?.userSvcAuthToken ?: '').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "def queryParams = [:]; queryParams['piiTextType'] = 'PLAINTEXT'; return queryParams"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/build_create_address_body.groovy').text; return evaluate(script)"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/transform_create_address.groovy').text; return evaluate(script)"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

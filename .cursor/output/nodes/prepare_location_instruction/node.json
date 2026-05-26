@@ -1,0 +1,14 @@
+{
+    "id": "prepare_location_instruction",
+    "name": "Prepare Location Instruction",
+    "type": "GROOVY",
+    "parameters": ["dontShowSuccess"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/fetch_location/prepare_location_instruction.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

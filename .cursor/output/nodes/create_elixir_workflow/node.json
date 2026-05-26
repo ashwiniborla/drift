@@ -1,0 +1,57 @@
+{
+  "id": "create_elixir_workflow",
+  "name": "Start Elixir Workflow",
+  "type": "HTTP",
+  "parameters": [
+    "issueId",
+    "elixirEntityReferenceType",
+    "elixirEntityFlow",
+    "elixir_wf_version",
+    "elixirEntityType",
+    "elixir_wf_id",
+    "clientId",
+    "tenantId"
+  ],
+  "version": "1",
+  "httpComponents": {
+    "url": {
+      "value": {
+        "type": "STRING",
+        "data": "return 'http://10.83.75.93:80/v3/workflow/start'"
+      },
+      "type": "SCRIPT"
+    },
+    "headers": {
+      "value": {
+        "type": "STRING",
+        "data": "def headers = [:]\nheaders['Content-Type'] = 'application/json; charset=UTF-8'\nheaders['X_CLIENT_ID'] = _global.nodeParameters?.clientId\nheaders['X_TENANT_ID'] = _global.nodeParameters?.tenantId\nreturn headers"
+      },
+      "type": "SCRIPT"
+    },
+    "queryParams": {
+      "value": {
+        "type": "STRING",
+        "data": "return [:];"
+      },
+      "type": "SCRIPT"
+    },
+    "body": {
+      "value": {
+        "type": "STRING",
+        "data": "def response = _global['check_similarity_and_create']\nif (!response) {\n    throw new Exception('check_similarity_and_create response not found in workflow context.')\n}\n\ndef incidentId\nif (response.isDuplicateIncidentFound) {\n    incidentId = response?.similarityResponse?.duplicate?.externalId\n} else {\n    incidentId = response?.workflowResponse?.workflowEntityId\n}\n\ndef body = [:]\nbody['incidentId'] = incidentId\nbody['issueDetail'] = [:]\nbody['customer'] = ['customerId': _global.customer?.customerId]\nbody['orderDetails'] = _global.orderDetails\n\nbody['params'] = [\n    'issueId'                  : _global.nodeParameters?.issueId,\n    'elixirEntityReferenceType': _global.nodeParameters?.elixirEntityReferenceType,\n    'elixirEntityReferenceId'  : _global.params?.trackingId,\n    'elixirEntityFlow'         : _global.nodeParameters?.elixirEntityFlow,\n    'incidentId'               : incidentId,\n    'version'                  : _global.nodeParameters?.elixir_wf_version,\n    'elixirEntityType'         : _global.nodeParameters?.elixirEntityType,\n    'workflowId'               : _global.nodeParameters?.elixir_wf_id\n]\n\nreturn body"
+      },
+      "type": "SCRIPT"
+    },
+    "method": "POST",
+    "contentType": "application/json"
+  },
+  "transformerComponents": {
+    "transformer": {
+      "value": {
+        "type": "STRING",
+        "data": "return _response"
+      },
+      "type": "SCRIPT"
+    }
+  }
+}

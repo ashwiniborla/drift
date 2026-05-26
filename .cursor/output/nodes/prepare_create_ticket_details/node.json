@@ -1,0 +1,14 @@
+{
+    "id": "prepare_create_ticket_details",
+    "name": "Prepare Create Ticket Details",
+    "type": "GROOVY",
+    "parameters": ["incidentId", "issueId", "elixirEntityReferenceType", "elixirEntityReferenceId", "elixirEntityType", "workflowId"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/prepare_create_ticket_details.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

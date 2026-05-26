@@ -1,0 +1,49 @@
+{
+    "id": "update_incident_v3",
+    "name": "Update incident",
+    "type": "HTTP",
+    "parameters": ["incidentId", "statusWithType", "statusId", "questionnaireData", "threads", "notesText", "elxrTkt", "childWorkflowAction", "childWorkflowMeta", "workflowId", "childWorkflowName", "childWorkflowVersion", "childWorkflowCompleted"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('imsv2.ch.host') ?: '').toString() + '/incidents/v3/' + _global.nodeParameters.incidentId"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['Content-Type'] = 'application/json'; headers['x_perf_test'] = (_global?.global_params?.threadContext?.perfFlag ?: 'false').toString(); headers['x_ims_client_id'] = (_global?.global_params?.threadContext?.clientId ?: '').toString(); headers['x_ims_tenant'] = (_global?.global_params?.threadContext?.tenant ?: '').toString(); headers['x_ims_username'] = (_global?.global_params?.threadContext?.userName ?: '').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "def script = new File('src/main/resources/scripts/generic/build_update_incident_body.groovy').text; evaluate(script);"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json",
+        "targetClientId": "imsv2_varadhi_client1"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "def result = [:]; result['incidentId'] = _response?.externalId; return result"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

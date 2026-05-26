@@ -1,0 +1,11 @@
+{
+    "id": "e2e_scheduler_wait",
+    "name": "E2E Scheduler Wait (3 hours)",
+    "type": "WAIT",
+    "version": "1",
+    "config": {
+        "waitType": "SCHEDULER_WAIT",
+        "duration": 10800,
+        "executionMode": "ASYNC"
+    }
+}

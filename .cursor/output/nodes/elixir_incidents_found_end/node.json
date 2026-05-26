@@ -1,0 +1,8 @@
+{
+    "id": "elixir_incidents_found_end",
+    "name": "Elixir incidents found end",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Elixir ticket already exists for this order. If previous elixir workflow failed then restart it.",
+    "executionMode": "SYNC"
+}

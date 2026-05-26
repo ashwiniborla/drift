@@ -1,0 +1,14 @@
+{
+    "id": "process_fake_workflow_details",
+    "name": "Process Fake Workflow Details",
+    "type": "GROOVY",
+    "parameters": ["issueId", "undeliveredType", ""],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/fake_questionnaire/process_fake_workflow_details.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

@@ -12,6 +12,7 @@ import redis.clients.jedis.JedisSentinelPool;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static com.flipkart.drift.commons.utils.Utility.*;
 
@@ -61,6 +62,53 @@ public class NodeDefinitionService {
             return nodeHB.getNodeData();
         } catch (IOException e) {
             throw new ApiException("Error while fetching node from NodeHB in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    /**
+     * Removes the node definition from HBase: SNAPSHOT, LATEST (if published), and all numbered version rows.
+     * Publishes Redis notifications for each removed row so caches can refresh.
+     */
+    public void deleteNode(String id) {
+        try {
+            String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
+            String latestKey = generateRowKey(id, Version.LATEST);
+
+            NodeHB snapshotHb = nodeDefinitionDao.get(snapshotKey, ConnectionType.HOT);
+            NodeHB latestHb = nodeDefinitionDao.get(latestKey, ConnectionType.HOT);
+
+            if (snapshotHb == null && latestHb == null) {
+                throw new ApiException(Response.Status.BAD_REQUEST, "Node not found");
+            }
+
+            ArrayList<String> keysToDelete = new ArrayList<>();
+
+            if (snapshotHb != null) {
+                keysToDelete.add(snapshotKey);
+            }
+
+            if (latestHb != null) {
+                NodeDefinition latestDef = latestHb.getNodeData();
+                int maxVersion = StringToIntegerVersionParser(latestDef.getVersion());
+                if (maxVersion > 0) {
+                    for (int v = 1; v <= maxVersion; v++) {
+                        keysToDelete.add(generateRowKey(id, v));
+                    }
+                }
+                keysToDelete.add(latestKey);
+            }
+
+            if (!keysToDelete.isEmpty()) {
+                nodeDefinitionDao.delete(keysToDelete, ConnectionType.HOT);
+            }
+
+            for (String key : keysToDelete) {
+                publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, NODE_EVENT_ID + " " + key);
+            }
+        } catch (ApiException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new ApiException("Error while deleting node from HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 

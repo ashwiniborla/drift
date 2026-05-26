@@ -1,0 +1,14 @@
+{
+    "id": "prepare_elixir_action_update",
+    "name": "Prepare elixir action update",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/prepare_elixir_action_update.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

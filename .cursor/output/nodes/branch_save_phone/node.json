@@ -1,0 +1,30 @@
+{
+    "id": "branch_save_phone",
+    "name": "Branch: Should Save Phone?",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.evaluate_alternate_phone_response?.savePhone == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "sub_address_update"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.evaluate_alternate_phone_response?.savePhone == false"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_fap_success_instruction"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

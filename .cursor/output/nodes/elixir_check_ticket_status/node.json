@@ -1,0 +1,30 @@
+{
+    "id": "elixir_check_ticket_status",
+    "name": "Elixir check ticket status",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.get('elixir_waiting_for_response:viewResponse')?.selectedOptions?.status == 'CREATED'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_waiting_for_updates"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.get('elixir_waiting_for_response:viewResponse')?.selectedOptions?.status == 'REJECTED'"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_ticket_rejected_end"
+        }
+    ],
+    "defaultNode": "elixir_waiting_for_updates"
+}

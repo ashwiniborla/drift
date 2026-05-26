@@ -1,0 +1,48 @@
+{
+    "id": "get_current_address",
+    "name": "User Service: Get Current Delivery Address",
+    "type": "HTTP",
+    "parameters": ["userSvcAuthToken"],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "def base = (_enum_store?.clients?.get('user_svc.ch.host') ?: '').toString(); def customerId = _global?.customer?.customerId?.toString(); def addressId = _global?.oxford_unit_details?.deliveryAddressId?.toString(); return base + '/userservice/v5/users/' + customerId + '/contacts/' + addressId"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['Content-Type'] = 'application/json'; headers['X-PERF-TEST'] = (_global?.threadContext?.perfFlag ?: 'false').toString(); headers['Authorization'] = 'Bearer ' + (_global?.nodeParameters?.userSvcAuthToken ?: '').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return ['piiTextType': 'PLAINTEXT']"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "return null"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "GET",
+        "contentType": "application/json"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "return _response"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

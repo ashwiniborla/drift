@@ -1,0 +1,18 @@
+{
+  "id": "forward_address_phone_change_subworkflow_node",
+  "name": "forward_address_phone_change_subworkflow_node",
+  "type": "SUB_WORKFLOW",
+  "version": "1",
+  "subWorkflowId": "forward_address_phone_change",
+  "subWorkflowVersion": "LATEST",
+  "config": {
+    "includeLastNode": true,
+    "includeFirstNode": true,
+    "errorHandlingStrategy": "PROPAGATE"
+  },
+  "effectiveConfig": {
+    "includeLastNode": true,
+    "includeFirstNode": true,
+    "errorHandlingStrategy": "PROPAGATE"
+  }
+}

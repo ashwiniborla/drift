@@ -1,0 +1,48 @@
+{
+    "id": "evaluate_location",
+    "name": "AIS: Evaluate Delivery Location",
+    "type": "HTTP",
+    "parameters": [],
+    "version": "1",
+    "httpComponents": {
+        "url": {
+            "value": {
+                "type": "STRING",
+                "data": "return (_enum_store?.clients?.get('ais.ch.host') ?: '').toString() + '/api/v3/contact/location/evaluate'"
+            },
+            "type": "SCRIPT"
+        },
+        "headers": {
+            "value": {
+                "type": "STRING",
+                "data": "def headers = [:]; headers['Content-Type'] = 'application/json'; headers['X-REQUEST-ID'] = (_global?.workflowId ?: '').toString(); headers['X-PERF-TEST'] = (_global?.threadContext?.perfFlag ?: 'false').toString(); return headers"
+            },
+            "type": "SCRIPT"
+        },
+        "queryParams": {
+            "value": {
+                "type": "STRING",
+                "data": "return [:]"
+            },
+            "type": "SCRIPT"
+        },
+        "body": {
+            "value": {
+                "type": "STRING",
+                "data": "return customEvaluate(new File('src/main/resources/scripts/fetch_location/build_evaluate_location_http_body.groovy').text)"
+            },
+            "type": "SCRIPT"
+        },
+        "method": "POST",
+        "contentType": "application/json"
+    },
+    "transformerComponents": {
+        "transformer": {
+            "value": {
+                "type": "STRING",
+                "data": "return _response"
+            },
+            "type": "SCRIPT"
+        }
+    }
+}

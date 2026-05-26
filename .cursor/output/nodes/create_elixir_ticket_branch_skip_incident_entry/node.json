@@ -1,0 +1,30 @@
+{
+    "id": "create_elixir_ticket_branch_skip_incident_entry",
+    "name": "create_elixir_ticket_branch_skip_incident_entry",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.params?.ignore_incident_update == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_fetch_order_oxford"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.params?.ignore_incident_update != true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "register_elixir_child_workflow"
+        }
+    ],
+    "defaultNode": "register_elixir_child_workflow"
+}

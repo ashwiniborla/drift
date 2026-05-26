@@ -21,7 +21,7 @@ if (!fetchResult) {
     throw new Exception("fetch_order_oxford output not found in workflow context")
 }
 
-def allUnits = fetchResult.units ?: [:]
+def allUnits = fetchResult.allUnitsFlat ?: [:]
 def targetUnitIds = fetchResult.targetUnitIds ?: []
 
 if (targetUnitIds.isEmpty()) {

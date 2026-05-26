@@ -1,0 +1,20 @@
+{
+    "id": "branch_elixir_ticket_communication_update",
+    "name": "branch_elixir_ticket_communication_update",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return java.lang.Boolean.TRUE.equals(_global?.prepare_elixir_ticket_update?.sendElixirCommunicationUpdate)"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "elixir_ticket_communication_update"
+        }
+    ],
+    "defaultNode": "prepare_fap_success_instruction"
+}

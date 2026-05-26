@@ -1,0 +1,70 @@
+{
+  "id": "fap_eligibility_check",
+  "comment": "Shared sub-workflow: Minions eligibility, Chore eligibility, and Chore feasibility checks for forward address phone change. Oxford unit extraction, User Service token, and current address are now a parent responsibility — every parent must run sub_prepare_current_address (or equivalent fap_* states in forward_address_phone_change) before inlining this sub-workflow so _global.oxford_unit_details, _global.get_user_svc_auth_token, and _global.get_current_address are already populated. Ends at fap_eligibility_success (rewired by parent flattener). Failure branches delegate to parent's default_failure.",
+  "startNode": "check_minions_eligibility",
+  "version": "1",
+  "defaultFailureNode": "default_failure",
+  "states": {
+    "check_minions_eligibility": {
+      "instanceName": "check_minions_eligibility",
+      "resourceId": "check_minions_eligibility",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "nextNode": "branch_minions_eligible",
+      "end": false
+    },
+    "branch_minions_eligible": {
+      "instanceName": "branch_minions_eligible",
+      "resourceId": "branch_minions_eligible",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": false
+    },
+    "chore_eligibility": {
+      "instanceName": "chore_eligibility",
+      "resourceId": "chore_eligibility",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "nextNode": "branch_chore_eligible",
+      "end": false
+    },
+    "branch_chore_eligible": {
+      "instanceName": "branch_chore_eligible",
+      "resourceId": "branch_chore_eligible",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": false
+    },
+    "chore_feasibility": {
+      "instanceName": "chore_feasibility",
+      "resourceId": "chore_feasibility",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "fieldsUpdatedV2": "SECONDARY_PHONE_NUMBER"
+      },
+      "nextNode": "fap_eligibility_success",
+      "end": false
+    },
+    "fap_eligibility_success": {
+      "instanceName": "fap_eligibility_success",
+      "resourceId": "fap_eligibility_success",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": true
+    },
+    "default_failure": {
+      "instanceName": "default_failure",
+      "resourceId": "default_failure",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": true
+    }
+  }
+}

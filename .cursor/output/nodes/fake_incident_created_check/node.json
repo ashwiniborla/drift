@@ -1,0 +1,30 @@
+{
+    "id": "fake_incident_created_check",
+    "name": "Fake incident created check",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.fake_check_similarity_and_create_incident?.duplicateIncidentFound == false"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "create_elixir_ticket_child"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.fake_check_similarity_and_create_incident?.duplicateIncidentFound == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fake_client_check"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

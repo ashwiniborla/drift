@@ -1,0 +1,14 @@
+{
+    "id": "sub_forward_address_phone_change",
+    "name": "Sub-workflow: forward_address_phone_change (include last node)",
+    "type": "SUB_WORKFLOW",
+    "parameters": [],
+    "version": "1",
+    "subWorkflowId": "forward_address_phone_change",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": true,
+        "includeLastNode": true,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

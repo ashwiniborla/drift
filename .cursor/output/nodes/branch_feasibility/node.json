@@ -1,0 +1,30 @@
+{
+    "id": "branch_feasibility",
+    "name": "Branch: Is Address Change Feasible?",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.chore_feasibility?.isFeasible == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_alternate_phone_response"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return !_global?.chore_feasibility?.isFeasible"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_fap_success_instruction"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

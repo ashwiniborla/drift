@@ -1,0 +1,1900 @@
+{
+  "workflowWaitingContractSamples": {
+    "description": "Example IMSv3 WAITING view payloads for fake_workflow after prepare_fake_workflow_show_instructions builds widgets from reporting Oxford (values are illustrative).",
+    "fake_workflow_show_instructions": {
+      "incidentId": "IN26022415000880225687",
+      "workflowId": "WF-IN26022415000880225687",
+      "workflowStatus": "WAITING",
+      "view": {
+        "inputOptions": [
+          {
+            "id": "fake_delivery_attempt",
+            "description": "Show static text",
+            "tags": { "values": ["sa.static_text"] },
+            "instructions": [
+              {
+                "templateId": "text_to_display",
+                "templateVariables": {
+                  "title": "Message to customer",
+                  "messageToShow": "Inform instructions to the customer"
+                }
+              },
+              {
+                "templateId": "order_items",
+                "templateVariables": {
+                  "productDetails": [
+                    {
+                      "productImageLink": "https://img.fkcdn.com/image/example.jpeg",
+                      "productTitle": "Example product"
+                    }
+                  ],
+                  "expected_shipping_date": "05 Mar 26, 02:39 PM",
+                  "promise_delivery_date": "05 Mar 26, 11:00 PM",
+                  "status": "approved"
+                }
+              },
+              {
+                "templateId": "text_to_display",
+                "templateVariables": {
+                  "title": "Instructions",
+                  "messageToShow": "Inform customer : delivery / OFD / DE guidance (from prep script static copy)."
+                }
+              }
+            ]
+          },
+          {
+            "id": "fake_delivery_attempt_proceed_button_widget",
+            "description": "Select a button",
+            "tags": { "values": ["sa.button_widget"] },
+            "possibleValues": [{ "displayValue": "Done", "value": "DONE" }]
+          }
+        ],
+        "layoutId": "elixir_fake_attempt"
+      }
+    },
+    "add_notes_instruction": {
+      "incidentId": "IN26030510443947272055",
+      "workflowId": "WF-IN26030510443947272055",
+      "workflowStatus": "WAITING",
+      "view": {
+        "inputOptions": [
+          {
+            "id": "add_notes_static_text",
+            "description": "Show static text",
+            "tags": { "values": ["sa.static_text"] },
+            "instructions": [{ "templateId": "add_notes_template" }]
+          },
+          {
+            "id": "agent_notes",
+            "description": "Agent notes for SA",
+            "tags": { "values": ["sa.free_text"] },
+            "instructions": [{ "templateId": "take_notes_template" }]
+          },
+          {
+            "id": "add_notes_button_widget",
+            "description": "Select a button",
+            "tags": { "values": ["sa.button_widget"] },
+            "possibleValues": [
+              {
+                "displayValue": "Update Incident",
+                "metaData": {},
+                "value": "UPDATE_INCIDENT"
+              }
+            ]
+          }
+        ],
+        "layoutId": "add_notes_instruction"
+      }
+    },
+    "update_incident_notes_binding": "Workflow maps $.add_notes_instruction.agent_notes to update_incident.parameters.notesText"
+  },
+  "resolvedVariablesResponse": {
+    "ORDER": {
+      "pivotMetaData": {
+        "parentPivot": null,
+        "subPivots": []
+      },
+      "pivotIdContextMap": {
+        "OD437086100951637100": {
+          "resolvedVariables": {
+            "v2OrderData_imsv2_varadhi_client1_reporting": {
+              "value": {
+                "shareOrderData": null,
+                "resolvedVariableResponse": null,
+                "message": null,
+                "is_thin_order": null,
+                "aggregated_order": null,
+                "oms3_aggregated_order": {
+                  "scratchCardResponse": null,
+                  "vipBannerResponse": null,
+                  "assignedIncidentResponse": null,
+                  "assignedIncidentResponseV2": null,
+                  "addShareCommunicationResponse": null,
+                  "scheduledCallsByReturnIds": null,
+                  "unitIdToCustomerSelfServeContextMapForWaitingIncidents": null,
+                  "shipmentSurveyLink": null,
+                  "communicationData": null,
+                  "vrpCheckListDetailsNew": null,
+                  "vrpAssessmentDetailsV2": null,
+                  "vrpAssessmentDetailsResponse": null,
+                  "vrpTransactionDetails": null,
+                  "snackbarResponse": null,
+                  "ehcAbResponse": null,
+                  "communicationResponse": null,
+                  "samasyaClientResponseSA": null,
+                  "vasRecommendations": null,
+                  "orderBulkResponse": null,
+                  "notificationResponse": null,
+                  "locationSharingEligibilityResponse": null,
+                  "locationShareEligibilityForAllAddressIds": null,
+                  "addressIdAndAisLocationEvaluateResponse": {},
+                  "rcbpMultiConnectionInformationResponse": null,
+                  "fetchTierResponse": null,
+                  "recoImageUrlResponse": null,
+                  "rcbpTransactionAndBillDetailsResponse": null,
+                  "liveTrackingResponse": null,
+                  "etaTrackingResponse": null,
+                  "orderStatusResponse": null,
+                  "healthcareOrderVerificationHistory": null,
+                  "healthcareOrderVerification": null,
+                  "ffDemeterPlanResponse": null,
+                  "modifySlotFeasibilityResponse": null,
+                  "deliverySlotFeasibilityResponse": null,
+                  "changeAddressEligibilityResponse": null,
+                  "batchGroupedItemsResponse": null,
+                  "agentInfoResponse": null,
+                  "pravegOrderDetailsResponse": null,
+                  "pravegOrderHistoryResponse": null,
+                  "pravegImagesResponse": null,
+                  "shipmentStatusResponse": null,
+                  "agentDetailsResponse": null,
+                  "shipmentDetailsResponse": null,
+                  "etaTrackingResponseV2": null,
+                  "treatsEligibilityPSResponse": null,
+                  "featureStoreResponse": null,
+                  "installationResponse": null,
+                  "expressLaneDataResponse": null,
+                  "repeatOrderDecision": null,
+                  "personalizationDataBag": null,
+                  "codInflightWarningEligibility": false,
+                  "orderDetailsView": {},
+                  "service_unit_activation_details_sa": null,
+                  "oms3_order_data": {
+                    "executionStatus": "SUCCESS",
+                    "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                    "externalId": "OD437086100951637100",
+                    "checkoutId": "OD4370861009516371",
+                    "creationData": {
+                      "fingerPrintId": "db549122-596e-4a68-af29-8bfed7b530db"
+                    },
+                    "status": "CO_APPROVED",
+                    "version": 23,
+                    "tenantId": "FKMP",
+                    "orderDate": 1774005694516,
+                    "terminalId": "1A1D0DA73270495B9C00D5D8558C0910",
+                    "createdAt": 1774005717428,
+                    "billingAmount": 132.0,
+                    "billingAmountMultiCurrency": [
+                      {
+                        "value": 132.0,
+                        "currency": "INR",
+                        "inrValue": 132.0
+                      }
+                    ],
+                    "token": "8186dc603134b75d1711b99ab303933a",
+                    "originalBilingAmount": 132.0,
+                    "originalBillingAmountMultiCurrency": [
+                      {
+                        "value": 132.0,
+                        "currency": "INR",
+                        "inrValue": 132.0
+                      }
+                    ],
+                    "unitGroupings": {},
+                    "giftWrapInfo": {},
+                    "id": "43708610095163700",
+                    "channel": "iOSApp",
+                    "subChannel": "APP",
+                    "abEnabledFeatures": {
+                      "ASYNCFSEEVENTS": true,
+                      "MULTIRETURN": true,
+                      "MULTISELLER": true,
+                      "ASYNCOMSFDPEVENTS": true,
+                      "CHANGEEXPORT": true,
+                      "ENABLEOPTIMISATION": true,
+                      "ENABLERNPS": true,
+                      "ASYNCOMSRESTBUSEVENTS": true,
+                      "TEST": true,
+                      "HYDCHSPLIT": true,
+                      "ENABLEASYNCFLOW": true,
+                      "INLINEAEREJECT": false,
+                      "ASYNCPROTOEVENTS": true,
+                      "ASYNCAPLEVENTS": true,
+                      "SAAL": true,
+                      "ASYNCOMSEVENTS": true
+                    },
+                    "platform": "STANDALONE",
+                    "buyerContextInfo": {
+                      "partnerContext": {},
+                      "bulkContext": {}
+                    },
+                    "transactions": {
+                      "PZT2603201651HV3BS01": {
+                        "id": "PZT2603201651HV3BS01",
+                        "createdAt": 1774005717428,
+                        "flow": "FORWARD",
+                        "amount": {
+                          "value": 132.0,
+                          "currency": "INR",
+                          "inrValue": 132.0
+                        },
+                        "status": "SUCCESSFUL",
+                        "paymentChannel": "DEFAULT",
+                        "paymentInstrument": "UPI",
+                        "paymentMetaData": {
+                          "paymentInstrument": "UPI",
+                          "paymentChannel": "DEFAULT",
+                          "type": "FORWARD"
+                        }
+                      }
+                    },
+                    "units": {
+                      "437086100951637100000": {
+                        "createdAt": 1774005717428,
+                        "status": "UNDELIVERED",
+                        "id": "437086100951637100000",
+                        "offers": [
+                          "nb:mp:022a4f4405"
+                        ],
+                        "type": "physical",
+                        "itemExternalId": "437086100951637100",
+                        "rolledUpStatus": "UNDELIVERED",
+                        "policyData": [
+                          {
+                            "type": "RETURN_POLICY",
+                            "data": [
+                              "no_returns"
+                            ]
+                          }
+                        ],
+                        "policyInfo": {
+                          "returnPolicyInfo": {
+                            "policyId": "no_returns_ehc:cohort1:v1",
+                            "description": "No Returns Allowed",
+                            "returnFeeDecision": "DISABLE"
+                          }
+                        },
+                        "adjustments": [
+                          {
+                            "type": "PROMOTION_DISCOUNT",
+                            "amount": {
+                              "value": -22.0,
+                              "currency": "INR",
+                              "inrValue": -22.0
+                            },
+                            "offerReferenceId": "nb:mp:022a4f4405",
+                            "referenceId": "nb:mp:022a4f4405"
+                          },
+                          {
+                            "type": "CONSTRUCT_FEE",
+                            "amount": {
+                              "value": 7.0,
+                              "currency": "INR",
+                              "inrValue": 7.0
+                            },
+                            "offerReferenceId": "pf:001",
+                            "referenceId": "pf:001"
+                          },
+                          {
+                            "type": "CONSTRUCT_FEE",
+                            "amount": {
+                              "value": 46.0,
+                              "currency": "INR",
+                              "inrValue": 46.0
+                            },
+                            "offerReferenceId": "iks:001",
+                            "referenceId": "iks:001"
+                          },
+                          {
+                            "type": "PROMOTION_DISCOUNT",
+                            "amount": {
+                              "value": 7.0,
+                              "currency": "INR",
+                              "inrValue": 7.0
+                            },
+                            "offerReferenceId": "nb:mp:022a4f4405",
+                            "referenceId": "nb:mp:022a4f4405",
+                            "adjustmentContext": {
+                              "subType": "FEE"
+                            }
+                          },
+                          {
+                            "type": "CONSTRUCT_FEE",
+                            "amount": {
+                              "value": -7.0,
+                              "currency": "INR",
+                              "inrValue": -7.0
+                            },
+                            "offerReferenceId": "pf:001",
+                            "referenceId": "pf:001",
+                            "adjustmentContext": {
+                              "subType": "FEE"
+                            }
+                          }
+                        ],
+                        "chores": [
+                          {
+                            "changeRequestId": "CU203708617540253758",
+                            "choreType": "ADDRESS_CHANGE",
+                            "status": "COMPLETED",
+                            "meta": {
+                              "type": "ADDRESS_CHANGE",
+                              "deliveryAddressId": "CNTCTF41909724DA54CE5A95B31CDC",
+                              "oldDeliveryAddressId": "CNTCT3E0060DDBF61483192B8899A8",
+                              "fieldsUpdated": "TEXT",
+                              "type": "ADDRESS_CHANGE"
+                            },
+                            "createdAt": 1774006483631,
+                            "updatedAt": 1774006488768
+                          },
+                          {
+                            "changeRequestId": "CU103717400675626457",
+                            "choreType": "RETURN",
+                            "status": "ACTIVE",
+                            "meta": {
+                              "type": "RETURN",
+                              "returnId": "1093904410107105294770176",
+                              "reason": "Shipment_EOB_Ageing",
+                              "subReason": "Shipment_EOB_Ageing",
+                              "comments": "",
+                              "returnType": "COURIER_RETURN",
+                              "action": "wait_reship",
+                              "customerWillShip": false,
+                              "channel": "TERMINATOR",
+                              "userLogin": "TERMINATOR",
+                              "associatedUnits": [
+                                "437086100951637100001"
+                              ],
+                              "amount": 132.0,
+                              "amountWithCurrency": [
+                                {
+                                  "value": 132.0,
+                                  "currency": "INR",
+                                  "inrValue": 132.0
+                                }
+                              ],
+                              "refundAmount": [
+                                {
+                                  "value": 132.0,
+                                  "currency": "INR",
+                                  "inrValue": 132.0
+                                }
+                              ],
+                              "refundMode": "back_to_source",
+                              "refundTat": 144,
+                              "derivedReturnStatus": "INIT",
+                              "inducedBy": "FLIPKART",
+                              "policyViolationMeta": {},
+                              "type": "RETURN"
+                            },
+                            "createdAt": 1774884753613,
+                            "updatedAt": 1774884756461,
+                            "changeActions": [
+                              {
+                                "actionType": "APPROVE",
+                                "eligibility": false,
+                                "reason": "NOT_A_CUSTOMER_RETURN"
+                              },
+                              {
+                                "actionType": "OVERRIDE",
+                                "eligibility": false,
+                                "reason": "CANNOT_CHANGE_BEFORE_PROMISE_DATE"
+                              },
+                              {
+                                "actionType": "REJECT",
+                                "eligibility": false,
+                                "reason": "INVALID_RETURN_STATUS"
+                              },
+                              {
+                                "actionType": "CANCEL",
+                                "eligibility": false,
+                                "reason": "INVALID_RETURN_TYPE"
+                              },
+                              {
+                                "actionType": "DELIVERY_CONFIRMATION",
+                                "eligibility": false,
+                                "reason": "NOT_A_CUSTOMER_RETURN"
+                              }
+                            ],
+                            "changeRequests": []
+                          },
+                          {
+                            "changeRequestId": "CU103717400724285204",
+                            "choreType": "PROCESS_REPLACEMENT",
+                            "status": "COMPLETED",
+                            "meta": {
+                              "type": "PROCESS_REPLACEMENT",
+                              "associatedUnits": [
+                                "437086100951637101000"
+                              ],
+                              "type": "PROCESS_REPLACEMENT"
+                            },
+                            "createdAt": 1774884757653,
+                            "updatedAt": 1774884757651
+                          }
+                        ],
+                        "statusHistories": [
+                          {
+                            "timestamp": 1774005752804,
+                            "status": "APPROVED",
+                            "createdBy": "ae-event"
+                          },
+                          {
+                            "timestamp": 1774016069000,
+                            "status": "READY_TO_SHIP",
+                            "createdBy": "ORDER_ITEM_UNIT_READY_TO_SHIP"
+                          },
+                          {
+                            "timestamp": 1774016070000,
+                            "status": "DISPATCHED",
+                            "createdBy": "ORDER_ITEM_UNIT_DISPATCHED"
+                          },
+                          {
+                            "timestamp": 1774017792000,
+                            "status": "SHIPPED",
+                            "createdBy": "ORDER_ITEM_UNIT_SHIPPED"
+                          },
+                          {
+                            "timestamp": 1774884756461,
+                            "status": "UNDELIVERED",
+                            "createdBy": "ORDER_ITEM_UNIT_UNDELIVERED",
+                            "reason": "Shipment_EOB_Ageing"
+                          }
+                        ],
+                        "postFulfillmentData": {
+                          "shipmentId": "S989713162963",
+                          "trackingId": "FMPP3852818416",
+                          "courierName": "flipkartlogistics",
+                          "location": "malur_bts",
+                          "fulfilledBy": "FKL"
+                        },
+                        "promiseDataBag": {
+                          "promiseType": "UN_SLOTTED",
+                          "fulfillmentSpeed": "\"PREMIUM\"",
+                          "fulfillmentHasSlots": "false",
+                          "fulfillmentPromised": "true",
+                          "omsPromisData": "{\"from\":1,\"to\":1,\"speed\":\"PREMIUM\",\"holidays\":{}}",
+                          "pickupPromiseDate": 0,
+                          "promisedDateFrom": 1774114200000,
+                          "promisedDateTo": 1774114200000,
+                          "updatedPromisedDateFrom": 0,
+                          "updatedPromisedDateTo": 1774157400000,
+                          "slaMessageType": "TIME",
+                          "promiseRefId": "hyd$FLIPKARTOD4370861009516371-RX-00$7425dc89de67872cd5ba7829b1a7cfa4",
+                          "promiseRefVersion": "0",
+                          "promiseChangeReason": "{\"reason\":\"FlipkartTriggered\",\"subreason\":\"confidence_event_orchestration\"}",
+                          "sla": 1
+                        },
+                        "unitChangeActions": [
+                          {
+                            "actionType": "CANCEL",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "CHANGE_SLOT",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "CHANGE_ADDRESS",
+                            "eligibility": false,
+                            "reason": "PICK_LIST_CREATED"
+                          },
+                          {
+                            "actionType": "POST_DISPATCH_CHANGE_ADDRESS",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "CHANGE_PAYMENT",
+                            "eligibility": false,
+                            "reason": "PREPAID_ORDER"
+                          },
+                          {
+                            "actionType": "RETURN",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "RE_OPEN_RETURN",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "CHANGE_DELIVERY_SLOT",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "PAYMENT_CONFIRMATION_LOCKIN",
+                            "eligibility": false,
+                            "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+                          },
+                          {
+                            "actionType": "PAYMENT_CONFIRMATION_NON_LOCKIN",
+                            "eligibility": false,
+                            "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+                          },
+                          {
+                            "actionType": "FEE_WAIVER",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          },
+                          {
+                            "actionType": "PRICE_MATCH",
+                            "eligibility": false,
+                            "reason": "UNIT_STATUS_INVALID"
+                          }
+                        ],
+                        "isPrexo": false,
+                        "paymentCategoryInfo": {
+                          "POSTPAID": {
+                            "amounts": [],
+                            "transactionIds": []
+                          },
+                          "PREPAID": {
+                            "amounts": [
+                              {
+                                "value": 132.0,
+                                "currency": "INR",
+                                "inrValue": 132.0
+                              }
+                            ],
+                            "transactionIds": [
+                              "PZT2603201651HV3BS01"
+                            ]
+                          }
+                        },
+                        "unitType": "OrderItemUnit",
+                        "flow": "FORWARD",
+                        "toParty": {
+                          "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                          "deliveryAddressId": "CNTCTF41909724DA54CE5A95B31CDC",
+                          "billingAddressId": "CNTCT3E0060DDBF61483192B8899A8",
+                          "deliveryMode": "NORMAL"
+                        },
+                        "fromParty": {
+                          "accountId": "f4601cc353fd4883"
+                        },
+                        "productData": {
+                          "sellerId": "f4601cc353fd4883",
+                          "title": "WolTop 301 cm x 39 cm Waterproof Art & Paintings Vinyl Wallpaper",
+                          "listingId": "LSTSTIFF8YZZTUFZUDYBWACFH",
+                          "productId": "STIFF8YZZTUFZUDY",
+                          "categoryId": "44273",
+                          "listingType": "current",
+                          "serviceProfile": "FBF",
+                          "mrp": {
+                            "value": 1299.0,
+                            "currency": "INR",
+                            "inrValue": 1299.0
+                          },
+                          "listPrice": {
+                            "value": 101.0,
+                            "currency": "INR",
+                            "inrValue": 101.0
+                          },
+                          "listPriceMultiCurrency": [
+                            {
+                              "value": 101.0,
+                              "currency": "INR",
+                              "inrValue": 101.0
+                            }
+                          ],
+                          "anchorPrice": {
+                            "value": 219.0,
+                            "currency": "INR"
+                          },
+                          "marketPlace": "FLIPKART",
+                          "paymentFlowIdentifier": "FORWARD",
+                          "itemDataType": "oiuZuluData",
+                          "paymentCollectionStatus": "COMPLETED"
+                        },
+                        "childUnits": {
+                          "437086100951637101000": {
+                            "createdAt": 1774884757651,
+                            "status": "DELIVERED",
+                            "id": "437086100951637101000",
+                            "holdSubReason": "Shipment_EOB_Ageing",
+                            "offers": [
+                              "nb:mp:022a4f4405"
+                            ],
+                            "type": "physical",
+                            "itemExternalId": "437086100951637101",
+                            "unitSubType": "RESHIP",
+                            "rolledUpStatus": "DELIVERED",
+                            "policyData": [
+                              {
+                                "type": "RETURN_POLICY",
+                                "data": [
+                                  "no_returns"
+                                ]
+                              }
+                            ],
+                            "policyInfo": {
+                              "returnPolicyInfo": {
+                                "policyId": "no_returns_ehc:cohort1:v1",
+                                "description": "No Returns Allowed",
+                                "returnFeeDecision": "DISABLE"
+                              }
+                            },
+                            "adjustments": [
+                              {
+                                "type": "PROMOTION_DISCOUNT",
+                                "amount": {
+                                  "value": -22.0,
+                                  "currency": "INR",
+                                  "inrValue": -22.0
+                                },
+                                "offerReferenceId": "nb:mp:022a4f4405",
+                                "referenceId": "nb:mp:022a4f4405"
+                              },
+                              {
+                                "type": "CONSTRUCT_FEE",
+                                "amount": {
+                                  "value": 7.0,
+                                  "currency": "INR",
+                                  "inrValue": 7.0
+                                },
+                                "offerReferenceId": "pf:001",
+                                "referenceId": "pf:001"
+                              },
+                              {
+                                "type": "CONSTRUCT_FEE",
+                                "amount": {
+                                  "value": 46.0,
+                                  "currency": "INR",
+                                  "inrValue": 46.0
+                                },
+                                "offerReferenceId": "iks:001",
+                                "referenceId": "iks:001"
+                              },
+                              {
+                                "type": "PROMOTION_DISCOUNT",
+                                "amount": {
+                                  "value": 7.0,
+                                  "currency": "INR",
+                                  "inrValue": 7.0
+                                },
+                                "offerReferenceId": "nb:mp:022a4f4405",
+                                "referenceId": "nb:mp:022a4f4405",
+                                "adjustmentContext": {
+                                  "subType": "FEE"
+                                }
+                              },
+                              {
+                                "type": "CONSTRUCT_FEE",
+                                "amount": {
+                                  "value": -7.0,
+                                  "currency": "INR",
+                                  "inrValue": -7.0
+                                },
+                                "offerReferenceId": "pf:001",
+                                "referenceId": "pf:001",
+                                "adjustmentContext": {
+                                  "subType": "FEE"
+                                }
+                              }
+                            ],
+                            "chores": [],
+                            "statusHistories": [
+                              {
+                                "timestamp": 1774884757634,
+                                "status": "APPROVAL_HOLD",
+                                "createdBy": "System",
+                                "reason": "Shipment_EOB_Ageing",
+                                "subReason": "Shipment_EOB_Ageing",
+                                "comments": "reship created by chore orchestrator"
+                              },
+                              {
+                                "timestamp": 1774884780684,
+                                "status": "APPROVED",
+                                "createdBy": "ae-event",
+                                "reason": "reship_order",
+                                "subReason": "reship_prepaid"
+                              },
+                              {
+                                "timestamp": 1774891040000,
+                                "status": "READY_TO_SHIP",
+                                "createdBy": "ORDER_ITEM_UNIT_READY_TO_SHIP"
+                              },
+                              {
+                                "timestamp": 1774891041000,
+                                "status": "DISPATCHED",
+                                "createdBy": "ORDER_ITEM_UNIT_DISPATCHED"
+                              },
+                              {
+                                "timestamp": 1774892146000,
+                                "status": "SHIPPED",
+                                "createdBy": "ORDER_ITEM_UNIT_SHIPPED"
+                              },
+                              {
+                                "timestamp": 1774926228000,
+                                "status": "OUT_FOR_DELIVERY",
+                                "createdBy": "OUT_FOR_DELIVERY"
+                              },
+                              {
+                                "timestamp": 1774940623000,
+                                "status": "DELIVERED",
+                                "createdBy": "ORDER_ITEM_UNIT_DELIVERED"
+                              }
+                            ],
+                            "postFulfillmentData": {
+                              "shipmentId": "S989783032003",
+                              "trackingId": "FMPP3876831695",
+                              "courierName": "flipkartlogistics",
+                              "location": "malur_bts",
+                              "fulfilledBy": "FKL"
+                            },
+                            "promiseDataBag": {
+                              "promiseType": "UN_SLOTTED",
+                              "fulfillmentPromised": "false",
+                              "pickupPromiseDate": 0,
+                              "promisedDateFrom": 1775068199000,
+                              "promisedDateTo": 1775068199000,
+                              "updatedPromisedDateFrom": 0,
+                              "updatedPromisedDateTo": 0,
+                              "promiseRefId": "calvin$FLIPKARTOD4370861009516371-RX-00$f5165443917dbf8d4c4c0b5d807229f6",
+                              "promiseRefVersion": "0",
+                              "sla": 0
+                            },
+                            "unitChangeActions": [
+                              {
+                                "actionType": "CANCEL",
+                                "eligibility": false,
+                                "reason": "UNIT_STATUS_INVALID"
+                              },
+                              {
+                                "actionType": "CHANGE_SLOT",
+                                "eligibility": false,
+                                "reason": "UNIT_STATUS_INVALID"
+                              },
+                              {
+                                "actionType": "CHANGE_ADDRESS",
+                                "eligibility": false,
+                                "reason": "PICK_LIST_CREATED"
+                              },
+                              {
+                                "actionType": "POST_DISPATCH_CHANGE_ADDRESS",
+                                "eligibility": false,
+                                "reason": "UNIT_STATUS_INVALID"
+                              },
+                              {
+                                "actionType": "CHANGE_PAYMENT",
+                                "eligibility": false,
+                                "reason": "PREPAID_ORDER"
+                              },
+                              {
+                                "actionType": "RETURN",
+                                "eligibility": true,
+                                "reason": "VALID_PARAM_PASSED"
+                              },
+                              {
+                                "actionType": "RE_OPEN_RETURN",
+                                "eligibility": true,
+                                "reason": "VALID_PARAM_PASSED"
+                              },
+                              {
+                                "actionType": "CHANGE_DELIVERY_SLOT",
+                                "eligibility": false,
+                                "reason": "UNIT_STATUS_INVALID"
+                              },
+                              {
+                                "actionType": "PAYMENT_CONFIRMATION_LOCKIN",
+                                "eligibility": false,
+                                "reason": "INVALID_UNIT_TYPE"
+                              },
+                              {
+                                "actionType": "PAYMENT_CONFIRMATION_NON_LOCKIN",
+                                "eligibility": false,
+                                "reason": "INVALID_UNIT_TYPE"
+                              },
+                              {
+                                "actionType": "FEE_WAIVER",
+                                "eligibility": false,
+                                "reason": "UNIT_STATUS_INVALID"
+                              },
+                              {
+                                "actionType": "PRICE_MATCH",
+                                "eligibility": true,
+                                "reason": "VALID_PARAM_PASSED"
+                              }
+                            ],
+                            "isPrexo": false,
+                            "paymentCategoryInfo": {
+                              "POSTPAID": {
+                                "amounts": [],
+                                "transactionIds": []
+                              },
+                              "PREPAID": {
+                                "amounts": [
+                                  {
+                                    "value": 132.0,
+                                    "currency": "INR",
+                                    "inrValue": 132.0
+                                  }
+                                ],
+                                "transactionIds": [
+                                  "PZT2603201651HV3BS01"
+                                ]
+                              }
+                            },
+                            "unitType": "OrderItemUnit",
+                            "flow": "FORWARD",
+                            "toParty": {
+                              "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                              "deliveryAddressId": "CNTCTF41909724DA54CE5A95B31CDC",
+                              "billingAddressId": "CNTCT3E0060DDBF61483192B8899A8",
+                              "deliveryMode": "NORMAL"
+                            },
+                            "fromParty": {
+                              "accountId": "f4601cc353fd4883"
+                            },
+                            "productData": {
+                              "sellerId": "f4601cc353fd4883",
+                              "title": "WolTop 301 cm x 39 cm Waterproof Art & Paintings Vinyl Wallpaper",
+                              "listingId": "LSTSTIFF8YZZTUFZUDYBWACFH",
+                              "productId": "STIFF8YZZTUFZUDY",
+                              "categoryId": "44273",
+                              "listingType": "current",
+                              "serviceProfile": "FBF",
+                              "mrp": {
+                                "value": 1299.0,
+                                "currency": "INR",
+                                "inrValue": 1299.0
+                              },
+                              "listPrice": {
+                                "value": 101.0,
+                                "currency": "INR",
+                                "inrValue": 101.0
+                              },
+                              "listPriceMultiCurrency": [
+                                {
+                                  "value": 101.0,
+                                  "currency": "INR",
+                                  "inrValue": 101.0
+                                }
+                              ],
+                              "anchorPrice": {
+                                "value": 219.0,
+                                "currency": "INR"
+                              },
+                              "marketPlace": "FLIPKART",
+                              "paymentFlowIdentifier": "FORWARD",
+                              "itemDataType": "oiuZuluData",
+                              "paymentCollectionStatus": "COMPLETED"
+                            },
+                            "childUnits": {}
+                          },
+                          "437086100951637100001": {
+                            "createdAt": 1774884753611,
+                            "status": "PICKED",
+                            "id": "437086100951637100001",
+                            "offers": [],
+                            "type": "physical",
+                            "itemExternalId": "437086100951637100",
+                            "unitSubType": "PICKUP",
+                            "rolledUpStatus": "PICKED",
+                            "adjustments": [],
+                            "chores": [],
+                            "statusHistories": [
+                              {
+                                "timestamp": 1774884753606,
+                                "status": "APPROVED",
+                                "createdBy": "TERMINATOR",
+                                "reason": "Shipment_EOB_Ageing",
+                                "subReason": "Shipment_EOB_Ageing"
+                              },
+                              {
+                                "timestamp": 1774884754000,
+                                "status": "PICKED",
+                                "createdBy": "ORDER_ITEM_UNIT_PICKED",
+                                "reason": "Shipment_EOB_Ageing",
+                                "subReason": "Shipment_EOB_Ageing",
+                                "comments": ""
+                              }
+                            ],
+                            "postFulfillmentData": {
+                              "shipmentId": "S989713162963",
+                              "trackingId": "FMPP3852818416",
+                              "courierName": "flipkartlogistics"
+                            },
+                            "promiseDataBag": {
+                              "pickupPromiseDate": 0,
+                              "promisedDateFrom": 0,
+                              "promisedDateTo": 0,
+                              "updatedPromisedDateFrom": 0,
+                              "updatedPromisedDateTo": 0,
+                              "sla": 0
+                            },
+                            "isPrexo": false,
+                            "paymentCategoryInfo": {},
+                            "unitType": "OrderItemUnit",
+                            "flow": "RETURN",
+                            "toParty": {
+                              "accountId": "f4601cc353fd4883",
+                              "deliveryAddressId": "malur_bts"
+                            },
+                            "fromParty": {
+                              "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                              "deliveryAddressId": "CNTCTF41909724DA54CE5A95B31CDC",
+                              "billingAddressId": "CNTCT3E0060DDBF61483192B8899A8",
+                              "deliveryMode": "NORMAL"
+                            },
+                            "productData": {
+                              "sellerId": "f4601cc353fd4883",
+                              "title": "WolTop 301 cm x 39 cm Waterproof Art & Paintings Vinyl Wallpaper",
+                              "listingId": "LSTSTIFF8YZZTUFZUDYBWACFH",
+                              "productId": "STIFF8YZZTUFZUDY",
+                              "categoryId": "44273",
+                              "listingType": "current",
+                              "serviceProfile": "FBF",
+                              "mrp": {
+                                "value": 1299.0,
+                                "currency": "INR",
+                                "inrValue": 1299.0
+                              },
+                              "listPrice": {
+                                "value": 101.0,
+                                "currency": "INR",
+                                "inrValue": 101.0
+                              },
+                              "listPriceMultiCurrency": [
+                                {
+                                  "value": 101.0,
+                                  "currency": "INR",
+                                  "inrValue": 101.0
+                                }
+                              ],
+                              "anchorPrice": {
+                                "value": 219.0,
+                                "currency": "INR"
+                              },
+                              "marketPlace": "FLIPKART",
+                              "paymentFlowIdentifier": "FORWARD",
+                              "itemDataType": "oiuZuluData",
+                              "paymentCollectionStatus": "COMPLETED"
+                            },
+                            "childUnits": {}
+                          }
+                        }
+                      }
+                    },
+                    "transactionMappings": {
+                      "TXMP43708610095163700000": {
+                        "unitIds": [
+                          "437086100951637100000"
+                        ],
+                        "paymentIds": [
+                          "PZT2603201651HV3BS01"
+                        ],
+                        "amount": 132.0,
+                        "amountMultiCurrency": {
+                          "value": 132.0,
+                          "currency": "INR",
+                          "inrValue": 132.0
+                        }
+                      }
+                    }
+                  },
+                  "snapshot_data": null,
+                  "orderStarInfo": null,
+                  "smartPackResponse": null,
+                  "lockinUserState": null,
+                  "lockinWalletSummary": null,
+                  "superCoinWalletSummary": null,
+                  "seller_list": [
+                    {
+                      "profile": {
+                        "email_id": "vinakadecor@gmail.com",
+                        "mobile_number": "+919510088388",
+                        "business_name": "VINAKA DECOR",
+                        "display_name": "VinakaDecor",
+                        "description": "One of the LARGEST IMPORTER AND Distributor of Wallpapers &#x3b;We Have Widest Range of Wallpapers To Decorate Your House.",
+                        "seller_name": "VINEET JAIPRAKASH MUTHA",
+                        "city": "SURAT",
+                        "pincode": 394101,
+                        "state": "ACTIVE"
+                      },
+                      "contacts": [
+                        {
+                          "name": "VINEET JAIPRAKASH MUTHA",
+                          "mobile_number": "+919510088388",
+                          "email_id": "vinakadecor@gmail.com",
+                          "type": "1"
+                        }
+                      ],
+                      "addresses": [
+                        {
+                          "type": "invoice",
+                          "address": {
+                            "address_line1": "7TH FLOOR,7ES6D FLY desk, Cubic no WB25,",
+                            "address_line2": "Mani Casadona, East Block, Premises no 24 0372,",
+                            "city": "KOLKATA",
+                            "state": "WEST BENGAL",
+                            "pincode": "700156",
+                            "landmark": null,
+                            "country": "INDIA"
+                          }
+                        },
+                        {
+                          "type": "invoice",
+                          "address": {
+                            "address_line1": "IT-BT OFFICE BUILDING, KHATA NO 337/203/1/5",
+                            "address_line2": "VASWANI AUGUSTA LANE, EMBASSY GOLF LINK ROAD, Domlur,",
+                            "city": "BANGALORE",
+                            "state": "KARNATAKA",
+                            "pincode": "560071",
+                            "landmark": "",
+                            "country": "INDIA"
+                          }
+                        },
+                        {
+                          "type": "invoice",
+                          "address": {
+                            "address_line1": "FIRST FLOOR, UNIT NO-124, PARAS TRADE CENTER",
+                            "address_line2": "SECTOR 63, GWAL PAHARI",
+                            "city": "GURGAON",
+                            "state": "HARYANA",
+                            "pincode": "122003",
+                            "landmark": "",
+                            "country": "INDIA"
+                          }
+                        },
+                        {
+                          "type": "invoice",
+                          "address": {
+                            "address_line1": "Office No. R-4/3051, Flat No. A/03,Booth No. 1539,, Near Balaji Mandir, ",
+                            "address_line2": "Tirupati Vihar , C.T.S. Number -7621, Papvinash Road,,nagarapalika hadaditil kshetr, Latur",
+                            "city": "LATUR",
+                            "state": "MAHARASHTRA",
+                            "pincode": "413512",
+                            "landmark": "",
+                            "country": "INDIA"
+                          }
+                        },
+                        {
+                          "type": "invoice",
+                          "address": {
+                            "address_line1": "603-603A, 6TH FLOOR,DR INDIA TEXTILE HUB",
+                            "address_line2": "NR.MAHAVEER MOBILE CIRCLE, PARVAT PATIYA",
+                            "city": "SURAT",
+                            "state": "GUJARAT",
+                            "pincode": "395010",
+                            "landmark": "",
+                            "country": "INDIA"
+                          }
+                        },
+                        {
+                          "type": "pickup",
+                          "address": {
+                            "address_line1": "223, 2nd Floor, Raghuvir Scarlett, Nr. DMD Logistic Park",
+                            "address_line2": "Landmark: Saroli District: Surat State: Gujarat",
+                            "city": "SURAT",
+                            "state": "GUJARAT",
+                            "pincode": "394101",
+                            "landmark": "",
+                            "country": "INDIA"
+                          }
+                        }
+                      ],
+                      "warehouses": [
+                        {
+                          "id": "ahm_khe_wh_nl_01nl",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "bhi_vas_wh_nl_01nl",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "gur_san_wh_nl_01nl",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "malur_bts",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "nad_har_wh_kl_nl_01nl",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        },
+                        {
+                          "id": "ulub_bts",
+                          "warehouse_details": {
+                            "roles": [
+                              "inwarding"
+                            ]
+                          }
+                        }
+                      ],
+                      "bank": null,
+                      "metadata": {
+                        "instance_list": [
+                          {
+                            "key": "ALPHA_SELLER",
+                            "value": "false"
+                          }
+                        ]
+                      },
+                      "seller_id": "f4601cc353fd4883",
+                      "state_details": {
+                        "state": "ACTIVE",
+                        "reason_codes": []
+                      }
+                    }
+                  ],
+                  "address_data": [
+                    {
+                      "phone": "8475825031",
+                      "state": "Karnataka",
+                      "version": null,
+                      "city": "BANGALORE",
+                      "country": "India",
+                      "id": "CNTCTF41909724DA54CE5A95B31CDC",
+                      "pincode": "560103",
+                      "landmark": "",
+                      "active": "",
+                      "guest": "",
+                      "nickname": "",
+                      "notes": [],
+                      "status": "",
+                      "preferences": {
+                        "usedCount": "",
+                        "lastUsedTime": ""
+                      },
+                      "digitalAddress": false,
+                      "pickUpAddress": false,
+                      "state_code": "IN-KA",
+                      "account_id": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                      "creation_date": "2026-03-20T17:04:43.000+0530",
+                      "first_name": "Milasha",
+                      "last_modified": "2026-03-20T17:04:43.000+0530",
+                      "address_line1": "B7",
+                      "address_line2": "Embassy TechVillage, Devarabisanahalli, Kadubeesanahalli",
+                      "last_name": "",
+                      "creating_system": "",
+                      "location_type": "Home",
+                      "alt_phone": "",
+                      "normalized_address_ref_id": "",
+                      "isPickupAddress": false,
+                      "pickup_address_id": "",
+                      "isDigitalAddress": false,
+                      "handle": "",
+                      "handle_type": "",
+                      "digital_address_id": ""
+                    },
+                    {
+                      "phone": "8475825031",
+                      "state": "Karnataka",
+                      "version": null,
+                      "city": "Bengaluru",
+                      "country": "IN",
+                      "id": "CNTCT3E0060DDBF61483192B8899A8",
+                      "pincode": "560103",
+                      "landmark": "",
+                      "active": "",
+                      "guest": "",
+                      "nickname": "",
+                      "notes": [],
+                      "status": "",
+                      "preferences": {
+                        "usedCount": "4",
+                        "lastUsedTime": "1675013401"
+                      },
+                      "digitalAddress": false,
+                      "pickUpAddress": false,
+                      "state_code": "IN-KA",
+                      "account_id": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                      "creation_date": "2022-07-30T18:49:56.000+0530",
+                      "first_name": "Milasha Puspwan",
+                      "last_modified": "2023-01-29T23:00:01.000+0530",
+                      "address_line1": "Flat 414, G3 Block, Chaurasia Manor, Phase 2",
+                      "address_line2": "Kverrapa Layout, Panathur Road",
+                      "last_name": "",
+                      "creating_system": "",
+                      "location_type": "Home",
+                      "alt_phone": "",
+                      "normalized_address_ref_id": "",
+                      "isPickupAddress": false,
+                      "pickup_address_id": "",
+                      "isDigitalAddress": false,
+                      "handle": "",
+                      "handle_type": "",
+                      "digital_address_id": ""
+                    }
+                  ],
+                  "returns": null,
+                  "vas_data": null,
+                  "delivery_confirmation_list": null,
+                  "shipment_executive_data": null,
+                  "ekl_bridge_data": null,
+                  "planned_dates_data": null,
+                  "santa_offers": null,
+                  "payment_data": [
+                    {
+                      "reason": null,
+                      "status": "SUCCESSFUL",
+                      "installments": null,
+                      "comments": null,
+                      "payment_gateway_preference_id": null,
+                      "fraud_level": null,
+                      "payment_gateway": null,
+                      "flipkart_ref_id": null,
+                      "promised_amount": null,
+                      "fraud_score": null,
+                      "fraud_desc": null,
+                      "payment_gateway_info": null,
+                      "return_id": null,
+                      "party_id_to": null,
+                      "auth_code": null,
+                      "created_at": "2026-03-20T16:51:57.428+05:30",
+                      "party_id_from": null,
+                      "payment_gateway_detail": null,
+                      "paid_amount": "132.0",
+                      "payment_gateway_error_code": null,
+                      "merchant_terminal_id": null,
+                      "external_id": null,
+                      "payment_date": null,
+                      "user_login": null,
+                      "consumed_amount": null,
+                      "payment_channel": null,
+                      "payment_terminal": null,
+                      "updated_at": null,
+                      "payment_ref_num": null,
+                      "payment_method": "UPI",
+                      "payment_type": null,
+                      "mode": "UPI",
+                      "transaction_id": "PZT2603201651HV3BS01",
+                      "payment_instrument": "UPI",
+                      "fkpg_payment": null
+                    }
+                  ],
+                  "ubona_callbacks": null,
+                  "refunds_data": null,
+                  "refunds_data_new": null,
+                  "actions": null,
+                  "issuesFromIssueDiscovery": null,
+                  "actionsFromIssueDiscovery": null,
+                  "validIssuesFromIssueDiscovery": null,
+                  "shipment_data": {
+                    "FMPP3852818416": {
+                      "weight": "0.205",
+                      "delivered": "false",
+                      "receiver": null,
+                      "vendor": "Ekart Logistics",
+                      "customer": null,
+                      "sender": {
+                        "phone": "8475825031",
+                        "email": "milasha_d19@iift.edu",
+                        "name": "Milasha ",
+                        "state": "Karnataka",
+                        "address1": "B7",
+                        "address2": "Embassy TechVillage, Devarabisanahalli, Kadubeesanahalli",
+                        "city": "BANGALORE",
+                        "pincode": "560103"
+                      },
+                      "history": [
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-21T07:10:08+0530",
+                          "city": "BANGALORE",
+                          "remarks": "Received at BellandurHub_BLR",
+                          "cs_notes": "Delivery_Date_Added:01-04-2026",
+                          "event_date": "2026-03-21T07:10:08.000+05:30",
+                          "hub_notes": "Delivery_Date_Added"
+                        },
+                        {
+                          "publicDescription": "Your item has left a Flipkart Facility",
+                          "description": null,
+                          "status": "Expected",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-21T05:00:49+0530",
+                          "city": "BENGALURU",
+                          "remarks": "Dispatched to BellandurHub_BLR",
+                          "cs_notes": "Delivery_Date_Added:24-03-2026",
+                          "event_date": "2026-03-21T05:00:49.000+05:30",
+                          "hub_notes": "Delivery_Date_Added"
+                        },
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "MotherHub_BLR",
+                          "updatedDatetime": "2026-03-21T01:54:39+0530",
+                          "city": "BENGALURU",
+                          "remarks": "Received at MotherHub_BLR",
+                          "cs_notes": "Delivery_Date_Added:24-03-2026",
+                          "event_date": "2026-03-21T01:54:39.000+05:30",
+                          "hub_notes": "Delivery_Date_Added"
+                        },
+                        {
+                          "publicDescription": "Your item has left a Flipkart Facility",
+                          "description": null,
+                          "status": "Expected",
+                          "hubName": "MotherHub_BLR",
+                          "updatedDatetime": "2026-03-20T23:59:48+0530",
+                          "city": "MALUR",
+                          "remarks": "Dispatched to MotherHub_BLR",
+                          "cs_notes": "Delivery_Date_Added:24-03-2026",
+                          "event_date": "2026-03-20T23:59:48.000+05:30",
+                          "hub_notes": "Delivery_Date_Added"
+                        },
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "Motherhub_MAL",
+                          "updatedDatetime": "2026-03-20T20:06:12+0530",
+                          "city": "MALUR",
+                          "remarks": "Received at Motherhub_MAL",
+                          "cs_notes": "",
+                          "event_date": "2026-03-20T20:06:12.000+05:30",
+                          "hub_notes": ""
+                        }
+                      ],
+                      "items": [
+                        {
+                          "itemDescription": "WolTop, 613J96, Brown",
+                          "itemType": "wallpaper",
+                          "itemPrice": 72.88,
+                          "orderId": "OD437086100951637100"
+                        }
+                      ],
+                      "smartChecksData": null,
+                      "smartCheckImageUrls": null,
+                      "obdChecksData": null,
+                      "delivery_type": "small",
+                      "cod_amount": "0.0",
+                      "assigned_hub": {
+                        "description": null,
+                        "name": "Malur BTS Warehouse",
+                        "state": "KARNATAKA",
+                        "address1": "Marasandra and Madnahatti -Venkatapura Villages, Kasaba Hobli, Malur Taluk ,Dist -Kolar",
+                        "address2": "Malur",
+                        "cocCode": "malur_bts",
+                        "displayName": "RC_MAL_Bangalore",
+                        "country": "India",
+                        "city": "BENGALURU",
+                        "zone": "South",
+                        "pincode": "563130"
+                      },
+                      "merchant_name": "FKMP",
+                      "order_id": "OD437086100951637100",
+                      "external_tracking_id": "FMPP3852818416",
+                      "current_hub": {
+                        "description": null,
+                        "name": "BellandurHub_BLR",
+                        "state": "KARNATAKA",
+                        "address1": "#39/12 , 5th main road , Ibblur village , Agara post , Bangalore, Karnataka- 560102",
+                        "address2": null,
+                        "cocCode": "BLR/BLD",
+                        "displayName": "BellandurHub_BLR",
+                        "country": "India",
+                        "city": "BANGALORE",
+                        "zone": "South",
+                        "pincode": "560102"
+                      },
+                      "shipment_value": "86.0",
+                      "shipment_type": "PP",
+                      "shipment_id": "S989713162963",
+                      "consignment_status": "CONSIGNMENT_NOT_CREATED"
+                    },
+                    "FMPP3876831695": {
+                      "weight": "0.205",
+                      "delivered": "true",
+                      "receiver": null,
+                      "vendor": "Ekart Logistics",
+                      "customer": null,
+                      "sender": {
+                        "phone": null,
+                        "email": null,
+                        "name": "VINAKA DECOR",
+                        "state": "Karnataka",
+                        "address1": "Marasandra and Madnahatti -Venkatapura Villages, Kasaba Hobli, Malur Taluk ,Dist -Kolar",
+                        "address2": "Malur",
+                        "city": "Bangalore",
+                        "pincode": "563130"
+                      },
+                      "history": [
+                        {
+                          "publicDescription": "Shipment delivery update",
+                          "description": null,
+                          "status": "Delivery_Update",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-31T12:33:43+0530",
+                          "city": "BANGALORE",
+                          "remarks": "Shipment delivery update",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T12:33:43.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your order is out for delivery.",
+                          "description": null,
+                          "status": "Out_For_Delivery",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-31T08:33:48+0530",
+                          "city": "BANGALORE",
+                          "remarks": "Out for delivery",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T08:33:48.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-31T07:16:41+0530",
+                          "city": "BANGALORE",
+                          "remarks": "Received at BellandurHub_BLR",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T07:16:41.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your item has left a Flipkart Facility",
+                          "description": null,
+                          "status": "Expected",
+                          "hubName": "BellandurHub_BLR",
+                          "updatedDatetime": "2026-03-31T04:27:50+0530",
+                          "city": "BENGALURU",
+                          "remarks": "Dispatched to BellandurHub_BLR",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T04:27:50.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "MotherHub_BLR",
+                          "updatedDatetime": "2026-03-31T02:16:49+0530",
+                          "city": "BENGALURU",
+                          "remarks": "Received at MotherHub_BLR",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T02:16:49.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your item has left a Flipkart Facility",
+                          "description": null,
+                          "status": "Expected",
+                          "hubName": "MotherHub_BLR",
+                          "updatedDatetime": "2026-03-31T01:17:13+0530",
+                          "city": "MALUR",
+                          "remarks": "Dispatched to MotherHub_BLR",
+                          "cs_notes": "",
+                          "event_date": "2026-03-31T01:17:13.000+05:30",
+                          "hub_notes": ""
+                        },
+                        {
+                          "publicDescription": "Your item has arrived at a Flipkart Facility",
+                          "description": null,
+                          "status": "Received",
+                          "hubName": "Motherhub_MAL",
+                          "updatedDatetime": "2026-03-30T23:00:18+0530",
+                          "city": "MALUR",
+                          "remarks": "Received at Motherhub_MAL",
+                          "cs_notes": "",
+                          "event_date": "2026-03-30T23:00:18.000+05:30",
+                          "hub_notes": ""
+                        }
+                      ],
+                      "items": [
+                        {
+                          "itemDescription": "WolTop, 613J96, Brown",
+                          "itemType": "wallpaper",
+                          "itemPrice": 72.88,
+                          "orderId": "OD437086100951637100"
+                        }
+                      ],
+                      "smartChecksData": null,
+                      "smartCheckImageUrls": null,
+                      "obdChecksData": null,
+                      "delivery_type": "small",
+                      "cod_amount": "0.0",
+                      "assigned_hub": {
+                        "description": null,
+                        "name": "BellandurHub_BLR",
+                        "state": "KARNATAKA",
+                        "address1": "#39/12 , 5th main road , Ibblur village , Agara post , Bangalore, Karnataka- 560102",
+                        "address2": null,
+                        "cocCode": "BLR/BLD",
+                        "displayName": "BellandurHub_BLR",
+                        "country": "India",
+                        "city": "BANGALORE",
+                        "zone": "South",
+                        "pincode": "560102"
+                      },
+                      "merchant_name": "FKMP",
+                      "order_id": "OD437086100951637100",
+                      "external_tracking_id": "FMPP3876831695",
+                      "current_hub": {
+                        "description": null,
+                        "name": "BellandurHub_BLR",
+                        "state": "KARNATAKA",
+                        "address1": "#39/12 , 5th main road , Ibblur village , Agara post , Bangalore, Karnataka- 560102",
+                        "address2": null,
+                        "cocCode": "BLR/BLD",
+                        "displayName": "BellandurHub_BLR",
+                        "country": "India",
+                        "city": "BANGALORE",
+                        "zone": "South",
+                        "pincode": "560102"
+                      },
+                      "shipment_value": "86.0",
+                      "shipment_type": "PP",
+                      "shipment_id": "S989783032003",
+                      "consignment_status": "CONSIGNMENT_CREATED"
+                    }
+                  },
+                  "billed_customer_info": null,
+                  "shared_accounts_info": null,
+                  "prepaid_eligibility_data": null,
+                  "zulu_data": {
+                    "entityViews": [
+                      {
+                        "entityId": "LSTSTIFF8YZZTUFZUDYBWACFH",
+                        "entityType": "listing",
+                        "entitySubType": "wallpaper",
+                        "viewName": "order_details",
+                        "viewDefinitionVersion": 22,
+                        "viewVersion": 9266282316,
+                        "view": {
+                          "seller": {
+                            "seller_id": "f4601cc353fd4883"
+                          },
+                          "url": "/woltop-301-cm-x-39-waterproof-art-paintings-vinyl-wallpaper/p/itm8555422706764?pid=STIFF8YZZTUFZUDY",
+                          "product": {
+                            "vertical": "wallpaper",
+                            "verticalIdentifier": {
+                              "name": "wallpaper",
+                              "namespace": "xif0q"
+                            },
+                            "title": "WolTop 301 cm x 39 cm Waterproof Art & Paintings Vinyl Wallpaper",
+                            "brand": "WolTop",
+                            "live": null,
+                            "giftWrappable": null,
+                            "product_id": "STIFF8YZZTUFZUDY",
+                            "product_state": "ready",
+                            "image_url": "https://img.fkcdn.com/image/xif0q/wallpaper/7/w/r/240-40-1-dcrr-2585-9625-240cm-40cm-decorrhouse-original-imahcyc5ukdc6apx.jpeg",
+                            "is_live": null,
+                            "is_gift_wrappable": null
+                          },
+                          "installation": null,
+                          "shipping": 1,
+                          "price": 1299.0,
+                          "listing": {
+                            "max_order_quantity_allowed": "50",
+                            "free": false,
+                            "service_profile": "FBF",
+                            "listing_state": "current",
+                            "listing_id": "LSTSTIFF8YZZTUFZUDYBWACFH",
+                            "listing_status": "ACTIVE",
+                            "sku_id": "WT-595-3M_1",
+                            "return_policies": [
+                              "no_returns"
+                            ],
+                            "is_free": false
+                          },
+                          "brand": null,
+                          "is_preorder": false,
+                          "hidden_sales_package": null,
+                          "product_type": {
+                            "is_digital_item": false
+                          },
+                          "category_node_info": {
+                            "category_node_id": 44273
+                          },
+                          "attributes": null,
+                          "vertical": null,
+                          "verticalIdentifier": null,
+                          "categoryNodeId": null,
+                          "is_prescription_required": null,
+                          "specifications": null,
+                          "flipkart_release_date": null,
+                          "is_gift_wrappable": "true",
+                          "is_live": "true",
+                          "scm_taxonomy": [
+                            [
+                              {
+                                "nodeId": "100000",
+                                "nodeName": "SCM_TREE"
+                              },
+                              {
+                                "nodeId": "100026",
+                                "nodeName": "HYPERLOCAL"
+                              },
+                              {
+                                "nodeId": "100040",
+                                "nodeName": "Non-Large"
+                              }
+                            ],
+                            [
+                              {
+                                "nodeId": "100000",
+                                "nodeName": "SCM_TREE"
+                              },
+                              {
+                                "nodeId": "100026",
+                                "nodeName": "HYPERLOCAL"
+                              },
+                              {
+                                "nodeId": "100032",
+                                "nodeName": "Non-Food"
+                              }
+                            ]
+                          ],
+                          "product_type_taxonomy": null,
+                          "marketplace_id": "FLIPKART",
+                          "sales_package": [
+                            "1 Roll",
+                            "Wallpaper Squeegee"
+                          ],
+                          "listing_tier": "NONE",
+                          "flipkart_selling_price": 147.0,
+                          "release_date_type": null,
+                          "cms_tags": null,
+                          "price_values": null,
+                          "shipping_and_handling": {
+                            "largeItem": null,
+                            "is_large_item": null,
+                            "supply_chain_handling": null,
+                            "dangerous_good": null
+                          },
+                          "primary_path": [
+                            {
+                              "nodeId": 20001,
+                              "nodeName": "FLIPKART_TREE"
+                            },
+                            {
+                              "nodeId": 44227,
+                              "nodeName": "Home Decor New"
+                            },
+                            {
+                              "nodeId": 44272,
+                              "nodeName": "Stickers & Wallpapers"
+                            },
+                            {
+                              "nodeId": 44273,
+                              "nodeName": "Wallpapers"
+                            }
+                          ],
+                          "is_mps": false,
+                          "lmi_title_text": null,
+                          "earliest_expiry_date": null,
+                          "buyable_criteria": null,
+                          "service_type": null
+                        }
+                      }
+                    ],
+                    "unavailableViews": []
+                  },
+                  "smart_pack_zulu_data": null,
+                  "add_to_wallet_response": null,
+                  "zulu_data_product": null,
+                  "zulu_data_product_new": null,
+                  "fxmart_data": null,
+                  "promise_lookup_data": null,
+                  "service_item_activation_details": null,
+                  "user_review_rating_data": null,
+                  "troubleshooting_resume_eligibilities": null,
+                  "bnpl_response": null,
+                  "bnpl_statement_response": null,
+                  "user_insight_response": null,
+                  "order_share_response": null,
+                  "group_buying_order_share_data_response": null,
+                  "address_data_new": [
+                    {
+                      "id": "CNTCTF41909724DA54CE5A95B31CDC",
+                      "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                      "name": {
+                        "id": "UNAME0AC04407A7534C999DECCF878",
+                        "input": "Milasha"
+                      },
+                      "communications": [
+                        {
+                          "id": "COMMD5A006F23D744313B5AB2BC684",
+                          "type": "mobile",
+                          "input": "8475825031",
+                          "status": null
+                        }
+                      ],
+                      "address": {
+                        "addressType": "user_generated",
+                        "addressId": "PHY0E5DA8E41BEE42FFB4219E45780",
+                        "active": true,
+                        "addressLine1": {
+                          "input": "B7",
+                          "error": null
+                        },
+                        "addressLine2": {
+                          "input": "Embassy TechVillage, Devarabisanahalli, Kadubeesanahalli",
+                          "error": null
+                        },
+                        "landmark": {
+                          "input": "",
+                          "error": null
+                        },
+                        "city": {
+                          "input": "BANGALORE",
+                          "error": null
+                        },
+                        "pincode": {
+                          "input": "560103",
+                          "error": null
+                        },
+                        "state": {
+                          "input": "Karnataka",
+                          "error": null
+                        },
+                        "stateCode": {
+                          "input": "IN-KA",
+                          "error": null
+                        },
+                        "country": {
+                          "input": "India",
+                          "error": null
+                        },
+                        "location": {
+                          "latitude": 12.9275233,
+                          "longitude": 77.6922033
+                        },
+                        "locationTypeTag": "Home"
+                      },
+                      "creationDate": "2026-03-20 17:04:43",
+                      "lastModified": "2026-03-20 17:04:43",
+                      "active": true
+                    },
+                    {
+                      "id": "CNTCT3E0060DDBF61483192B8899A8",
+                      "accountId": "ACC12BECE0FA1E2444AB5BDD620E251B8E1X",
+                      "name": {
+                        "id": "UNAME58BFF5310D9940FDA85B348EA",
+                        "input": "Milasha Puspwan"
+                      },
+                      "communications": [
+                        {
+                          "id": "COMMD5A006F23D744313B5AB2BC684",
+                          "type": "mobile",
+                          "input": "8475825031",
+                          "status": null
+                        }
+                      ],
+                      "address": {
+                        "addressType": "user_generated",
+                        "addressId": "PHY74BD95728E414659A62CA6B01C9",
+                        "active": true,
+                        "addressLine1": {
+                          "input": "Flat 414, G3 Block, Chaurasia Manor, Phase 2",
+                          "error": null
+                        },
+                        "addressLine2": {
+                          "input": "Kverrapa Layout, Panathur Road",
+                          "error": null
+                        },
+                        "landmark": {
+                          "input": null,
+                          "error": null
+                        },
+                        "city": {
+                          "input": "Bengaluru",
+                          "error": null
+                        },
+                        "pincode": {
+                          "input": "560103",
+                          "error": null
+                        },
+                        "state": {
+                          "input": "Karnataka",
+                          "error": null
+                        },
+                        "stateCode": {
+                          "input": "IN-KA",
+                          "error": null
+                        },
+                        "country": {
+                          "input": "IN",
+                          "error": null
+                        },
+                        "location": {
+                          "latitude": 12.9334073,
+                          "longitude": 77.7023932
+                        },
+                        "locationTypeTag": "Home"
+                      },
+                      "meta": {
+                        "lastUsedTime": 1675013401,
+                        "usedCount": 4
+                      },
+                      "creationDate": "2022-07-30 18:49:56",
+                      "lastModified": "2023-01-29 23:00:01",
+                      "active": true
+                    }
+                  ],
+                  "degradation_message": null,
+                  "byos_client_responses": {},
+                  "courier_data": null,
+                  "ndr_data": null,
+                  "subscription_service_data": null,
+                  "incidents_data": null,
+                  "incidents_data_v2_model": null,
+                  "service_recovery_data": null,
+                  "warehouse": null,
+                  "toa_history": null,
+                  "unicorn_client_details": null,
+                  "additional_payment_details": null,
+                  "shipment_groups": null,
+                  "service_unit_activation_details": null,
+                  "recent_incident_id_by_units_map": {},
+                  "recent_incident_id_by_unit_map_v2": {},
+                  "recent_incident_id_by_units_map_grocery": null,
+                  "incidents_by_units": null,
+                  "incident_by_units_v2": null,
+                  "incidents_by_units_grocery": null,
+                  "incidents_by_units_grocery_v2": null,
+                  "count_incidents_by_units": null,
+                  "open_incidents_count_by_units": null,
+                  "survey_response": {},
+                  "vrp_client_checkedList_details": null,
+                  "vrp_client_assessment_details": null,
+                  "predictive_service_response": null,
+                  "ab_experiment_response": null,
+                  "dj_client_details": null,
+                  "zone_pincode_details": null,
+                  "return_action_eligibility_data": null,
+                  "cancel_action_eligibility_data": null,
+                  "price_lock_pay_now_eligibility_data": null,
+                  "audience_manager_data": null
+                },
+                "courier_data": null
+              },
+              "type": "java.lang.Object"
+            }
+          },
+          "pivotIdMetaData": {
+            "parentPivotId": null,
+            "parentPivotIds": [],
+            "subPivotToIdMap": {}
+          }
+        }
+      }
+    }
+  }
+}

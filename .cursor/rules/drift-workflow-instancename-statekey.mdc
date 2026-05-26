@@ -1,0 +1,35 @@
+---
+description: Drift workflow states must use instanceName identical to the state map key
+globs: .cursor/output/workflows/**/workflow.json
+alwaysApply: false
+---
+
+# Workflow state: `instanceName` must equal state key
+
+When editing or generating Drift workflow definitions under `.cursor/output/workflows/`:
+
+- **`instanceName` MUST always be exactly the same string as the state key** (the key in the workflow JSON `states` object).
+- Do **not** use a different `instanceName` to “context override” or alias outputs under another `_global` key. Node outputs are stored as `_global.<instanceName>`; keeping `instanceName === stateKey` avoids confusion, flattening bugs, and broken JsonPath references.
+- **`resourceId`** is the node definition ID from the store (may differ from the state key). Only `resourceId` should differ when reusing a shared node definition.
+
+**Valid:**
+
+```json
+"fetch_location_fetch_oxford": {
+  "instanceName": "fetch_location_fetch_oxford",
+  "resourceId": "e2e_fetch_order_details",
+  ...
+}
+```
+
+**Invalid (do not do this):**
+
+```json
+"questionnaire_workflow_fetch_oxford": {
+  "instanceName": "fetch_order_oxford",
+  "resourceId": "e2e_fetch_order_details",
+  ...
+}
+```
+
+When adding states, verify every entry: `states.<key>.instanceName === <key>`.

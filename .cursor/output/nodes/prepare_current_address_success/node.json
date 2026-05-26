@@ -1,0 +1,8 @@
+{
+    "id": "prepare_current_address_success",
+    "name": "Prepare Current Address - Success",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Terminal success node for the prepare_current_address sub-workflow. Excluded from the parent flattened graph via includeLastNode: false in sub_prepare_current_address.",
+    "executionMode": "SYNC"
+}

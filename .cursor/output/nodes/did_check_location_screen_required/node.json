@@ -1,0 +1,43 @@
+{
+  "id": "did_check_location_screen_required",
+  "name": "DID Check location screen required",
+  "type": "BRANCH",
+  "parameters": [
+    "locationRequired",
+    "phoneChangeSuccess"
+  ],
+  "version": "1",
+  "choices": [
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "def pcs = _global.nodeParameters?.phoneChangeSuccess; return pcs != null && pcs.toString() == 'false'"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "did_phone_failure_instruction_terminal"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "def loc = _global.nodeParameters?.locationRequired; def pcs = _global.nodeParameters?.phoneChangeSuccess; return loc != null && pcs != null && loc.toString() == 'true' && pcs.toString() == 'true'"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "did_phone_success_node"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "def loc = _global.nodeParameters?.locationRequired; return loc != null && loc.toString() == 'true'"
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "collect_location"
+    }
+  ],
+  "defaultNode": "default_failure"
+}

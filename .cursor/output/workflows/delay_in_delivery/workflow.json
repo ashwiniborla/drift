@@ -1,0 +1,148 @@
+{
+  "id": "did_dip_workflow",
+  "comment": "IMSv3 DID / DIP Workflow — creates an IMSv2 DID / DIP incident then phone collection via subworkflow",
+  "startNode": "did_workflow_fetch_oxford",
+  "states": {
+    "phone_collection": {
+      "instanceName": "phone_collection",
+      "resourceId": "collect_phone_number",
+      "resourceVersion": "SNAPSHOT",
+      "type": "SUBWORKFLOW",
+      "nextNode": "did_check_location_screen_required",
+      "end": false,
+      "nodeIdentifier": "phone_collection"
+    },
+    "did_check_location_screen_required": {
+      "instanceName": "did_check_location_screen_required",
+      "resourceId": "did_check_location_screen_required",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "locationRequired": "true",
+        "phoneChangeSuccess": "$.chore_confirm_address.isSuccess"
+      },
+      "end": false,
+      "nodeIdentifier": "did_check_location_screen_required"
+    },
+    "did_phone_success_node": {
+      "instanceName": "did_phone_success_node",
+      "resourceId": "fap_success_instruction",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "inputOptions": "$.prepare_fap_success_instruction.inputOptions",
+        "layoutId": "$.prepare_fap_success_instruction.layoutId"
+      },
+      "nextNode": "collect_location",
+      "end": false,
+      "nodeIdentifier": "did_phone_success_node"
+    },
+    "collect_location": {
+      "instanceName": "collect_location",
+      "resourceId": "sub_fetch_location",
+      "resourceVersion": "SNAPSHOT",
+      "type": "SUBWORKFLOW",
+      "parameters": {},
+      "nextNode": "did_check_location_instruction_available",
+      "end": false,
+      "nodeIdentifier": "collect_location"
+    },
+    "did_phone_failure_instruction_terminal": {
+      "instanceName": "did_phone_failure_instruction_terminal",
+      "resourceId": "phone_number_update_failed",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": true,
+      "nodeIdentifier": "did_phone_failure_instruction_terminal"
+    },
+    "did_end_instructions": {
+      "instanceName": "did_end_instructions",
+      "resourceId": "questionnaire_end_instruction",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "inputOptions": "$.prepare_did_end_instructions.inputOptions"
+      },
+      "end": true,
+      "nodeIdentifier": "did_end_instructions"
+    },
+    "did_workflow_fetch_oxford": {
+      "instanceName": "did_workflow_fetch_oxford",
+      "resourceId": "e2e_fetch_order_details",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+        "useCase": "default"
+      },
+      "contextOverrideKey": "fetch_order_oxford",
+      "nextNode": "did_create_incident_varadhi",
+      "end": false,
+      "nodeIdentifier": "fetch_order_oxford"
+    },
+    "did_create_incident_varadhi": {
+      "instanceName": "did_create_incident_varadhi",
+      "resourceId": "create_incident_varadhi",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "incidentType": "CS",
+        "issueId": "$.issueDetail.issueId",
+        "statusWithTypeId": "1",
+        "dispositionId": "3062",
+        "queueId": "$.queueDetail.queueId",
+        "customFields": "$.params",
+        "csTenant": "cs",
+        "imsTenant": "cs",
+        "imsUsername": "fk_selfserve",
+        "imsClientId": "ss",
+        "csChannel": "MANUAL_IB_BOT",
+        "csOrganization": "cs"
+      },
+      "nextNode": "prepare_current_address",
+      "end": false,
+      "nodeIdentifier": "did_create_incident_varadhi"
+    },
+    "prepare_did_end_instructions": {
+      "instanceName": "prepare_did_end_instructions",
+      "resourceId": "prepare_questionnaire_end_instructions",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "nextNode": "did_end_instructions",
+      "end": false,
+      "nodeIdentifier": "prepare_did_end_instructions"
+    },
+    "did___location_instruction_available": {
+      "instanceName": "did_check_location_instruction_available",
+      "resourceId": "did_check_location_instruction_available",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "end": false,
+      "nodeIdentifier": "did_check_location_instruction_available"
+    },
+    "show_location_instruction": {
+      "instanceName": "show_location_instruction",
+      "resourceId": "show_location_instruction",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {
+        "inputOptions": "$.prepare_location_instruction.inputOptions"
+      },
+      "end": true,
+      "nodeIdentifier": "show_location_instruction"
+    },
+    "prepare_current_address": {
+      "instanceName": "prepare_current_address",
+      "resourceId": "sub_prepare_current_address",
+      "resourceVersion": "SNAPSHOT",
+      "type": "NODE",
+      "parameters": {},
+      "nextNode": "phone_collection",
+      "end": false,
+      "nodeIdentifier": "prepare_current_address"
+    }
+  }
+}

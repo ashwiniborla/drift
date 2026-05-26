@@ -1,0 +1,20 @@
+{
+    "id": "branch_fap_success_by_location",
+    "name": "Branch FAP success by postScreens location",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_success_instruction_continue"
+        }
+    ],
+    "defaultNode": "fap_success_instruction_terminal"
+}

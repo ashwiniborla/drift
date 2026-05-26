@@ -1,0 +1,53 @@
+{
+    "id": "fetch_location",
+    "comment": "Evaluates the customer's delivery location via AIS. If a nudge is required, shows a location confirmation screen with a deeplink for the customer to share their precise location. Used as a subworkflow in questionnaire_workflow to replace the collect_location stub.",
+    "startNode": "evaluate_location",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "evaluate_location": {
+            "instanceName": "evaluate_location",
+            "resourceId": "evaluate_location",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "branch_nudge_required",
+            "end": false
+        },
+        "branch_nudge_required": {
+            "instanceName": "branch_nudge_required",
+            "resourceId": "branch_nudge_required",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "prepare_location_instruction": {
+            "instanceName": "prepare_location_instruction",
+            "resourceId": "prepare_location_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dontShowSuccess": "$.chore_eligibility.isEligible"
+            },
+            "nextNode": "fetch_location_success",
+            "end": false
+        },
+        "fetch_location_success": {
+            "instanceName": "fetch_location_success",
+            "resourceId": "fetch_location_success",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

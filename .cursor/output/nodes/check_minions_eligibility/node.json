@@ -1,0 +1,14 @@
+{
+    "id": "check_minions_eligibility",
+    "name": "Check Minions Eligibility for Post-Dispatch Address Change",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/forward_address_phone_change/check_minions_eligibility.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

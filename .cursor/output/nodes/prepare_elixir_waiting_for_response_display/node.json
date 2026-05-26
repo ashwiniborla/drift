@@ -1,0 +1,14 @@
+{
+    "id": "prepare_elixir_waiting_for_response_display",
+    "name": "prepare_elixir_waiting_for_response_display",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/prepare_elixir_waiting_for_response_display.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

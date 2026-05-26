@@ -1,0 +1,59 @@
+{
+    "id": "prepare_current_address",
+    "comment": "Shared prep sub-workflow: extracts Oxford order units, fetches a User Service auth token, and retrieves the current delivery address. Uses prefixed state keys (pca_*) so this workflow can be inlined alongside fap_eligibility_check nodes (which still contain get_user_svc_auth_token and get_current_address states) in the same root graph without duplicate-state-key conflicts. contextOverrideKey on each state ensures output lands on the canonical _global keys (oxford_unit_details, get_user_svc_auth_token, get_current_address). Must run after fetch_order_oxford is populated in _global. Use with includeLastNode: false via sub_prepare_current_address.",
+    "startNode": "pca_extract_oxford_order_units",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "pca_extract_oxford_order_units": {
+            "instanceName": "pca_extract_oxford_order_units",
+            "resourceId": "extract_oxford_order_units",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default"
+            },
+            "contextOverrideKey": "oxford_unit_details",
+            "nextNode": "pca_get_user_svc_auth_token",
+            "end": false
+        },
+        "pca_get_user_svc_auth_token": {
+            "instanceName": "pca_get_user_svc_auth_token",
+            "resourceId": "get_user_svc_auth_token",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "contextOverrideKey": "get_user_svc_auth_token",
+            "nextNode": "pca_get_current_address",
+            "end": false
+        },
+        "pca_get_current_address": {
+            "instanceName": "pca_get_current_address",
+            "resourceId": "get_current_address",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "userSvcAuthToken": "$.get_user_svc_auth_token.access_token"
+            },
+            "contextOverrideKey": "get_current_address",
+            "nextNode": "prepare_current_address_success",
+            "end": false
+        },
+        "prepare_current_address_success": {
+            "instanceName": "prepare_current_address_success",
+            "resourceId": "prepare_current_address_success",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

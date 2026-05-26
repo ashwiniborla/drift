@@ -1,0 +1,1321 @@
+{
+  "id": "WF-26032715023506552635",
+  "workflowId": "WF-26032715023506552635",
+  "context": {
+    "incidentId": null,
+    "workflowId": "WF-26032715023506552635",
+    "parentWorkflowId": null,
+    "threadContext": {
+      "clientId": "imsv2",
+      "perfFlag": "false",
+      "userName": "imsv2",
+      "tenant": "cs"
+    },
+    "params": {
+      "issueId": "3267",
+      "elixirEntityReferenceType": "TRACKING_ID",
+      "elixirEntityReferenceId": "FMPC5901282744",
+      "ignore_incident_update": true,
+      "elixirEntityFlow": "FORWARD",
+      "incidentId": "IN26032715023424286886",
+      "version": "SNAPSHOT",
+      "elixirEntityType": "PHYSICAL",
+      "workflowId": "create_elixir_ticket_workflow"
+    },
+    "issueDetail": {
+      "issueId": null,
+      "issueName": null
+    },
+    "queueDetail": null,
+    "customer": {
+      "customerId": "ACC0225473F71E5420FAF3F4ED52AD2C199Q"
+    },
+    "orderDetails": [
+      {
+        "orderId": "OD437244764994727100",
+        "orderItemId": "437244764994727100",
+        "orderItemUnitId": "437244764994727100000",
+        "trackingId": "FMPR0883811672"
+      }
+    ],
+    "global_params": {
+      "threadContext": {
+        "clientId": null,
+        "perfFlag": "null",
+        "userName": null,
+        "tenant": "cs"
+      }
+    },
+    "nodeParameters": {},
+    "create_elixir_ticket_branch_skip_incident_entry": {
+      "nextNode": "elixir_fetch_order_oxford"
+    },
+    "fetch_order_oxford": {
+      "units": {
+        "437244764994727100000": {
+          "createdAt": 1775592397509,
+          "status": "DELIVERED",
+          "id": "437244764994727100000",
+          "offers": [
+            "nb:mp:027a63ba06",
+            "nb:mp:065166bb30"
+          ],
+          "type": "physical",
+          "itemExternalId": "437244764994727100",
+          "rolledUpStatus": "DELIVERED",
+          "policyData": [
+            {
+              "type": "RETURN_POLICY",
+              "data": [
+                "10_day_return"
+              ]
+            }
+          ],
+          "policyInfo": {
+            "returnPolicyInfo": {
+              "policyId": "10_day_returns_lifestyle:cohort1:v1",
+              "description": "10 Day Return",
+              "eligibilityDays": 10,
+              "returnFeeDecision": "DISABLE"
+            }
+          },
+          "adjustments": [
+            {
+              "type": "PROMOTION_DISCOUNT",
+              "amount": {
+                "value": -137.0,
+                "currency": "INR",
+                "inrValue": -137.0
+              },
+              "offerReferenceId": "nb:mp:027a63ba06",
+              "referenceId": "nb:mp:027a63ba06"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 7.0,
+                "currency": "INR",
+                "inrValue": 7.0
+              },
+              "offerReferenceId": "pf:001",
+              "referenceId": "pf:001"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 198.0,
+                "currency": "INR",
+                "inrValue": 198.0
+              },
+              "offerReferenceId": "iks:001",
+              "referenceId": "iks:001"
+            }
+          ],
+          "chores": [
+            {
+              "changeRequestId": "CU103725213094413866",
+              "choreType": "RETURN",
+              "status": "ACTIVE",
+              "meta": {
+                "type": "RETURN",
+                "returnId": "12200299370110305449246720",
+                "reason": "SIZE_FIT_ISSUES",
+                "subReason": "SIZE_SMALLER",
+                "comments": "",
+                "returnType": "CUSTOMER_RETURN",
+                "handInHand": false,
+                "action": "wait_refund",
+                "customerWillShip": false,
+                "channel": "SELF_SERVE",
+                "userLogin": "fk_selfServe",
+                "associatedUnits": [
+                  "437244764994727100001"
+                ],
+                "returnSteps": [
+                  {
+                    "returnStepType": "PICKUP",
+                    "status": "IN_PROGRESS",
+                    "completionTime": 1775932140000,
+                    "slotted": false,
+                    "startTime": 0,
+                    "endTime": 0,
+                    "duration": 0
+                  },
+                  {
+                    "returnStepType": "REFUND",
+                    "status": "NOT_STARTED",
+                    "completionTime": 1776277740000,
+                    "slotted": false,
+                    "startTime": 0,
+                    "endTime": 0,
+                    "duration": 0
+                  }
+                ],
+                "amount": 1162.0,
+                "amountWithCurrency": [
+                  {
+                    "value": 1162.0,
+                    "currency": "INR",
+                    "inrValue": 1162.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "refundAmount": [
+                  {
+                    "value": 1162.0,
+                    "currency": "INR",
+                    "inrValue": 1162.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "refundMode": "back_to_source",
+                "refundModeSplit": "{\"back_to_source\":1230.0}",
+                "refundModeSplitCurrency": "{\"COIN\":{\"amount\":61.0,\"units\":68.0},\"DEBIT_CARD\":{\"amount\":1169.0,\"units\":1169.0}}",
+                "refundTat": 120,
+                "derivedReturnStatus": "INIT",
+                "beneficiaryDetails": {
+                  "internal": false
+                },
+                "inducedBy": "CUSTOMER",
+                "appliedPolicies": [],
+                "type": "RETURN"
+              },
+              "createdAt": 1775666041338,
+              "updatedAt": 1775666041337,
+              "changeActions": [
+                {
+                  "actionType": "APPROVE",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_STATUS"
+                },
+                {
+                  "actionType": "OVERRIDE",
+                  "eligibility": true,
+                  "reason": "VALID_PARAM_PASSED"
+                },
+                {
+                  "actionType": "REJECT",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_STATUS"
+                },
+                {
+                  "actionType": "CANCEL",
+                  "eligibility": true,
+                  "reason": "VALID_PARAM_PASSED"
+                },
+                {
+                  "actionType": "DELIVERY_CONFIRMATION",
+                  "eligibility": false,
+                  "reason": "UNIT_ALREADY_DELIVERED"
+                }
+              ],
+              "changeRequests": []
+            }
+          ],
+          "statusHistories": [
+            {
+              "timestamp": 1775592446676,
+              "status": "APPROVED",
+              "createdBy": "ae-event"
+            },
+            {
+              "timestamp": 1775622741000,
+              "status": "READY_TO_SHIP",
+              "createdBy": "ORDER_ITEM_UNIT_READY_TO_SHIP"
+            },
+            {
+              "timestamp": 1775622743000,
+              "status": "DISPATCHED",
+              "createdBy": "ORDER_ITEM_UNIT_DISPATCHED"
+            },
+            {
+              "timestamp": 1775624451000,
+              "status": "SHIPPED",
+              "createdBy": "ORDER_ITEM_UNIT_SHIPPED"
+            },
+            {
+              "timestamp": 1775654051000,
+              "status": "OUT_FOR_DELIVERY",
+              "createdBy": "OUT_FOR_DELIVERY"
+            },
+            {
+              "timestamp": 1775658252000,
+              "status": "DELIVERED",
+              "createdBy": "ORDER_ITEM_UNIT_DELIVERED"
+            }
+          ],
+          "postFulfillmentData": {
+            "shipmentId": "S989851225753",
+            "trackingId": "SF2964875043F",
+            "courierName": "shadowfax-prepaid",
+            "location": "malur_bts",
+            "fulfilledBy": "FKL"
+          },
+          "promiseDataBag": {
+            "promiseType": "UN_SLOTTED",
+            "fulfillmentSpeed": "\"PREMIUM\"",
+            "fulfillmentHasSlots": "false",
+            "fulfillmentPromised": "true",
+            "omsPromisData": "{\"from\":1,\"to\":1,\"speed\":\"PREMIUM\",\"holidays\":{}}",
+            "pickupPromiseDate": 0,
+            "promisedDateFrom": 1775669400000,
+            "promisedDateTo": 1775669400000,
+            "updatedPromisedDateFrom": 0,
+            "updatedPromisedDateTo": 0,
+            "slaMessageType": "TIME",
+            "promiseRefId": "hyd$FLIPKARTOD4372447649947271-RX-00$f92a0f1fb846c26b26bd82a9d3fafaed",
+            "promiseRefVersion": "0",
+            "sla": 1
+          },
+          "unitChangeActions": [
+            {
+              "actionType": "CANCEL",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_SLOT",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "POST_DISPATCH_CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_PAYMENT",
+              "eligibility": false,
+              "reason": "PREPAID_ORDER"
+            },
+            {
+              "actionType": "RETURN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "RE_OPEN_RETURN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "CHANGE_DELIVERY_SLOT",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_LOCKIN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_NON_LOCKIN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "FEE_WAIVER",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PRICE_MATCH",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            }
+          ],
+          "isPrexo": false,
+          "paymentCategoryInfo": {
+            "PREPAID": {
+              "amounts": [
+                {
+                  "value": 1169.0,
+                  "currency": "INR",
+                  "inrValue": 1169.0
+                },
+                {
+                  "value": 68.0,
+                  "currency": "COINS",
+                  "inrValue": 68.0
+                }
+              ],
+              "transactionIds": [
+                "PZT2604080136GAL1N02",
+                "PZT2604080136GAL1N01"
+              ]
+            },
+            "POSTPAID": {
+              "amounts": [],
+              "transactionIds": []
+            }
+          },
+          "unitType": "OrderItemUnit",
+          "flow": "FORWARD",
+          "toParty": {
+            "accountId": "ACC757262A3DB4441E4AA1C48C55CFD6166L",
+            "deliveryAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "billingAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "deliveryMode": "NORMAL"
+          },
+          "fromParty": {
+            "accountId": "e5c763d953f74a07"
+          },
+          "productData": {
+            "sellerId": "e5c763d953f74a07",
+            "title": "ADIDAS FOUNDATION FG/MG Football Shoes For Men",
+            "listingId": "LSTSHOHCSPEV5XBH4BFWTU89J",
+            "productId": "SHOHCSPEV5XBH4BF",
+            "categoryId": "21940",
+            "listingType": "current",
+            "serviceProfile": "FBF",
+            "mrp": {
+              "value": 3999.0,
+              "currency": "INR",
+              "inrValue": 3999.0
+            },
+            "listPrice": {
+              "value": 1101.0,
+              "currency": "INR",
+              "inrValue": 1101.0
+            },
+            "listPriceMultiCurrency": [
+              {
+                "value": 1101.0,
+                "currency": "INR",
+                "inrValue": 1101.0
+              },
+              {
+                "value": 68.0,
+                "currency": "COINS",
+                "inrValue": 68.0
+              }
+            ],
+            "anchorPrice": {
+              "value": 3599.0,
+              "currency": "INR"
+            },
+            "marketPlace": "FLIPKART",
+            "paymentFlowIdentifier": "FORWARD",
+            "itemDataType": "oiuZuluData",
+            "paymentCollectionStatus": "COMPLETED"
+          },
+          "childUnits": {
+            "437244764994727100001": {
+              "createdAt": 1775666041337,
+              "status": "APPROVED",
+              "id": "437244764994727100001",
+              "offers": [],
+              "type": "physical",
+              "itemExternalId": "437244764994727100",
+              "unitSubType": "PICKUP",
+              "rolledUpStatus": "APPROVED",
+              "adjustments": [],
+              "chores": [],
+              "statusHistories": [
+                {
+                  "timestamp": 1775666041320,
+                  "status": "APPROVED",
+                  "createdBy": "fk_selfServe",
+                  "reason": "customer_return_approved",
+                  "subReason": "AUTO_APPROVED",
+                  "comments": "System auto-approved the return"
+                }
+              ],
+              "postFulfillmentData": {
+                "shipmentId": "R-P2753435349",
+                "trackingId": "FMPR0883811672",
+                "courierName": "flipkartlogistics"
+              },
+              "promiseDataBag": {
+                "pickupPromiseDate": 1775932140000,
+                "promisedDateFrom": 1775932199000,
+                "promisedDateTo": 1775932199000,
+                "updatedPromisedDateFrom": 1775932140000,
+                "updatedPromisedDateTo": 1775932140000,
+                "promiseRefId": "CU103725213094413866$40201888b5039f398d19e8b140e6330d",
+                "promiseRefVersion": "0",
+                "sla": 0
+              },
+              "isPrexo": false,
+              "paymentCategoryInfo": {},
+              "unitType": "OrderItemUnit",
+              "flow": "RETURN",
+              "toParty": {
+                "accountId": "e5c763d953f74a07",
+                "deliveryAddressId": "malur_bts"
+              },
+              "fromParty": {
+                "accountId": "ACC757262A3DB4441E4AA1C48C55CFD6166L",
+                "deliveryAddressId": "CNTCT1C1000D16DA84555875074BF1",
+                "billingAddressId": "CNTCT1C1000D16DA84555875074BF1",
+                "deliveryMode": "NORMAL"
+              },
+              "productData": {
+                "sellerId": "e5c763d953f74a07",
+                "title": "ADIDAS FOUNDATION FG/MG Football Shoes For Men",
+                "listingId": "LSTSHOHCSPEV5XBH4BFWTU89J",
+                "productId": "SHOHCSPEV5XBH4BF",
+                "categoryId": "21940",
+                "listingType": "current",
+                "serviceProfile": "FBF",
+                "mrp": {
+                  "value": 3999.0,
+                  "currency": "INR",
+                  "inrValue": 3999.0
+                },
+                "listPrice": {
+                  "value": 1101.0,
+                  "currency": "INR",
+                  "inrValue": 1101.0
+                },
+                "listPriceMultiCurrency": [
+                  {
+                    "value": 1101.0,
+                    "currency": "INR",
+                    "inrValue": 1101.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "anchorPrice": {
+                  "value": 3599.0,
+                  "currency": "INR"
+                },
+                "marketPlace": "FLIPKART",
+                "paymentFlowIdentifier": "FORWARD",
+                "itemDataType": "oiuZuluData",
+                "paymentCollectionStatus": "COMPLETED"
+              },
+              "childUnits": {}
+            }
+          }
+        }
+      },
+      "allUnitsFlat": {
+        "437244764994727100000": {
+          "createdAt": 1775592397509,
+          "status": "DELIVERED",
+          "id": "437244764994727100000",
+          "offers": [
+            "nb:mp:027a63ba06",
+            "nb:mp:065166bb30"
+          ],
+          "type": "physical",
+          "itemExternalId": "437244764994727100",
+          "rolledUpStatus": "DELIVERED",
+          "policyData": [
+            {
+              "type": "RETURN_POLICY",
+              "data": [
+                "10_day_return"
+              ]
+            }
+          ],
+          "policyInfo": {
+            "returnPolicyInfo": {
+              "policyId": "10_day_returns_lifestyle:cohort1:v1",
+              "description": "10 Day Return",
+              "eligibilityDays": 10,
+              "returnFeeDecision": "DISABLE"
+            }
+          },
+          "adjustments": [
+            {
+              "type": "PROMOTION_DISCOUNT",
+              "amount": {
+                "value": -137.0,
+                "currency": "INR",
+                "inrValue": -137.0
+              },
+              "offerReferenceId": "nb:mp:027a63ba06",
+              "referenceId": "nb:mp:027a63ba06"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 7.0,
+                "currency": "INR",
+                "inrValue": 7.0
+              },
+              "offerReferenceId": "pf:001",
+              "referenceId": "pf:001"
+            },
+            {
+              "type": "CONSTRUCT_FEE",
+              "amount": {
+                "value": 198.0,
+                "currency": "INR",
+                "inrValue": 198.0
+              },
+              "offerReferenceId": "iks:001",
+              "referenceId": "iks:001"
+            }
+          ],
+          "chores": [
+            {
+              "changeRequestId": "CU103725213094413866",
+              "choreType": "RETURN",
+              "status": "ACTIVE",
+              "meta": {
+                "type": "RETURN",
+                "returnId": "12200299370110305449246720",
+                "reason": "SIZE_FIT_ISSUES",
+                "subReason": "SIZE_SMALLER",
+                "comments": "",
+                "returnType": "CUSTOMER_RETURN",
+                "handInHand": false,
+                "action": "wait_refund",
+                "customerWillShip": false,
+                "channel": "SELF_SERVE",
+                "userLogin": "fk_selfServe",
+                "associatedUnits": [
+                  "437244764994727100001"
+                ],
+                "returnSteps": [
+                  {
+                    "returnStepType": "PICKUP",
+                    "status": "IN_PROGRESS",
+                    "completionTime": 1775932140000,
+                    "slotted": false,
+                    "startTime": 0,
+                    "endTime": 0,
+                    "duration": 0
+                  },
+                  {
+                    "returnStepType": "REFUND",
+                    "status": "NOT_STARTED",
+                    "completionTime": 1776277740000,
+                    "slotted": false,
+                    "startTime": 0,
+                    "endTime": 0,
+                    "duration": 0
+                  }
+                ],
+                "amount": 1162.0,
+                "amountWithCurrency": [
+                  {
+                    "value": 1162.0,
+                    "currency": "INR",
+                    "inrValue": 1162.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "refundAmount": [
+                  {
+                    "value": 1162.0,
+                    "currency": "INR",
+                    "inrValue": 1162.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "refundMode": "back_to_source",
+                "refundModeSplit": "{\"back_to_source\":1230.0}",
+                "refundModeSplitCurrency": "{\"COIN\":{\"amount\":61.0,\"units\":68.0},\"DEBIT_CARD\":{\"amount\":1169.0,\"units\":1169.0}}",
+                "refundTat": 120,
+                "derivedReturnStatus": "INIT",
+                "beneficiaryDetails": {
+                  "internal": false
+                },
+                "inducedBy": "CUSTOMER",
+                "appliedPolicies": [],
+                "type": "RETURN"
+              },
+              "createdAt": 1775666041338,
+              "updatedAt": 1775666041337,
+              "changeActions": [
+                {
+                  "actionType": "APPROVE",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_STATUS"
+                },
+                {
+                  "actionType": "OVERRIDE",
+                  "eligibility": true,
+                  "reason": "VALID_PARAM_PASSED"
+                },
+                {
+                  "actionType": "REJECT",
+                  "eligibility": false,
+                  "reason": "INVALID_RETURN_STATUS"
+                },
+                {
+                  "actionType": "CANCEL",
+                  "eligibility": true,
+                  "reason": "VALID_PARAM_PASSED"
+                },
+                {
+                  "actionType": "DELIVERY_CONFIRMATION",
+                  "eligibility": false,
+                  "reason": "UNIT_ALREADY_DELIVERED"
+                }
+              ],
+              "changeRequests": []
+            }
+          ],
+          "statusHistories": [
+            {
+              "timestamp": 1775592446676,
+              "status": "APPROVED",
+              "createdBy": "ae-event"
+            },
+            {
+              "timestamp": 1775622741000,
+              "status": "READY_TO_SHIP",
+              "createdBy": "ORDER_ITEM_UNIT_READY_TO_SHIP"
+            },
+            {
+              "timestamp": 1775622743000,
+              "status": "DISPATCHED",
+              "createdBy": "ORDER_ITEM_UNIT_DISPATCHED"
+            },
+            {
+              "timestamp": 1775624451000,
+              "status": "SHIPPED",
+              "createdBy": "ORDER_ITEM_UNIT_SHIPPED"
+            },
+            {
+              "timestamp": 1775654051000,
+              "status": "OUT_FOR_DELIVERY",
+              "createdBy": "OUT_FOR_DELIVERY"
+            },
+            {
+              "timestamp": 1775658252000,
+              "status": "DELIVERED",
+              "createdBy": "ORDER_ITEM_UNIT_DELIVERED"
+            }
+          ],
+          "postFulfillmentData": {
+            "shipmentId": "S989851225753",
+            "trackingId": "SF2964875043F",
+            "courierName": "shadowfax-prepaid",
+            "location": "malur_bts",
+            "fulfilledBy": "FKL"
+          },
+          "promiseDataBag": {
+            "promiseType": "UN_SLOTTED",
+            "fulfillmentSpeed": "\"PREMIUM\"",
+            "fulfillmentHasSlots": "false",
+            "fulfillmentPromised": "true",
+            "omsPromisData": "{\"from\":1,\"to\":1,\"speed\":\"PREMIUM\",\"holidays\":{}}",
+            "pickupPromiseDate": 0,
+            "promisedDateFrom": 1775669400000,
+            "promisedDateTo": 1775669400000,
+            "updatedPromisedDateFrom": 0,
+            "updatedPromisedDateTo": 0,
+            "slaMessageType": "TIME",
+            "promiseRefId": "hyd$FLIPKARTOD4372447649947271-RX-00$f92a0f1fb846c26b26bd82a9d3fafaed",
+            "promiseRefVersion": "0",
+            "sla": 1
+          },
+          "unitChangeActions": [
+            {
+              "actionType": "CANCEL",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_SLOT",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "POST_DISPATCH_CHANGE_ADDRESS",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "CHANGE_PAYMENT",
+              "eligibility": false,
+              "reason": "PREPAID_ORDER"
+            },
+            {
+              "actionType": "RETURN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "RE_OPEN_RETURN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "CHANGE_DELIVERY_SLOT",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_LOCKIN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "PAYMENT_CONFIRMATION_NON_LOCKIN",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            },
+            {
+              "actionType": "FEE_WAIVER",
+              "eligibility": false,
+              "reason": "UNIT_STATUS_INVALID"
+            },
+            {
+              "actionType": "PRICE_MATCH",
+              "eligibility": false,
+              "reason": "ACTIVE_CHANGE_ORDER_REQUEST"
+            }
+          ],
+          "isPrexo": false,
+          "paymentCategoryInfo": {
+            "PREPAID": {
+              "amounts": [
+                {
+                  "value": 1169.0,
+                  "currency": "INR",
+                  "inrValue": 1169.0
+                },
+                {
+                  "value": 68.0,
+                  "currency": "COINS",
+                  "inrValue": 68.0
+                }
+              ],
+              "transactionIds": [
+                "PZT2604080136GAL1N02",
+                "PZT2604080136GAL1N01"
+              ]
+            },
+            "POSTPAID": {
+              "amounts": [],
+              "transactionIds": []
+            }
+          },
+          "unitType": "OrderItemUnit",
+          "flow": "FORWARD",
+          "toParty": {
+            "accountId": "ACC757262A3DB4441E4AA1C48C55CFD6166L",
+            "deliveryAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "billingAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "deliveryMode": "NORMAL"
+          },
+          "fromParty": {
+            "accountId": "e5c763d953f74a07"
+          },
+          "productData": {
+            "sellerId": "e5c763d953f74a07",
+            "title": "ADIDAS FOUNDATION FG/MG Football Shoes For Men",
+            "listingId": "LSTSHOHCSPEV5XBH4BFWTU89J",
+            "productId": "SHOHCSPEV5XBH4BF",
+            "categoryId": "21940",
+            "listingType": "current",
+            "serviceProfile": "FBF",
+            "mrp": {
+              "value": 3999.0,
+              "currency": "INR",
+              "inrValue": 3999.0
+            },
+            "listPrice": {
+              "value": 1101.0,
+              "currency": "INR",
+              "inrValue": 1101.0
+            },
+            "listPriceMultiCurrency": [
+              {
+                "value": 1101.0,
+                "currency": "INR",
+                "inrValue": 1101.0
+              },
+              {
+                "value": 68.0,
+                "currency": "COINS",
+                "inrValue": 68.0
+              }
+            ],
+            "anchorPrice": {
+              "value": 3599.0,
+              "currency": "INR"
+            },
+            "marketPlace": "FLIPKART",
+            "paymentFlowIdentifier": "FORWARD",
+            "itemDataType": "oiuZuluData",
+            "paymentCollectionStatus": "COMPLETED"
+          },
+          "childUnits": {
+            "437244764994727100001": {
+              "createdAt": 1775666041337,
+              "status": "APPROVED",
+              "id": "437244764994727100001",
+              "offers": [],
+              "type": "physical",
+              "itemExternalId": "437244764994727100",
+              "unitSubType": "PICKUP",
+              "rolledUpStatus": "APPROVED",
+              "adjustments": [],
+              "chores": [],
+              "statusHistories": [
+                {
+                  "timestamp": 1775666041320,
+                  "status": "APPROVED",
+                  "createdBy": "fk_selfServe",
+                  "reason": "customer_return_approved",
+                  "subReason": "AUTO_APPROVED",
+                  "comments": "System auto-approved the return"
+                }
+              ],
+              "postFulfillmentData": {
+                "shipmentId": "R-P2753435349",
+                "trackingId": "FMPR0883811672",
+                "courierName": "flipkartlogistics"
+              },
+              "promiseDataBag": {
+                "pickupPromiseDate": 1775932140000,
+                "promisedDateFrom": 1775932199000,
+                "promisedDateTo": 1775932199000,
+                "updatedPromisedDateFrom": 1775932140000,
+                "updatedPromisedDateTo": 1775932140000,
+                "promiseRefId": "CU103725213094413866$40201888b5039f398d19e8b140e6330d",
+                "promiseRefVersion": "0",
+                "sla": 0
+              },
+              "isPrexo": false,
+              "paymentCategoryInfo": {},
+              "unitType": "OrderItemUnit",
+              "flow": "RETURN",
+              "toParty": {
+                "accountId": "e5c763d953f74a07",
+                "deliveryAddressId": "malur_bts"
+              },
+              "fromParty": {
+                "accountId": "ACC757262A3DB4441E4AA1C48C55CFD6166L",
+                "deliveryAddressId": "CNTCT1C1000D16DA84555875074BF1",
+                "billingAddressId": "CNTCT1C1000D16DA84555875074BF1",
+                "deliveryMode": "NORMAL"
+              },
+              "productData": {
+                "sellerId": "e5c763d953f74a07",
+                "title": "ADIDAS FOUNDATION FG/MG Football Shoes For Men",
+                "listingId": "LSTSHOHCSPEV5XBH4BFWTU89J",
+                "productId": "SHOHCSPEV5XBH4BF",
+                "categoryId": "21940",
+                "listingType": "current",
+                "serviceProfile": "FBF",
+                "mrp": {
+                  "value": 3999.0,
+                  "currency": "INR",
+                  "inrValue": 3999.0
+                },
+                "listPrice": {
+                  "value": 1101.0,
+                  "currency": "INR",
+                  "inrValue": 1101.0
+                },
+                "listPriceMultiCurrency": [
+                  {
+                    "value": 1101.0,
+                    "currency": "INR",
+                    "inrValue": 1101.0
+                  },
+                  {
+                    "value": 68.0,
+                    "currency": "COINS",
+                    "inrValue": 68.0
+                  }
+                ],
+                "anchorPrice": {
+                  "value": 3599.0,
+                  "currency": "INR"
+                },
+                "marketPlace": "FLIPKART",
+                "paymentFlowIdentifier": "FORWARD",
+                "itemDataType": "oiuZuluData",
+                "paymentCollectionStatus": "COMPLETED"
+              },
+              "childUnits": {}
+            }
+          }
+        },
+        "437244764994727100001": {
+          "createdAt": 1775666041337,
+          "status": "APPROVED",
+          "id": "437244764994727100001",
+          "offers": [],
+          "type": "physical",
+          "itemExternalId": "437244764994727100",
+          "unitSubType": "PICKUP",
+          "rolledUpStatus": "APPROVED",
+          "adjustments": [],
+          "chores": [],
+          "statusHistories": [
+            {
+              "timestamp": 1775666041320,
+              "status": "APPROVED",
+              "createdBy": "fk_selfServe",
+              "reason": "customer_return_approved",
+              "subReason": "AUTO_APPROVED",
+              "comments": "System auto-approved the return"
+            }
+          ],
+          "postFulfillmentData": {
+            "shipmentId": "R-P2753435349",
+            "trackingId": "FMPR0883811672",
+            "courierName": "flipkartlogistics"
+          },
+          "promiseDataBag": {
+            "pickupPromiseDate": 1775932140000,
+            "promisedDateFrom": 1775932199000,
+            "promisedDateTo": 1775932199000,
+            "updatedPromisedDateFrom": 1775932140000,
+            "updatedPromisedDateTo": 1775932140000,
+            "promiseRefId": "CU103725213094413866$40201888b5039f398d19e8b140e6330d",
+            "promiseRefVersion": "0",
+            "sla": 0
+          },
+          "isPrexo": false,
+          "paymentCategoryInfo": {},
+          "unitType": "OrderItemUnit",
+          "flow": "RETURN",
+          "toParty": {
+            "accountId": "e5c763d953f74a07",
+            "deliveryAddressId": "malur_bts"
+          },
+          "fromParty": {
+            "accountId": "ACC757262A3DB4441E4AA1C48C55CFD6166L",
+            "deliveryAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "billingAddressId": "CNTCT1C1000D16DA84555875074BF1",
+            "deliveryMode": "NORMAL"
+          },
+          "productData": {
+            "sellerId": "e5c763d953f74a07",
+            "title": "ADIDAS FOUNDATION FG/MG Football Shoes For Men",
+            "listingId": "LSTSHOHCSPEV5XBH4BFWTU89J",
+            "productId": "SHOHCSPEV5XBH4BF",
+            "categoryId": "21940",
+            "listingType": "current",
+            "serviceProfile": "FBF",
+            "mrp": {
+              "value": 3999.0,
+              "currency": "INR",
+              "inrValue": 3999.0
+            },
+            "listPrice": {
+              "value": 1101.0,
+              "currency": "INR",
+              "inrValue": 1101.0
+            },
+            "listPriceMultiCurrency": [
+              {
+                "value": 1101.0,
+                "currency": "INR",
+                "inrValue": 1101.0
+              },
+              {
+                "value": 68.0,
+                "currency": "COINS",
+                "inrValue": 68.0
+              }
+            ],
+            "anchorPrice": {
+              "value": 3599.0,
+              "currency": "INR"
+            },
+            "marketPlace": "FLIPKART",
+            "paymentFlowIdentifier": "FORWARD",
+            "itemDataType": "oiuZuluData",
+            "paymentCollectionStatus": "COMPLETED"
+          },
+          "childUnits": {}
+        }
+      },
+      "targetUnitIds": [
+        "437215735435948400000"
+      ],
+      "deliveryAddressId": "CNTCT2FC68F9F21524F59937FA4081"
+    },
+    "elixir_get_order_details": {
+      "itemType": "PHYSICAL",
+      "postFulfillmentData": {
+        "shipmentId": "S989719212143",
+        "trackingId": "FMPC5901282744",
+        "courierName": "flipkartlogistics-cod",
+        "location": "malur_bts",
+        "fulfilledBy": "FKL"
+      },
+      "allowed": true
+    },
+    "elixir_check_allowed": {
+      "nextNode": "elixir_filter_incidents"
+    },
+    "elixir_filter_incidents": {
+      "filteredIncidents": [],
+      "firstElixirDetails": null,
+      "count": 0,
+      "action": "create_ticket"
+    },
+    "prepare_create_ticket_details": {
+      "body": {
+        "external_id": "IN26032715023424286886",
+        "issue_type": "DELIVERY_BREACHED",
+        "entity_reference": {
+          "type": "TRACKING_ID",
+          "id": "FMPC5901282744"
+        },
+        "entity_type": "PHYSICAL",
+        "entity_flow": "FORWARD",
+        "callback_url": "http://10.83.75.93/ims/v2/callback",
+        "id_type": "SYSTEM",
+        "persona_id": "system",
+        "message": null
+      },
+      "extraHeaders": {
+        "X_CLIENT_ID": "CX",
+        "X_REQUEST_ID": "34fe5aae-823d-4f83-9727-b15b2be44b44",
+        "X_TENANT_ID": "ELIXIR_FK"
+      },
+      "httpUri": "http://10.83.46.255/elixir/v1/tickets",
+      "method": "POST",
+      "groupId": "IN26032715023424286886",
+      "messageId": "IN260327150234242868869434",
+      "queueName": "fk_fse_elixir_b2c_production",
+      "elxrTkt": {
+        "id": null,
+        "workflowId": "WF-26032715023506552635",
+        "status": "REQUESTED",
+        "type": "DELIVERY_BREACHED",
+        "entity": {
+          "referenceType": "TRACKING_ID",
+          "referenceId": "FMPC5901282744",
+          "type": "PHYSICAL"
+        },
+        "createdAt": 1774603955431,
+        "updatedAt": 1774603955431
+      },
+      "notesText": "Elixir ticket requested"
+    },
+    "elixir_check_filter_count": {
+      "nextNode": "elixir_create_ticket"
+    },
+    "elixir_create_ticket": {
+      "X_RESTBUS_MESSAGE_ID": "IN260327150234242868869434"
+    },
+    "create_elixir_ticket_branch_skip_incident_after_create": {
+      "nextNode": "elixir_waiting_for_response"
+    },
+    "elixir_waiting_for_response": {
+      "inputOptions": [
+        {
+          "id": "elixir_callback_placeholder",
+          "description": "Waiting for Elixir callback to resume workflow",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "status_template",
+              "templateVariables": {
+                "status": "WAITING_FOR_ELIXIR_CALLBACK"
+              }
+            }
+          ]
+        },
+        {
+          "id": "status",
+          "description": "Elixir ticket status from callback (CREATED / REJECTED)",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        },
+        {
+          "id": "ticket_id",
+          "description": "Elixir ticket ID from callback; null when status is REJECTED",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        },
+        {
+          "id": "created_at",
+          "description": "Timestamp from callback (used as updatedAt in elxrTkt)",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        },
+        {
+          "id": "message",
+          "description": "Optional message from callback (e.g. rejection reason)",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        }
+      ]
+    },
+    "elixir_waiting_for_response:viewResponse": {
+      "selectedOptions": {
+        "created_at": "2026-03-27T09:32:37.589+0000",
+        "external_id": "IN26032715023424286886",
+        "ticket_id": "IN26032715023743686000",
+        "status": "ACCEPTED"
+      }
+    },
+    "prepare_elixir_response_update": {
+      "threads": [
+        {
+          "text": "Elixir Ticket: ACCEPTED\n",
+          "contentType": "text/plain",
+          "threadEntryType": {
+            "id": 30,
+            "name": null
+          },
+          "createdByUser": "FF",
+          "action": "add"
+        }
+      ],
+      "elxrTicket": {
+        "id": "IN26032715023743686000",
+        "workflowId": "WF-26032715023506552635",
+        "status": "ACCEPTED",
+        "type": "DELIVERY_BREACHED",
+        "entity": {
+          "referenceType": "TRACKING_ID",
+          "referenceId": "FMPC5901282744",
+          "type": "PHYSICAL"
+        },
+        "createdAt": 1774603955431,
+        "updatedAt": "2026-03-27T09:32:37.589+0000"
+      }
+    },
+    "update_incident_elixir_response": {
+      "incidentId": "IN26032715023424286886"
+    },
+    "elixir_check_ticket_status": {
+      "nextNode": "elixir_waiting_for_updates"
+    },
+    "elixir_waiting_for_updates": {
+      "inputOptions": [
+        {
+          "id": "elixir_update_placeholder",
+          "description": "Waiting for Elixir update callback to resume workflow",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": [
+            {
+              "templateId": "status_template",
+              "templateVariables": {
+                "status": "WAITING_FOR_ELIXIR_UPDATE"
+              }
+            }
+          ]
+        },
+        {
+          "id": "action",
+          "description": "Elixir update action (ALT_PH_NUMBER_REQUIRED / OTHERS / CLOSED)",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        },
+        {
+          "id": "context",
+          "description": "Plain object with update details: reasonCode, subreasonCode, reasonText, subReasonText, persona",
+          "tags": {
+            "values": [
+              "ehc.static_text"
+            ]
+          },
+          "instructions": []
+        }
+      ]
+    },
+    "elixir_waiting_for_updates:viewResponse": {
+      "selectedOptions": {
+        "context": {
+          "reason_code": "CANNOT_BE_DELIVERED",
+          "subreason_code": "ALTERNATE_CONTACT_DETAILS_REQUIRED",
+          "reason_text": "Can not be delivered",
+          "subreason_text": "Price Issue",
+          "persona": "HUB_INCHARGE"
+        },
+        "action": "OTHERS",
+        "external_id": "IN26032715023424286886",
+        "ticket_id": "IN26032715023743686000"
+      }
+    },
+    "prepare_elixir_action_update": {
+      "action": "OTHERS",
+      "elxrTkt": null,
+      "threads": [
+        {
+          "text": "Reason Code: CANNOT_BE_DELIVERED\nReason Text: Can not be delivered\nSub Reason Code: ALTERNATE_CONTACT_DETAILS_REQUIRED\nSub Reason Text: Price Issue\nPersona: HUB_INCHARGE",
+          "contentType": "text/plain",
+          "threadEntryType": {
+            "id": 30,
+            "name": null
+          },
+          "createdByUser": "HUB_INCHARGE",
+          "action": "add"
+        }
+      ],
+      "error": false,
+      "childWfAction": null,
+      "childWorkflowName": null,
+      "childWorkflowVersion": null
+    },
+    "update_incident_elixir_action": {
+      "incidentId": "IN26032715023424286886"
+    },
+    "elixir_action_branch": {
+      "nextNode": "elixir_prepare_reach_out_instructions"
+    },
+    "elixir_prepare_reach_out_instructions": {
+      "sendReachoutMessage": false,
+      "reachoutConfig": {}
+    }
+  },
+  "createdAt": null,
+  "updatedAt": null
+}

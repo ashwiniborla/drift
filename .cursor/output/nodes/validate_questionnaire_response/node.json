@@ -1,0 +1,14 @@
+{
+    "id": "validate_questionnaire_response",
+    "name": "Validate questionnaire response",
+    "type": "GROOVY",
+    "parameters": ["questions", "questionnaireType"],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/fake_questionnaire/validate_questionnaire_response.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

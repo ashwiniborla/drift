@@ -1,0 +1,30 @@
+{
+    "id": "branch_minions_eligible",
+    "name": "Branch: Are Units Minions-Eligible for Address Change?",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.check_minions_eligibility?.isEligible == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "chore_eligibility"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return !_global?.check_minions_eligibility?.isEligible"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_eligibility_success"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

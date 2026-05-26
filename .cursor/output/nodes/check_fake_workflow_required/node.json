@@ -1,0 +1,50 @@
+{
+    "id": "check_fake_workflow_required",
+    "name": "Check fake workflow required",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.validate_questionnaire_response?.selectedQuestionConfig?.isFakeWorkflowRequired == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "run_fake_sub_workflow"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.phone == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "collect_phone_number"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.validate_questionnaire_response?.selectedQuestionConfig?.postScreensRequired?.location == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "collect_location"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_questionnaire_end_instructions"
+        }
+    ],
+    "defaultNode": "default_failure"
+}

@@ -1,0 +1,62 @@
+{
+    "id": "add_notes_instruction",
+    "name": "Add notes instruction",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "add_notes_instruction"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "id": "add_notes_static_text",
+            "description": "Show static text",
+            "tags": {
+                "values": [
+                    "sa.static_text"
+                ]
+            },
+            "instructions": [
+                {
+                    "templateId": "add_notes_template"
+                }
+            ]
+        },
+        {
+            "id": "agent_notes",
+            "description": "Agent notes for SA",
+            "tags": {
+                "values": [
+                    "sa.free_text"
+                ]
+            },
+            "instructions": [
+                {
+                    "templateId": "take_notes_template"
+                }
+            ]
+        },
+        {
+            "id": "add_notes_button_widget",
+            "description": "Select a button",
+            "tags": {
+                "values": [
+                    "sa.button_widget"
+                ]
+            },
+            "possibleValues": [
+                {
+                    "displayValue": "Update Incident",
+                    "metaData": {},
+                    "value": "UPDATE_INCIDENT"
+                }
+            ]
+        }
+    ]
+}

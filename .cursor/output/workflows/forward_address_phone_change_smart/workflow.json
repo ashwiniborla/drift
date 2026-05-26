@@ -1,0 +1,191 @@
+{
+    "id": "forward_address_phone_change_smart",
+    "comment": "Smart-action alternate phone number update workflow. Standalone — not used as a SUB_WORKFLOW. Starts with get_incident_for_elixir (GET incident + incident_extractor) to resolve elixirTicketId from customFields.elxrTkt. Registers this workflow as a V3 child on the incident via updateIncident, then runs eligibility/feasibility checks via the shared fap_eligibility_check sub-workflow, then presents smart-action-specific UI to collect the new phone number. After successful sub_address_update, optionally pushes Elixir COMMUNICATION update via Varadhi when elixir.actionConfig[updateType] has responseConfig; then shows fap_success_instruction. On failure (default_failure), spawns the non-smart forward_address_phone_change as a CHILD workflow and shows fap_end_instruction.",
+    "startNode": "get_incident_for_elixir",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "postWorkflowCompletionNodes": ["complete_forward_phone_change_smart_workflow"],
+    "states": {
+        "get_incident_for_elixir": {
+            "instanceName": "get_incident_for_elixir",
+            "resourceId": "get_incident",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "includeV3SmartWorkflow": false,
+                "transformerScript": "src/main/resources/scripts/incident_extractor/extract_elxr_tkt_from_get_incident.groovy"
+            },
+            "nextNode": "fap_eligibility_fetch_oxford",
+            "end": false
+        },
+        "fap_eligibility_fetch_oxford": {
+            "instanceName": "fap_eligibility_fetch_oxford",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+                "useCase": "default"
+            },
+            "nextNode": "register_child_workflow_update_incident",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "register_child_workflow_update_incident": {
+            "instanceName": "register_child_workflow_update_incident",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "childWorkflowAction": "update",
+                "workflowId": "$.workflowId",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version"
+            },
+            "nextNode": "prepare_current_address",
+            "end": false
+        },
+        "prepare_current_address": {
+            "instanceName": "prepare_current_address",
+            "resourceId": "sub_prepare_current_address",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "sub_eligibility",
+            "end": false
+        },
+        "sub_eligibility": {
+            "instanceName": "sub_eligibility",
+            "resourceId": "sub_fap_eligibility_check",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "branch_feasibility_smart",
+            "end": false
+        },
+        "branch_feasibility_smart": {
+            "instanceName": "branch_feasibility_smart",
+            "resourceId": "branch_feasibility_smart",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "prepare_alternate_phone_smart": {
+            "instanceName": "prepare_alternate_phone_smart",
+            "resourceId": "prepare_alternate_phone_smart",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "ask_alternate_phone_smart",
+            "end": false
+        },
+        "ask_alternate_phone_smart": {
+            "instanceName": "ask_alternate_phone_smart",
+            "resourceId": "ask_alternate_phone_smart",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_alternate_phone_smart.inputOptions"
+            },
+            "contextOverrideKey": "ask_alternate_phone",
+            "nextNode": "sub_address_update",
+            "end": false
+        },
+        "sub_address_update": {
+            "instanceName": "sub_address_update",
+            "resourceId": "sub_fap_address_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "prepare_elixir_ticket_update",
+            "end": false
+        },
+        "prepare_elixir_ticket_update": {
+            "instanceName": "prepare_elixir_ticket_update",
+            "resourceId": "prepare_elixir_ticket_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "elixirTicketId": "$.get_incident_for_elixir.elixirTicketId",
+                "updateType": "ALT_PH_NUMBER_REQUIRED"
+            },
+            "nextNode": "branch_elixir_ticket_communication_update",
+            "end": false
+        },
+        "branch_elixir_ticket_communication_update": {
+            "instanceName": "branch_elixir_ticket_communication_update",
+            "resourceId": "branch_elixir_ticket_communication_update",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "elixir_ticket_communication_update": {
+            "instanceName": "elixir_ticket_communication_update",
+            "resourceId": "push_to_varadhi",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "groupId": "$.prepare_elixir_ticket_update.groupId",
+                "messageId": "$.prepare_elixir_ticket_update.messageId",
+                "httpUri": "$.prepare_elixir_ticket_update.httpUri",
+                "method": "$.prepare_elixir_ticket_update.method",
+                "extraHeaders": "$.prepare_elixir_ticket_update.extraHeaders",
+                "body": "$.prepare_elixir_ticket_update.body",
+                "name": "$.prepare_elixir_ticket_update.queueName",
+                "isQueue": true
+            },
+            "nextNode": "prepare_fap_success_instruction",
+            "end": false
+        },
+        "prepare_fap_success_instruction": {
+            "instanceName": "prepare_fap_success_instruction",
+            "resourceId": "prepare_fap_success_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "odRedirect": true
+            },
+            "nextNode": "fap_success_instruction",
+            "end": false
+        },
+        "fap_success_instruction": {
+            "instanceName": "fap_success_instruction",
+            "resourceId": "fap_success_instruction",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "inputOptions": "$.prepare_fap_success_instruction.inputOptions",
+                "layoutId": "$.prepare_fap_success_instruction.layoutId"
+            },
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "fap_end_instruction",
+            "end": true
+        },
+        "complete_forward_phone_change_smart_workflow": {
+            "instanceName": "complete_forward_phone_change_smart_workflow",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "childWorkflowAction": "update",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version",
+                "workflowId": "$.workflowId",
+                "childWorkflowCompleted": true
+            },
+            "end": true
+        }
+    }
+}

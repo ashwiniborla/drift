@@ -45,8 +45,4 @@ public class SubWorkflowNode extends NodeDefinition {
             this.setConfig(source.getConfig());
         }
     }
-
-    public SubWorkflowConfig getEffectiveConfig() {
-        return config != null ? config : SubWorkflowConfig.builder().build();
-    }
 }

@@ -1,0 +1,13 @@
+{
+    "id": "sub_fetch_location",
+    "name": "Sub Workflow: Fetch Location",
+    "type": "SUB_WORKFLOW",
+    "version": "1",
+    "subWorkflowId": "fetch_location",
+    "subWorkflowVersion": "LATEST",
+    "config": {
+        "includeFirstNode": true,
+        "includeLastNode": false,
+        "errorHandlingStrategy": "PROPAGATE"
+    }
+}

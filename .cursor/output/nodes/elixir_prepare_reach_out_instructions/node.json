@@ -1,0 +1,14 @@
+{
+    "id": "elixir_prepare_reach_out_instructions",
+    "name": "elixir_prepare_reach_out_instructions",
+    "type": "GROOVY",
+    "parameters": [],
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/create_elixir_ticket_workflow/elixir_prepare_reach_out_instructions.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

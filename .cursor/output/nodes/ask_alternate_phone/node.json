@@ -1,0 +1,22 @@
+{
+    "id": "ask_alternate_phone",
+    "name": "Ask: Collect Alternate Phone Number",
+    "type": "INSTRUCTION",
+    "parameters": ["inputOptions"],
+    "version": "1",
+    "layoutId": {
+        "attribute": {
+            "type": "STATIC",
+            "value": {
+                "type": "STRING",
+                "data": "elixir_proactive_get_alternate_number_layout"
+            }
+        }
+    },
+    "inputOptions": [
+        {
+            "description": "Resolved at runtime from prepare_alternate_phone_response output",
+            "possibleDynamicValues": "nodeParameters.inputOptions"
+        }
+    ]
+}

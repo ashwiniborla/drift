@@ -1,0 +1,50 @@
+{
+    "id": "check_location_screen_required",
+    "name": "Check location screen required",
+    "type": "BRANCH",
+    "parameters": ["locationRequired", "phoneChangeSuccess"],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.nodeParameters?.phoneChangeSuccess == false"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_failure_instruction_terminal"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.nodeParameters?.locationRequired == true && _global.nodeParameters?.phoneChangeSuccess == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_success_instruction_continue"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.nodeParameters?.locationRequired == false && _global.nodeParameters?.phoneChangeSuccess == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fap_success_instruction_terminal"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global.nodeParameters?.locationRequired == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "collect_location"
+        }
+    ],
+    "defaultNode": "prepare_questionnaire_end_instructions"
+}

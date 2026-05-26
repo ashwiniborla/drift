@@ -1,0 +1,128 @@
+{
+    "id": "e2e_order_delivery_workflow",
+    "comment": "E2E Order Delivery workflow. Polls order-unit statuses every 3 hours via Oxford and evaluates terminal conditions (delivered, cancelled, rejected, CPD breached, post-SLA). Routes use-case logic by issueId. Closes the incident when the order reaches a terminal state.",
+    "startNode": "update_incident_e2e_waiting",
+    "version": "1",
+    "defaultFailureNode": "default_failure",
+    "states": {
+        "update_incident_e2e_waiting": {
+            "instanceName": "update_incident_e2e_waiting",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "statusId": "197",
+                "childWorkflowAction": "add",
+                "workflowId": "$.workflowId",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version"
+
+            },
+            "nextNode": "e2e_scheduler_wait",
+            "end": false
+        },
+        "e2e_scheduler_wait": {
+            "instanceName": "e2e_scheduler_wait",
+            "resourceId": "e2e_scheduler_wait",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "e2e_fetch_order_details",
+            "end": false
+        },
+        "e2e_fetch_order_details": {
+            "instanceName": "e2e_fetch_order_details",
+            "resourceId": "e2e_fetch_order_details",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default",
+                "useCase": "default"
+            },
+            "nextNode": "e2e_extract_oxford_units",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "e2e_extract_oxford_units": {
+            "instanceName": "e2e_extract_oxford_units",
+            "resourceId": "extract_oxford_order_units",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "dataVariable": "v2OrderData_imsv2_varadhi_client1_default"
+            },
+            "nextNode": "e2e_use_case_branch",
+            "contextOverrideKey": "fetch_order_oxford",
+            "end": false
+        },
+        "e2e_use_case_branch": {
+            "instanceName": "e2e_use_case_branch",
+            "resourceId": "e2e_use_case_branch",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "e2e_fake_forward": {
+            "instanceName": "e2e_fake_forward",
+            "resourceId": "e2e_fake_forward",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "e2e_check_ended",
+            "end": false
+        },
+        "e2e_fake_reverse": {
+            "instanceName": "e2e_fake_reverse",
+            "resourceId": "e2e_fake_reverse",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "nextNode": "e2e_check_ended",
+            "end": false
+        },
+        "e2e_check_ended": {
+            "instanceName": "e2e_check_ended",
+            "resourceId": "e2e_check_ended",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": false
+        },
+        "update_incident_closed": {
+            "instanceName": "update_incident_closed",
+            "resourceId": "update_incident_v3",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {
+                "incidentId": "$.params.incidentId",
+                "statusId": "2",
+                "notesText": "$.e2e_fake_forward.useCaseName",
+                "childWorkflowCompleted": true,
+                "childWorkflowAction": "update",
+                "childWorkflowName": "$.params.workflowId",
+                "childWorkflowVersion": "$.params.version",
+                "workflowId": "$.workflowId"
+            },
+            "nextNode": "e2e_workflow_success",
+            "end": false
+        },
+        "e2e_workflow_success": {
+            "instanceName": "e2e_workflow_success",
+            "resourceId": "e2e_workflow_success",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        },
+        "default_failure": {
+            "instanceName": "default_failure",
+            "resourceId": "default_failure",
+            "resourceVersion": "SNAPSHOT",
+            "type": "NODE",
+            "parameters": {},
+            "end": true
+        }
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "id": "elixir_waiting_for_updates",
+    "name": "Elixir waiting for updates",
+    "type": "INSTRUCTION",
+    "parameters": [],
+    "version": "1",
+    "inputOptions": [
+        {
+            "id": "elixir_update_placeholder",
+            "description": "Waiting for Elixir update callback to resume workflow",
+            "tags": {
+                "values": ["ehc.static_text"]
+            },
+            "instructions": [
+                {
+                    "templateId": "status_template",
+                    "templateVariables": {
+                        "status": "WAITING_FOR_ELIXIR_UPDATE"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "action",
+            "description": "Elixir update action (ALT_PH_NUMBER_REQUIRED / OTHERS / CLOSED)",
+            "tags": {
+                "values": ["ehc.static_text"]
+            },
+            "instructions": []
+        },
+        {
+            "id": "context",
+            "description": "Plain object with update details: reasonCode, subreasonCode, reasonText, subReasonText, persona",
+            "tags": {
+                "values": ["ehc.static_text"]
+            },
+            "instructions": []
+        }
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "id": "fap_workflow_success",
+    "name": "Forward Address Phone Change - Workflow Success",
+    "type": "SUCCESS",
+    "version": "1",
+    "comment": "Alternate phone number updated successfully",
+    "executionMode": "SYNC"
+}

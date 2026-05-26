@@ -1,0 +1,50 @@
+{
+  "id": "elixir_check_filter_count",
+  "name": "Elixir check filter count",
+  "type": "BRANCH",
+  "parameters": [],
+  "version": "1",
+  "choices": [
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "return _global?.elixir_filter_incidents?.action == 'create_ticket' "
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "elixir_create_ticket"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "return _global?.elixir_filter_incidents?.action == 'wait_for_elixir_acceptance' "
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "update_incident_elixir_requested"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "return _global?.elixir_filter_incidents?.action == 'listen_to_elixir_updates' "
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "elixir_waiting_for_updates"
+    },
+    {
+      "rule": {
+        "value": {
+          "type": "STRING",
+          "data": "return _global?.elixir_filter_incidents?.action == 'listen_to_elixir_updates' "
+        },
+        "type": "SCRIPT"
+      },
+      "nextNode": "elixir_incidents_found_end"
+    }
+  ],
+  "defaultNode": "default_failure"
+}

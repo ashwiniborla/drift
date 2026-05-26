@@ -1,0 +1,13 @@
+{
+    "id": "e2e_fake_reverse",
+    "name": "E2E Fake Reverse (Delay in Pickup)",
+    "type": "GROOVY",
+    "version": "1",
+    "transformer": {
+        "value": {
+            "type": "STRING",
+            "data": "def script = new File('src/main/resources/scripts/e2e_reverse_pickup_workflow/e2e_fake_reverse.groovy').text; evaluate(script);"
+        },
+        "type": "SCRIPT"
+    }
+}

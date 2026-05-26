@@ -1,0 +1,30 @@
+{
+    "id": "branch_nudge_required",
+    "name": "Branch: Nudge Required",
+    "type": "BRANCH",
+    "parameters": [],
+    "version": "1",
+    "choices": [
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.evaluate_location?.nudge?.required == true"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "prepare_location_instruction"
+        },
+        {
+            "rule": {
+                "value": {
+                    "type": "STRING",
+                    "data": "return _global?.evaluate_location?.nudge?.required == false"
+                },
+                "type": "SCRIPT"
+            },
+            "nextNode": "fetch_location_success"
+        }
+    ],
+    "defaultNode": "default_failure"
+}
