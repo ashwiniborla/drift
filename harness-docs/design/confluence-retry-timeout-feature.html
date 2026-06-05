@@ -1,0 +1,283 @@
+<ac:structured-macro ac:name="info">
+  <ac:rich-text-body>
+    <p>This page covers the design, implementation, and validation of per-node retry and timeout configuration for Drift activity execution on Temporal.</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>Background</h2>
+<p>Drift orchestrates workflows as DAGs on top of Temporal. Every workflow node (HTTP call, processor, etc.) is executed as a Temporal <strong>activity</strong>. Before this change, all activities shared a single global <code>ActivityOptions</code> object defined in <code>OptionsStore.activityOptionsV1</code> — a hardcoded 10-second timeout with no retry policy.</p>
+<p>This meant:</p>
+<ul>
+  <li>No way to retry a flaky HTTP node without wrapping it in custom code.</li>
+  <li>No way to give a slow node a longer timeout without affecting every other node in the system.</li>
+  <li>Any transient failure immediately moved the workflow to its <code>defaultFailureNode</code>.</li>
+</ul>
+
+<h2>Objective</h2>
+<p>Allow workflow authors to declare, <strong>per node</strong>, a custom activity timeout and retry policy — directly in the workflow definition JSON stored in HBase. No code deployment required to change retry behaviour for a workflow.</p>
+
+<h2>Scope</h2>
+<table>
+  <tbody>
+    <tr><th>In scope</th><th>Out of scope</th></tr>
+    <tr>
+      <td>
+        <ul>
+          <li>Per-node <code>timeoutSeconds</code> (startToCloseTimeout)</li>
+          <li>Per-node <code>retryConfig</code> (maxAttempts, initialInterval, maxInterval, backoffCoefficient)</li>
+          <li>Platform-level defaults via <code>activityDefaults</code> in worker config YAML</li>
+          <li>Applies to all non-local activity types (HTTP, PROCESSOR, DELEGATE, CONTEXT_OVERRIDE, etc.)</li>
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>Local activity types (INSTRUCTION, BRANCH, GROOVY, SUCCESS, FAILURE) — these use <code>localActivityOptions</code> unchanged</li>
+          <li>Dynamic config service integration</li>
+          <li>Per-tenant retry defaults</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Design</h2>
+
+<h3>New DSL fields on WorkflowNode</h3>
+<p>Two optional fields added to <code>WorkflowNode</code> (stored in HBase as part of the workflow definition JSON):</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">json</ac:parameter>
+  <ac:rich-text-body>
+{
+  "instanceName": "callExternalService",
+  "resourceId": "my-http-node",
+  "resourceVersion": "1",
+  "type": "NODE",
+  "timeoutSeconds": 30,
+  "retryConfig": {
+    "maxAttempts": 3,
+    "initialIntervalSeconds": 2,
+    "maxIntervalSeconds": 30,
+    "backoffCoefficient": 2.0
+  },
+  "end": false
+}
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<p>Both fields are <strong>optional</strong>. If omitted, the platform defaults from <code>activityDefaults</code> in <code>configuration.yaml</code> are used.</p>
+
+<h3>Priority / override chain</h3>
+<table>
+  <tbody>
+    <tr><th>Source</th><th>Priority</th><th>Where configured</th></tr>
+    <tr><td>Node-level <code>retryConfig</code> / <code>timeoutSeconds</code></td><td>Highest</td><td>Workflow definition JSON in HBase</td></tr>
+    <tr><td><code>activityDefaults</code> block</td><td>Middle</td><td><code>worker/src/main/resources/config/configuration.yaml</code></td></tr>
+    <tr><td>Hard-coded fallback</td><td>Lowest</td><td><code>ActivityOptionsBuilder</code> constants (timeout=10s, maxAttempts=1)</td></tr>
+  </tbody>
+</table>
+
+<h3>Component changes</h3>
+
+<h4>1. NodeRetryConfig (commons)</h4>
+<p><strong>New class:</strong> <code>commons/src/main/java/com/flipkart/drift/commons/model/node/NodeRetryConfig.java</code></p>
+<p>Simple POJO deserialised from the workflow definition. Fields: <code>maxAttempts</code>, <code>initialIntervalSeconds</code> (default 1), <code>maxIntervalSeconds</code> (default 20), <code>backoffCoefficient</code> (default 2.0).</p>
+
+<h4>2. WorkflowNode (commons)</h4>
+<p><strong>Modified:</strong> <code>commons/src/main/java/com/flipkart/drift/commons/model/node/WorkflowNode.java</code></p>
+<p>Two new nullable fields added:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">java</ac:parameter>
+  <ac:rich-text-body>
+@JsonProperty("timeoutSeconds") private Integer timeoutSeconds;
+@JsonProperty("retryConfig")    private NodeRetryConfig retryConfig;
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h4>3. ActivityDefaultsConfig (worker)</h4>
+<p><strong>New class:</strong> <code>worker/src/main/java/com/flipkart/drift/worker/config/ActivityDefaultsConfig.java</code></p>
+<p>Bound to the <code>activityDefaults</code> YAML block. Provides platform-wide defaults when a node omits its own config.</p>
+
+<h4>4. ActivityOptionsBuilder (worker)</h4>
+<p><strong>New class:</strong> <code>worker/src/main/java/com/flipkart/drift/worker/temporal/ActivityOptionsBuilder.java</code></p>
+<p>Core logic: takes a <code>WorkflowNode</code> and returns a fully configured Temporal <code>ActivityOptions</code>. Node-level values override defaults; defaults override hard-coded fallbacks.</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">java</ac:parameter>
+  <ac:rich-text-body>
+public ActivityOptions build(WorkflowNode node) {
+    int timeout     = node.getTimeoutSeconds() != null ? node.getTimeoutSeconds() : defaultTimeoutSeconds;
+    int maxAttempts = retryConfig != null ? retryConfig.getMaxAttempts() : defaultMaxAttempts;
+    // ... initialInterval, maxInterval, backoff resolved the same way
+    return ActivityOptions.newBuilder()
+        .setStartToCloseTimeout(Duration.ofSeconds(timeout))
+        .setRetryOptions(RetryOptions.newBuilder()
+            .setMaximumAttempts(maxAttempts)
+            .setInitialInterval(Duration.ofSeconds(initialInterval))
+            .setMaximumInterval(Duration.ofSeconds(maxInterval))
+            .setBackoffCoefficient(backoff)
+            .build())
+        .build();
+}
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h4>5. ActivityOptionsBuilderHolder (worker)</h4>
+<p><strong>New class:</strong> <code>worker/src/main/java/com/flipkart/drift/worker/temporal/ActivityOptionsBuilderHolder.java</code></p>
+<p>Thread-safe singleton holder. Initialised once at worker startup. Workflow execution threads call <code>ActivityOptionsBuilderHolder.get().build(currentNode)</code>.</p>
+
+<h4>6. TemporalWorkerManaged (worker)</h4>
+<p><strong>Modified:</strong> <code>worker/src/main/java/com/flipkart/drift/worker/bootstrap/TemporalWorkerManaged.java</code></p>
+<p>Added one line to <code>start()</code> to initialise the holder before the worker factory starts polling:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">java</ac:parameter>
+  <ac:rich-text-body>
+@Override
+public void start() {
+    ActivityOptionsBuilderHolder.init(new ActivityOptionsBuilder(this.configuration.getActivityDefaults()));
+    workerFactory.start();
+}
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h4>7. WorkflowNodeExecutor (worker)</h4>
+<p><strong>Modified:</strong> <code>worker/src/main/java/com/flipkart/drift/worker/workflows/WorkflowNodeExecutor.java</code></p>
+<p>Replaced the static global options with per-node options:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">java</ac:parameter>
+  <ac:rich-text-body>
+// Before
+io.temporal.workflow.Workflow.newUntypedActivityStub(OptionsStore.activityOptionsV1)
+
+// After
+io.temporal.workflow.Workflow.newUntypedActivityStub(ActivityOptionsBuilderHolder.get().build(currentNode))
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h4>8. configuration.yaml (worker)</h4>
+<p><strong>Modified:</strong> <code>worker/src/main/resources/config/configuration.yaml</code></p>
+<p>Added platform defaults block and fixed a YAML quoting issue with <code>REDIS_PREFIX</code>:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:rich-text-body>
+# Redis prefix — quoted to prevent YAML colon parse error
+prefix: "${REDIS_PREFIX}"
+
+# Platform-level activity defaults (per-node overrides take priority)
+activityDefaults:
+  defaultMaxAttempts: 1
+  defaultTimeoutSeconds: 10
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>How to use</h2>
+
+<h3>Register a node definition (HTTP)</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:rich-text-body>
+curl -X POST http://&lt;drift-api&gt;/nodeDefinition/ \
+  -H "Content-Type: application/json" \
+  -H "X_TENANT_ID: &lt;tenant&gt;" \
+  -H "X_CLIENT_ID: &lt;client&gt;" \
+  -d '{
+    "id": "my-http-node",
+    "name": "My HTTP Node",
+    "type": "HTTP",
+    "httpComponents": {
+      "url": {"type": "STATIC", "value": {"type": "STRING", "data": "https://example.com/api"}},
+      "method": "POST",
+      "contentType": "application/json"
+    }
+  }'
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h3>Register a workflow with retry + timeout</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:rich-text-body>
+curl -X POST http://&lt;drift-api&gt;/workflowDefinition/ \
+  -H "Content-Type: application/json" \
+  -H "X_TENANT_ID: &lt;tenant&gt;" \
+  -H "X_CLIENT_ID: &lt;client&gt;" \
+  -d '{
+    "id": "my-workflow",
+    "startNode": "step1",
+    "states": {
+      "step1": {
+        "instanceName": "step1",
+        "resourceId": "my-http-node",
+        "resourceVersion": "1",
+        "type": "NODE",
+        "timeoutSeconds": 30,
+        "retryConfig": {
+          "maxAttempts": 3,
+          "initialIntervalSeconds": 2,
+          "maxIntervalSeconds": 30,
+          "backoffCoefficient": 2.0
+        },
+        "end": true
+      }
+    }
+  }'
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h3>Publish and activate</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:rich-text-body>
+# Publish node
+curl -X POST http://&lt;drift-api&gt;/nodeDefinition/my-http-node/publishNode/ \
+  -H "X_TENANT_ID: &lt;tenant&gt;" -H "X_CLIENT_ID: &lt;client&gt;"
+
+# Publish workflow
+curl -X POST http://&lt;drift-api&gt;/workflowDefinition/my-workflow/publishWorkflow/ \
+  -H "X_TENANT_ID: &lt;tenant&gt;" -H "X_CLIENT_ID: &lt;client&gt;"
+
+# Activate at version 1
+curl -X POST "http://&lt;drift-api&gt;/workflowDefinition/my-workflow/activate?version=1" \
+  -H "X_TENANT_ID: &lt;tenant&gt;" -H "X_CLIENT_ID: &lt;client&gt;"
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h3>Start a workflow</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:rich-text-body>
+curl -X POST http://&lt;drift-api&gt;/v3/workflow/start \
+  -H "Content-Type: application/json" \
+  -H "X_TENANT_ID: &lt;tenant&gt;" \
+  -H "X_CLIENT_ID: &lt;client&gt;" \
+  -d '{
+    "workflowId": "run-001",
+    "params": {"workflowId": "my-workflow", "version": "1"},
+    "issueDetail": {"issueId": "ISSUE-123"},
+    "threadContext": {"tenant": "&lt;tenant&gt;", "clientId": "&lt;client&gt;"}
+  }'
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>Validation</h2>
+
+<h3>Retry scenario</h3>
+<p>Workflow <code>drift-retry-final</code> — node with <code>maxAttempts: 3</code> hitting an endpoint that returns HTTP 500 for the first 2 calls and HTTP 200 on the 3rd.</p>
+<p><strong>Expected on Temporal UI:</strong> Activity <code>callRetryEndpoint</code> shows <code>attempt: 3</code> in its last STARTED event. Final workflow status: <strong>COMPLETED</strong>.</p>
+<p><strong>Observed:</strong> ✅ Workflow <code>WORKFLOW_EXECUTION_STATUS_COMPLETED</code>, activity reached attempt 3.</p>
+
+<h3>Timeout scenario</h3>
+<p>Workflow <code>drift-timeout-final</code> — node with <code>timeoutSeconds: 5</code> hitting an endpoint that sleeps for 30 seconds.</p>
+<p><strong>Expected on Temporal UI:</strong> <code>ACTIVITY_TASK_TIMED_OUT</code> with <code>TIMEOUT_TYPE_START_TO_CLOSE</code> after 5 seconds. Final workflow status: <strong>FAILED</strong>.</p>
+<p><strong>Observed:</strong> ✅ Workflow <code>WORKFLOW_EXECUTION_STATUS_FAILED</code> with error <em>"Activity task timed out … RETRY_STATE_MAXIMUM_ATTEMPTS_REACHED"</em>.</p>
+
+<h2>Unit tests</h2>
+<p>New test class: <code>worker/src/test/java/com/flipkart/drift/worker/temporal/ActivityOptionsBuilderTest.java</code></p>
+<ul>
+  <li>Node with <code>retryConfig</code> — verifies maxAttempts, intervals, backoff are applied</li>
+  <li>Node with <code>timeoutSeconds</code> — verifies startToCloseTimeout is set</li>
+  <li>Node with neither — verifies platform defaults are used</li>
+  <li>Null <code>ActivityDefaultsConfig</code> — verifies hard-coded fallbacks kick in</li>
+</ul>
+
+<h2>PR</h2>
+<p><a href="https://github.com/flipkart-incubator/drift/pull/36">https://github.com/flipkart-incubator/drift/pull/36</a> — <strong>feat: per-node retry and timeout config for HTTP activities</strong></p>
+<p>11 files changed, 271 additions, 7 deletions. CI: ✅ passing.</p>
