@@ -107,7 +107,7 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
                 logger.info("WfId : {} Running node: {}", workflowId, currentNode.getInstanceName());
                 activityThinResponse = nodeExecutor.executeNode(currentNode, threadContext, workflowStartRequest);
             } catch (Exception e) {
-                currentNode = nodeExecutor.handleNodeExecutionError(e, workflow);
+                currentNode = nodeExecutor.handleNodeExecutionError(e, workflow, currentNode);
                 continue;
             }
             if (activityThinResponse != null) {
