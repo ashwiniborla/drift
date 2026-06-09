@@ -1,7 +1,7 @@
 # Harness State
 
 session-id: defaultFailureNode-bug-fix
-pipeline-stage: IMPLEMENTING
+pipeline-stage: DONE
 task-type: IMPLEMENTATION_SMALL
 repo-type: SERVICE
 feature-branch: DefaultFailureNodeBug
