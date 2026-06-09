@@ -139,12 +139,13 @@ public class WorkflowNodeExecutor {
         }
     }
 
-    public WorkflowNode handleNodeExecutionError(Exception e, Workflow workflow) {
+    public WorkflowNode handleNodeExecutionError(Exception e, WorkflowNode failedNode, Workflow workflow) {
+        this.workflowState.setStatus(WorkflowStatus.FAILED);
+        this.workflowState.setCurrentNodeRef(generateNodeIdentifier(failedNode));
         this.workflowState.setErrorMessage("Error message: " + e.getMessage());
         WorkflowNode fallbackNode = workflow.getStates().get(workflow.getDefaultFailureNode());
         // Fail the workflow if no fallback configured
         if (fallbackNode == null) {
-            this.workflowState.setStatus(WorkflowStatus.FAILED);
             throw ApplicationFailure.newNonRetryableFailureWithCause(
                     "Failed to execute node: " + e.getMessage(),
                     "NODE_EXECUTION_FAILED", e

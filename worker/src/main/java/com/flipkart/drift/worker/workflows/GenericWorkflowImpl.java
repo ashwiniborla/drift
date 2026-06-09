@@ -2,6 +2,7 @@ package com.flipkart.drift.worker.workflows;
 
 import com.codahale.metrics.annotation.Timed;
 import com.flipkart.drift.worker.activities.FetchWorkflowActivity;
+import com.flipkart.drift.worker.activities.ReturnControlActivity;
 import com.flipkart.drift.worker.activities.WorkflowContextManagerActivity;
 import com.flipkart.drift.worker.model.activity.ActivityThinResponse;
 import com.flipkart.drift.sdk.model.request.WorkflowResumeRequest;
@@ -100,14 +101,33 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
         return this.workflowState;
     }
 
-    private void executeWorkflowNodes(Workflow workflow, WorkflowNode currentNode, String workflowId, Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
+    private void executeWorkflowNodes(Workflow workflow, WorkflowNode currentNode, String workflowId,
+                                       Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
         while (currentNode != null) {
+            boolean isDefaultFailureNode = workflow.getDefaultFailureNode() != null
+                    && currentNode.getInstanceName().equals(workflow.getDefaultFailureNode());
+
+            if (isDefaultFailureNode) {
+                try {
+                    logger.info("WfId : {} Running defaultFailureNode: {}", workflowId, currentNode.getInstanceName());
+                    nodeExecutor.executeNodeWithoutStatusUpdate(currentNode, threadContext);
+                } catch (Exception e) {
+                    this.workflowState.setErrorMessage("defaultFailureNode failed: " + e.getMessage());
+                    throw ApplicationFailure.newNonRetryableFailureWithCause(
+                            "defaultFailureNode failed, aborting", "FAILURE_NODE_FAILED", e);
+                }
+                io.temporal.workflow.Workflow.newActivityStub(ReturnControlActivity.class, OptionsStore.activityOptions)
+                        .exec(workflowId);
+                throw ApplicationFailure.newNonRetryableFailure(
+                        "Workflow failed — defaultFailureNode completed", "WORKFLOW_FAILED_VIA_FALLBACK");
+            }
+
             ActivityThinResponse activityThinResponse;
             try {
                 logger.info("WfId : {} Running node: {}", workflowId, currentNode.getInstanceName());
                 activityThinResponse = nodeExecutor.executeNode(currentNode, threadContext, workflowStartRequest);
             } catch (Exception e) {
-                currentNode = nodeExecutor.handleNodeExecutionError(e, workflow);
+                currentNode = nodeExecutor.handleNodeExecutionError(e, currentNode, workflow);
                 continue;
             }
             if (activityThinResponse != null) {
