@@ -157,8 +157,15 @@ public class WorkflowNodeExecutor {
             );
         }
 
+        // Fail immediately if no defaultFailureNode configured (null-safe before map lookup)
+        if (defaultFailureNodeId == null) {
+            this.workflowState.setStatus(WorkflowStatus.FAILED);
+            throw ApplicationFailure.newNonRetryableFailureWithCause(
+                    "Failed to execute node: " + e.getMessage(),
+                    "NODE_EXECUTION_FAILED", e
+            );
+        }
         WorkflowNode fallbackNode = workflow.getStates().get(defaultFailureNodeId);
-        // Fail the workflow if no fallback configured
         if (fallbackNode == null) {
             this.workflowState.setStatus(WorkflowStatus.FAILED);
             throw ApplicationFailure.newNonRetryableFailureWithCause(
@@ -167,7 +174,7 @@ public class WorkflowNodeExecutor {
             );
         }
         logger.info("Routing to defaultFailureNode '{}' after failure of node '{}'",
-                defaultFailureNodeId, failedNode.getInstanceName());
+                defaultFailureNodeId, failedNode != null ? failedNode.getInstanceName() : "unknown");
         return fallbackNode;
     }
 
