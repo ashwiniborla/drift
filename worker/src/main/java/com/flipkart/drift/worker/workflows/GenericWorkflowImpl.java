@@ -103,16 +103,20 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
 
     private void executeWorkflowNodes(Workflow workflow, WorkflowNode currentNode, String workflowId,
                                        Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
+        boolean routedViaFailure = false;
         while (currentNode != null) {
             boolean isDefaultFailureNode = workflow.getDefaultFailureNode() != null
                     && currentNode.getInstanceName().equals(workflow.getDefaultFailureNode());
 
-            if (isDefaultFailureNode) {
+            if (isDefaultFailureNode && routedViaFailure) {
+                routedViaFailure = false;
                 try {
                     logger.info("WfId : {} Running defaultFailureNode: {}", workflowId, currentNode.getInstanceName());
                     nodeExecutor.executeNodeWithoutStatusUpdate(currentNode, threadContext);
                 } catch (Exception e) {
                     this.workflowState.setErrorMessage("defaultFailureNode failed: " + e.getMessage());
+                    io.temporal.workflow.Workflow.newActivityStub(ReturnControlActivity.class, OptionsStore.activityOptions)
+                            .exec(workflowId);
                     throw ApplicationFailure.newNonRetryableFailureWithCause(
                             "defaultFailureNode failed, aborting", "FAILURE_NODE_FAILED", e);
                 }
@@ -127,6 +131,7 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
                 logger.info("WfId : {} Running node: {}", workflowId, currentNode.getInstanceName());
                 activityThinResponse = nodeExecutor.executeNode(currentNode, threadContext, workflowStartRequest);
             } catch (Exception e) {
+                routedViaFailure = true;
                 currentNode = nodeExecutor.handleNodeExecutionError(e, currentNode, workflow);
                 continue;
             }
