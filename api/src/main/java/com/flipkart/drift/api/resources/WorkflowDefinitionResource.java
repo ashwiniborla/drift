@@ -69,8 +69,8 @@ public class WorkflowDefinitionResource {
     @Timed
     public Response publishWorkflow(@NotEmpty @PathParam("id") String id) {
         try {
-            workflowDefinitionService.publishWorkflow(id);
-            return Response.ok().build();
+            Workflow workflow = workflowDefinitionService.publishWorkflow(id);
+            return Response.ok(workflow).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }

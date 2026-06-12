@@ -222,7 +222,7 @@ public class WorkflowDefinitionService {
     }
 
 
-    public void publishWorkflow(String id) {
+    public Workflow publishWorkflow(String id) {
         try {
             String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
             WorkflowHB snapshotWorkflowHB = getWorkflowHB(snapshotKey);
@@ -243,7 +243,7 @@ public class WorkflowDefinitionService {
                 publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + versionKey);
                 publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + latestKey);
 
-                return;
+                return workflow;
             }
             Workflow latestWorkflow = latestWorkflowHB.getWorkflowData();
             version = StringToIntegerVersionParser(latestWorkflow.getVersion());
@@ -257,6 +257,7 @@ public class WorkflowDefinitionService {
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + versionKey);
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + latestKey);
 
+            return workflow;
         } catch (Exception e) {
             throw new ApiException("Error while publishing workflow in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
         }

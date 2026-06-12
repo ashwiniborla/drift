@@ -70,8 +70,8 @@ public class NodeDefinitionResource {
     @Timed
     public Response publishNode(@NotEmpty @NotNull @PathParam("id") String id) {
         try {
-            nodeDefinitionService.publishNode(id);
-            return Response.ok().build();
+            NodeDefinition nodeDefinition = nodeDefinitionService.publishNode(id);
+            return Response.ok(nodeDefinition).build();
         } catch (Exception e) {
             log.error("Error publishing node", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
