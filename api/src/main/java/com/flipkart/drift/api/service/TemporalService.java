@@ -53,6 +53,16 @@ public class TemporalService {
         this.driftConfiguration = driftConfiguration;
     }
 
+    TemporalService(WorkflowClient client, RedisPubSubService redisPubSubService,
+                    DriftConfiguration driftConfiguration, Utility utility) {
+        this.stubsOptions = null;
+        this.serviceStub = null;
+        this.client = client;
+        this.redisPubSubService = redisPubSubService;
+        this.utility = utility;
+        this.driftConfiguration = driftConfiguration;
+    }
+
     public WorkflowResponse startWorkflow(WorkflowStartRequest workflowStartRequest) {
         if (workflowStartRequest.getWorkflowId() == null || workflowStartRequest.getWorkflowId().isBlank()) {
             workflowStartRequest.setWorkflowId(utility.generateWorkflowId(null, false));
