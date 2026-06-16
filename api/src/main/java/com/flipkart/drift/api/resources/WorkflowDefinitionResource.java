@@ -1,6 +1,7 @@
 package com.flipkart.drift.api.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import com.flipkart.drift.api.exception.ApiException;
 import com.flipkart.drift.commons.model.node.Workflow;
 import com.flipkart.drift.api.service.builder.WorkflowDefinitionService;
 import com.google.inject.Inject;
@@ -46,6 +47,8 @@ public class WorkflowDefinitionResource {
         try {
             Workflow workflowResponse = workflowDefinitionService.updateWorkflow(workflowData);
             return Response.ok(workflowResponse).build();
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
@@ -71,6 +74,8 @@ public class WorkflowDefinitionResource {
         try {
             workflowDefinitionService.publishWorkflow(id);
             return Response.ok().build();
+        } catch (ApiException e) {
+            throw e;
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
         }
