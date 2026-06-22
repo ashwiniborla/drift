@@ -256,12 +256,11 @@ public class WorkflowDefinitionService {
 
 
     public void publishWorkflow(String id) {
-        String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
-        WorkflowHB snapshotWorkflowHB = getWorkflowHB(snapshotKey);
-        Workflow workflow = snapshotWorkflowHB.getWorkflowData();
-        validateGraphIntegrity(workflow);
-
         try {
+            String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
+            WorkflowHB snapshotWorkflowHB = getWorkflowHB(snapshotKey);
+            Workflow workflow = snapshotWorkflowHB.getWorkflowData();
+            validateGraphIntegrity(workflow);
             String latestKey = generateRowKey(id, Version.LATEST);
             WorkflowHB latestWorkflowHB = workflowDefinitionDao.get(latestKey, ConnectionType.HOT);
             Integer version;
