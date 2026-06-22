@@ -17,6 +17,9 @@ import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
+import com.flipkart.drift.commons.exception.HttpClientErrorException;
+import com.flipkart.drift.commons.exception.HttpServerErrorException;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -123,10 +126,20 @@ public class HttpExecutor {
                     return objectMapper.readTree(bodyString);
                 }
             } else {
-                log.error("HTTP error code: " + response.code() + ", headers: " + response.headers().toString());
+                int code = response.code();
+                log.error("HTTP error code: {}, headers: {}", code, response.headers());
                 // Record failure metric
                 requestScope.counter("http_requests_failure").inc(1);
-                throw new IOException("HTTP error code: " + response.code());
+                if (code == 408 || code == 429) {
+                    // 408 Request Timeout / 429 Too Many Requests — transient, retryable despite being 4xx
+                    throw new HttpServerErrorException("HTTP server error: " + code, code);
+                } else if (code >= 400 && code < 500) {
+                    // other 4xx — client error: non-retryable
+                    throw new HttpClientErrorException("HTTP client error: " + code, code);
+                } else {
+                    // 5xx (and any unexpected non-2xx code) — server error: retryable
+                    throw new HttpServerErrorException("HTTP server error: " + code, code);
+                }
             }
         } catch (IOException e) {
             // Record failure metric for IO exceptions

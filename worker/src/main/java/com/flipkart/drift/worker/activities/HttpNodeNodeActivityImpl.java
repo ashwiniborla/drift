@@ -12,10 +12,12 @@ import com.flipkart.drift.commons.model.resolvedDetails.TransformerDetails;
 import com.flipkart.drift.worker.model.activity.ActivityRequest;
 import com.flipkart.drift.worker.model.activity.ActivityResponse;
 import com.flipkart.drift.worker.service.WorkflowConfigStoreService;
+import com.flipkart.drift.commons.exception.HttpClientErrorException;
 import com.flipkart.drift.worker.service.WorkflowContextHBService;
 import com.flipkart.drift.worker.translator.ClientResolvedDetailBuilder;
 import com.google.inject.Inject;
 import io.temporal.activity.Activity;
+import io.temporal.failure.ApplicationFailure;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -58,6 +60,11 @@ public class HttpNodeNodeActivityImpl extends BaseNodeActivityImpl<HttpNode> imp
             return ActivityResponse.builder()
                     .workflowStatus(WorkflowStatus.RUNNING)
                     .nodeResponse(transformerDetails.getTransformedResponse()).build();
+        } catch (HttpClientErrorException e) {
+            // 4xx: non-retryable — retrying an identical request to a service that rejected it will not succeed
+            log.error("HTTP 4xx error executing http node, status={}: {}", e.getStatusCode(), e.getMessage());
+            throw ApplicationFailure.newNonRetryableFailureWithCause(
+                    "HTTP 4xx: " + e.getMessage(), "HTTP_CLIENT_ERROR", e);
         } catch (Exception e) {
             log.error("Exception while executing http node {}", e.getMessage());
             throw Activity.wrap(e);
