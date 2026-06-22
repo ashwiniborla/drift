@@ -140,11 +140,13 @@ public class WorkflowNodeExecutor {
     }
 
     public WorkflowNode handleNodeExecutionError(Exception e, WorkflowNode failedNode, Workflow workflow) {
+        // Terminal status is set here, before the defaultFailureNode runs.
+        // The defaultFailureNode is a side-effect-only node (alerting, HBase writes, etc.);
+        // its own execution result never changes the workflow's terminal status.
         this.workflowState.setStatus(WorkflowStatus.FAILED);
         this.workflowState.setCurrentNodeRef(generateNodeIdentifier(failedNode));
         this.workflowState.setErrorMessage("Error message: " + e.getMessage());
         WorkflowNode fallbackNode = workflow.getStates().get(workflow.getDefaultFailureNode());
-        // Fail the workflow if no fallback configured
         if (fallbackNode == null) {
             throw ApplicationFailure.newNonRetryableFailureWithCause(
                     "Failed to execute node: " + e.getMessage(),

@@ -103,6 +103,9 @@ public class GenericWorkflowImpl implements com.flipkart.drift.workflows.Generic
 
     private void executeWorkflowNodes(Workflow workflow, WorkflowNode currentNode, String workflowId,
                                        Map<String, String> threadContext, WorkflowStartRequest workflowStartRequest) {
+        // routedViaFailure is set only when a node throws and handleNodeExecutionError returns
+        // the fallback. This prevents the isDefaultFailureNode guard from misfiring when the
+        // defaultFailureNode is also reachable via normal nextNode advancement.
         boolean routedViaFailure = false;
         while (currentNode != null) {
             boolean isDefaultFailureNode = workflow.getDefaultFailureNode() != null
