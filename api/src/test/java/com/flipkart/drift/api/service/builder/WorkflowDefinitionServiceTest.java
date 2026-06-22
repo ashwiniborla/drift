@@ -6,11 +6,11 @@ import com.flipkart.drift.commons.model.node.Workflow;
 import com.flipkart.drift.persistence.dao.ConnectionType;
 import com.flipkart.drift.persistence.dao.WorkflowDefinitionDao;
 import com.flipkart.drift.persistence.entity.WorkflowHB;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class WorkflowDefinitionServiceTest {
 
     @Mock
@@ -41,6 +40,7 @@ class WorkflowDefinitionServiceTest {
     private NodeDefinitionService nodeDefinitionService;
 
     private WorkflowDefinitionService service;
+    private AutoCloseable mocks;
 
     private static final String WORKFLOW_ID = "testWorkflow";
     private static final String SNAPSHOT_KEY = WORKFLOW_ID + "_SNAPSHOT";
@@ -48,8 +48,14 @@ class WorkflowDefinitionServiceTest {
 
     @BeforeEach
     void setUp() {
+        mocks = MockitoAnnotations.openMocks(this);
         service = new WorkflowDefinitionService(workflowDefinitionDao, objectMapper, jedisSentinelPool, nodeDefinitionService);
         lenient().when(jedisSentinelPool.getResource()).thenReturn(jedis);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     private WorkflowHB buildWorkflowHB(String key, String version) {

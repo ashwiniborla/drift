@@ -7,11 +7,11 @@ import com.flipkart.drift.commons.model.node.SuccessNode;
 import com.flipkart.drift.persistence.dao.ConnectionType;
 import com.flipkart.drift.persistence.dao.NodeDefinitionDao;
 import com.flipkart.drift.persistence.entity.NodeHB;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisSentinelPool;
 
@@ -23,7 +23,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class NodeDefinitionServiceTest {
 
     @Mock
@@ -39,6 +38,7 @@ class NodeDefinitionServiceTest {
     private ObjectMapper objectMapper;
 
     private NodeDefinitionService service;
+    private AutoCloseable mocks;
 
     private static final String NODE_ID = "testNode";
     private static final String SNAPSHOT_KEY = NODE_ID + "_SNAPSHOT";
@@ -46,8 +46,14 @@ class NodeDefinitionServiceTest {
 
     @BeforeEach
     void setUp() {
+        mocks = MockitoAnnotations.openMocks(this);
         service = new NodeDefinitionService(nodeDefinitionDao, objectMapper, jedisSentinelPool);
         lenient().when(jedisSentinelPool.getResource()).thenReturn(jedis);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     private NodeHB buildNodeHB(String key, String version) {
