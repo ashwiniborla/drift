@@ -124,17 +124,19 @@ public class ClientComponentsParser {
                            .append(GROOVY_BUILDER_METHOD_SIGNATURE)
                            .append(GROOVY_BUILDER_METHOD_START_BRACES);
 
-                if (value instanceof StaticComponentDetail) {
+                if (value == null) {
+                    scriptBuilder.append(GROOVY_BUILDER_RETURN_KEYWORD).append("null");
+                } else if (value instanceof StaticComponentDetail) {
                     scriptBuilder.append(GROOVY_BUILDER_RETURN_KEYWORD);
                     StaticComponentDetail scd = (StaticComponentDetail) value;
                     Object data = scd.getValue().getData();
                     ParameterizedType cFieldGenericType = (ParameterizedType) field.getGenericType();
                     Class<?> genericTypeClass = (Class<?>) cFieldGenericType.getActualTypeArguments()[1];
-                    
+
                     if (data == null) {
                         scriptBuilder.append(data);
                     } else {
-                        if (genericTypeClass.getSimpleName().equals(Map.class.getSimpleName()) || 
+                        if (genericTypeClass.getSimpleName().equals(Map.class.getSimpleName()) ||
                             genericTypeClass.getSimpleName().equals(List.class.getSimpleName())) {
                             String singleLineJson = data.toString().replaceAll("[\r\n\t]+", " ");
                             scriptBuilder.append(GROOVY_BUILDER_JSON_SLURPER_PARSER)
@@ -150,12 +152,12 @@ public class ClientComponentsParser {
                 } else if (value instanceof ScriptedComponentDetail) {
                     ScriptedComponentDetail scd = (ScriptedComponentDetail) value;
                     String scriptContent = scd.getValue().getData();
-                    
+
                     // Replace evaluate() calls with customEvaluate() to use our cached implementation
                     if (scriptContent != null && scriptContent.contains("evaluate(")) {
                         scriptContent = scriptContent.replaceAll("\\bevaluate\\(", "customEvaluate(");
                     }
-                    
+
                     scriptBuilder.append(scriptContent);
                 } else {
                     scriptBuilder.append(GROOVY_BUILDER_RETURN_KEYWORD)
