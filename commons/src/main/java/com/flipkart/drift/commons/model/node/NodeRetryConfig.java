@@ -28,7 +28,6 @@ public class NodeRetryConfig {
     @JsonProperty("maxIntervalSeconds")
     private int maxIntervalSeconds = 20;
 
-    // Temporal requires backoffCoefficient >= 1.0
     @DecimalMin("1.0")
     @JsonProperty("backoffCoefficient")
     private double backoffCoefficient = 2.0;

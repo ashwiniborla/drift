@@ -29,7 +29,6 @@ public class ActivityOptionsBuilder {
                 ? retryConfig.getMaxAttempts()
                 : this.defaultMaxAttempts;
 
-        // Interval/backoff: node retryConfig if present, else NodeRetryConfig field defaults (1s / 20s / 2.0)
         NodeRetryConfig effectiveRetry = retryConfig != null ? retryConfig : new NodeRetryConfig();
 
         return ActivityOptions.newBuilder()
