@@ -42,6 +42,8 @@ public class HttpDetails implements ResolvedDetails {
         if (null == this.headers) {
             this.headers = new HashMap<>();
         }
-        this.headers.put("Content-Type", contentType.toString());
+        if (contentType != null) {
+            this.headers.put("Content-Type", contentType.toString());
+        }
     }
 }

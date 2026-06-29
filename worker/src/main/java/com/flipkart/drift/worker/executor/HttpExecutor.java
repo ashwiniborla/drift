@@ -81,27 +81,29 @@ public class HttpExecutor {
         try {
             Call<ResponseBody> call;
             addAuthToken(httpDetails);
+            Map<String, String> queryParams = httpDetails.getQueryParams() != null ? httpDetails.getQueryParams() : new HashMap<>();
+            Map<String, Object> body = httpDetails.getBody() != null ? httpDetails.getBody() : new HashMap<>();
             switch (httpDetails.getMethod()) {
                 case GET:
-                    call = httpService.get(httpDetails.getUrl(), httpDetails.getHeaders(), httpDetails.getQueryParams());
+                    call = httpService.get(httpDetails.getUrl(), httpDetails.getHeaders(), queryParams);
                     break;
                 case POST:
                     try {
-                        log.info("Request body:" + Arrays.toString(httpDetails.getBody().entrySet().toArray()));
+                        log.info("Request body:" + Arrays.toString(body.entrySet().toArray()));
                     } catch (Exception e) {
                         log.error("Error while logging request body", e);
                     }
-                    log.info(Arrays.toString(httpDetails.getBody().entrySet().toArray()));
+                    log.info(Arrays.toString(body.entrySet().toArray()));
                     if (APPLICATION_X_WWW_FORM_URLENCODED.equals(httpDetails.getContentType()))
                         call = httpService.post(httpDetails.getUrl(), httpDetails.getHeaders(), "client_credentials");
                     else
-                        call = httpService.post(httpDetails.getUrl(), httpDetails.getHeaders(), httpDetails.getQueryParams(), httpDetails.getBody());
+                        call = httpService.post(httpDetails.getUrl(), httpDetails.getHeaders(), queryParams, body);
                     break;
                 case PUT:
-                    call = httpService.put(httpDetails.getUrl(), httpDetails.getHeaders(), httpDetails.getQueryParams(), httpDetails.getBody());
+                    call = httpService.put(httpDetails.getUrl(), httpDetails.getHeaders(), queryParams, body);
                     break;
                 case DELETE:
-                    call = httpService.delete(httpDetails.getUrl(), httpDetails.getHeaders(), httpDetails.getQueryParams());
+                    call = httpService.delete(httpDetails.getUrl(), httpDetails.getHeaders(), queryParams);
                     break;
                 default:
                     throw new UnsupportedOperationException("HTTP method not supported: " + httpDetails.getMethod());
