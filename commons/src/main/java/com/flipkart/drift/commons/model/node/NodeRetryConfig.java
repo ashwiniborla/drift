@@ -6,9 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Min;
-
 /**
  * Per-node retry policy sourced from the WorkflowNode DSL stored in HBase.
  */
@@ -18,7 +15,6 @@ import javax.validation.constraints.Min;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodeRetryConfig {
 
-    @Min(1)
     @JsonProperty("maxAttempts")
     private int maxAttempts;
 
@@ -28,7 +24,6 @@ public class NodeRetryConfig {
     @JsonProperty("maxIntervalSeconds")
     private int maxIntervalSeconds = 20;
 
-    @DecimalMin("1.0")
     @JsonProperty("backoffCoefficient")
     private double backoffCoefficient = 2.0;
 }
