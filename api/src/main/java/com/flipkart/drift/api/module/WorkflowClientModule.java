@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import redis.clients.jedis.JedisSentinelPool;
+import redis.clients.jedis.Protocol;
 
 import java.util.*;
 
@@ -49,7 +50,8 @@ public class WorkflowClientModule extends AbstractModule {
                 hostList.add(strTkn.nextToken());
             Set<String> sentinels = new HashSet<>(hostList);
             GenericObjectPoolConfig<?> genericObjectPoolConfig = getGenericObjectPoolConfig(redisConfiguration);
-            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig, redisConfiguration.getPassword());
+            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig,
+                    Protocol.DEFAULT_TIMEOUT, redisConfiguration.getPassword(), redisConfiguration.getDatabase());
         } catch (Exception e) {
             log.error("Failed to Connected to RedisDao Server {}", e.getMessage(), e);
             return null;
@@ -181,4 +183,3 @@ public class WorkflowClientModule extends AbstractModule {
     }
 
 }
-

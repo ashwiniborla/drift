@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 import redis.clients.jedis.JedisPoolAbstract;
 import redis.clients.jedis.JedisSentinelPool;
+import redis.clients.jedis.Protocol;
 
 import javax.ws.rs.core.Response;
 import java.util.*;
@@ -59,7 +60,8 @@ public class WorkerModule extends AbstractModule {
             while (strTkn.hasMoreTokens()) hostList.add(strTkn.nextToken());
             Set<String> sentinels = new HashSet<>(hostList);
             GenericObjectPoolConfig<?> genericObjectPoolConfig = getGenericObjectPoolConfig(redisConfiguration);
-            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig, redisConfiguration.getPassword());
+            return new JedisSentinelPool(redisConfiguration.getMaster(), sentinels, genericObjectPoolConfig,
+                    Protocol.DEFAULT_TIMEOUT, redisConfiguration.getPassword(), redisConfiguration.getDatabase());
         } catch (Exception e) {
             log.error("Failed to Connected to RedisDao Server " + e.getMessage(), e);
             throw new RedisStoreException(Response.Status.INTERNAL_SERVER_ERROR, "Unable to init redis config", e.getMessage());
