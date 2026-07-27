@@ -1,6 +1,7 @@
 package com.flipkart.drift.worker.bootstrap;
 
 import com.flipkart.drift.persistence.bootstrap.DriftEntityModule;
+import com.flipkart.drift.persistence.dao.ConnectionType;
 import com.flipkart.drift.worker.util.AuthNTokenGenerator;
 import com.flipkart.drift.worker.config.DriftWorkerConfiguration;
 import com.flipkart.drift.worker.resources.DriftWorkerResource;
@@ -46,6 +47,7 @@ public class WorkerApplication extends Application<DriftWorkerConfiguration> {
 
     @Override
     public void run(DriftWorkerConfiguration driftWorkerConfiguration, Environment environment) {
+        ConnectionType.init(driftWorkerConfiguration.getHbaseNamespaceConfig());
         Scope metricsScope = setupMetrics(driftWorkerConfiguration.getPrometheusConfig());
         ConcurrentCompositeConfiguration compositeConfiguration = getConcurrentCompositeConfiguration(driftWorkerConfiguration);
         DynamicPropertyFactory.initWithConfigurationSource(compositeConfiguration);

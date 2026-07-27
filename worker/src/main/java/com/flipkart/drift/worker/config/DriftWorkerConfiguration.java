@@ -2,6 +2,7 @@ package com.flipkart.drift.worker.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.flipkart.drift.persistence.bootstrap.CacheMaxEntriesConfig;
+import com.flipkart.drift.persistence.bootstrap.HbaseNamespaceConfig;
 import com.flipkart.drift.persistence.bootstrap.StaticCacheRefreshConfig;
 import io.dropwizard.Configuration;
 import lombok.Getter;
@@ -21,6 +22,8 @@ public class DriftWorkerConfiguration extends Configuration {
     private StaticCacheRefreshConfig staticCacheRefreshConfig;
     @NotNull
     private CacheMaxEntriesConfig cacheMaxEntriesConfig;
+    
+    private HbaseNamespaceConfig hbaseNamespaceConfig;
     @NotNull
     private String hbasePropertiesPath;
     @NotNull

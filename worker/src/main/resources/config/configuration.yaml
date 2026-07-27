@@ -43,6 +43,12 @@ authPropertiesPath: ${AUTH_PATH}
 
 workflowPropertiesPath: ${WORKFLOW_PROPERTY_PATH}
 
+hbaseNamespaceConfig:
+  hot: ${HBASE_NAMESPACE_HOT:-ims_hot}
+  cold: ${HBASE_NAMESPACE_COLD:-ims_cold}
+  archival: ${HBASE_NAMESPACE_ARCHIVAL:-ims_archive}
+  audit: ${HBASE_NAMESPACE_AUDIT:-ims_audit}
+
 prometheusConfig:
   port: 9090
   path: "/metrics"
