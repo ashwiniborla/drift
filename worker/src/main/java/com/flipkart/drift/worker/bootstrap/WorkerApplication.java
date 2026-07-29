@@ -23,10 +23,13 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.temporal.common.reporter.MicrometerClientStatsReporter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class WorkerApplication extends Application<DriftWorkerConfiguration> {
@@ -98,15 +101,23 @@ public class WorkerApplication extends Application<DriftWorkerConfiguration> {
     }
 
     private static ConcurrentCompositeConfiguration getConcurrentCompositeConfiguration(DriftWorkerConfiguration configuration) {
+        List<String> propertiesPath = new ArrayList<>(List.of(
+                configuration.getHbasePropertiesPath(),
+                configuration.getLookupPropertiesPath(),
+                configuration.getAuthPropertiesPath(),
+                configuration.getWorkflowPropertiesPath()
+        ));
+
+        String abPropertiesPath = configuration.getAbPropertiesPath();
+        if(StringUtils.isNotBlank(abPropertiesPath)){
+            propertiesPath.add(abPropertiesPath);
+        }
+
         DynamicURLConfiguration dynamicConfiguration = new DynamicURLConfiguration(
                 50000,
                 20000,
                 false,
-                configuration.getHbasePropertiesPath(),
-                configuration.getLookupPropertiesPath(),
-                configuration.getAuthPropertiesPath(),
-                configuration.getAbPropertiesPath(),
-                configuration.getWorkflowPropertiesPath()
+                propertiesPath.toArray(new String[0])
         );
         ConcurrentCompositeConfiguration compositeConfiguration =
                 new ConcurrentCompositeConfiguration();

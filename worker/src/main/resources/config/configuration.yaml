@@ -37,8 +37,6 @@ lookupPropertiesPath: ${ENUM_STORE_BUCKET}
 
 hbasePropertiesPath: ${HBASE_CONFIG_BUCKET}
 
-abPropertiesPath: ${AB_CONFIG_BUCKET}
-
 authPropertiesPath: ${AUTH_PATH}
 
 workflowPropertiesPath: ${WORKFLOW_PROPERTY_PATH}

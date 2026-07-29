@@ -49,6 +49,6 @@ public class DriftWorkerConfiguration extends Configuration {
     @NotNull
     private String authPropertiesPath;
 
-    @NotNull
+    //Optional : only required when a real (non-NoOp) ABTestingProvider is wired in via SPI
     private String abPropertiesPath;
 }
