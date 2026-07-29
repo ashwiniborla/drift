@@ -21,7 +21,7 @@ redisConfiguration:
   password: ${REDIS_PASSWORD}
   master: ${REDIS_MASTER}
   sentinels: ${REDIS_SENTINELS}
-  prefix: "${REDIS_PREFIX}"
+  prefix: ${REDIS_PREFIX}
   maxTotal: 50
   maxWaitMillis: 100
   maxIdle: 25
