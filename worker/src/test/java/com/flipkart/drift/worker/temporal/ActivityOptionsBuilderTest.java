@@ -1,5 +1,6 @@
 package com.flipkart.drift.worker.temporal;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.drift.commons.model.node.NodeRetryConfig;
 import com.flipkart.drift.commons.model.node.WorkflowNode;
 import com.flipkart.drift.worker.config.ActivityDefaultsConfig;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ActivityOptionsBuilderTest {
 
@@ -66,6 +69,22 @@ class ActivityOptionsBuilderTest {
     }
 
     @Test
+    void partialRetryConfigOnlyInitialInterval_usesPlatformMaxAttempts() throws Exception {
+        ActivityDefaultsConfig defaults = new ActivityDefaultsConfig(3, 10);
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(defaults);
+        NodeRetryConfig partial = new ObjectMapper()
+                .readValue("{\"initialIntervalSeconds\":5}", NodeRetryConfig.class);
+        assertNull(partial.getMaxAttempts());
+
+        ActivityOptions options = builder.build(node(null, partial));
+
+        assertEquals(3, options.getRetryOptions().getMaximumAttempts());
+        assertEquals(Duration.ofSeconds(5), options.getRetryOptions().getInitialInterval());
+        assertEquals(Duration.ofSeconds(20), options.getRetryOptions().getMaximumInterval());
+        assertEquals(2.0, options.getRetryOptions().getBackoffCoefficient(), 0.001);
+    }
+
+    @Test
     void allDefaultsNoNodeConfig() {
         // ActivityDefaultsConfig field defaults match the previously hardcoded values (10s, 1 attempt)
         ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig());
@@ -94,5 +113,34 @@ class ActivityOptionsBuilderTest {
         assertEquals(Duration.ofSeconds(3),  options.getRetryOptions().getInitialInterval());
         assertEquals(Duration.ofSeconds(60), options.getRetryOptions().getMaximumInterval());
         assertEquals(1.5, options.getRetryOptions().getBackoffCoefficient(), 0.001);
+    }
+
+    @Test
+    void rejectsNonPositiveTimeout() {
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig(1, 10));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(0, null)));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(-5, null)));
+    }
+
+    @Test
+    void rejectsNonPositiveMaxAttempts() {
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig(1, 10));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(null, retryMinimal(0))));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(null, retryMinimal(-1))));
+    }
+
+    @Test
+    void rejectsNonPositiveIntervals() {
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig(1, 10));
+        NodeRetryConfig badInitial = retry(2, 0, 20, 2.0);
+        NodeRetryConfig badMax = retry(2, 1, 0, 2.0);
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(null, badInitial)));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(null, badMax)));
+    }
+
+    @Test
+    void rejectsBackoffBelowOne() {
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig(1, 10));
+        assertThrows(IllegalArgumentException.class, () -> builder.build(node(null, retry(2, 1, 20, 0.5))));
     }
 }

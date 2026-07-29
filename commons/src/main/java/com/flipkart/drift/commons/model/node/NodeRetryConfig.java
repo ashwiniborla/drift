@@ -20,11 +20,13 @@ public class NodeRetryConfig {
 
     @Min(1)
     @JsonProperty("maxAttempts")
-    private int maxAttempts;
+    private Integer maxAttempts;
 
+    @Min(1)
     @JsonProperty("initialIntervalSeconds")
     private int initialIntervalSeconds = 1;
 
+    @Min(1)
     @JsonProperty("maxIntervalSeconds")
     private int maxIntervalSeconds = 20;
 
