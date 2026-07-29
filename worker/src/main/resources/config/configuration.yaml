@@ -11,7 +11,8 @@ redisConfiguration:
   password: ${REDIS_PASSWORD}
   master: ${REDIS_MASTER}
   sentinels: ${REDIS_SENTINELS}
-  prefix: "${REDIS_PREFIX}"
+  prefix: ${REDIS_PREFIX}
+  database: ${REDIS_DATABASE:-0}
   maxTotal: 50
   maxWaitMillis: 100
   maxIdle: 25
@@ -36,11 +37,15 @@ lookupPropertiesPath: ${ENUM_STORE_BUCKET}
 
 hbasePropertiesPath: ${HBASE_CONFIG_BUCKET}
 
-abPropertiesPath: ${AB_CONFIG_BUCKET}
-
 authPropertiesPath: ${AUTH_PATH}
 
 workflowPropertiesPath: ${WORKFLOW_PROPERTY_PATH}
+
+hbaseNamespaceConfig:
+  hot: ${HBASE_NAMESPACE_HOT:-ims_hot}
+  cold: ${HBASE_NAMESPACE_COLD:-ims_cold}
+  archival: ${HBASE_NAMESPACE_ARCHIVAL:-ims_archive}
+  audit: ${HBASE_NAMESPACE_AUDIT:-ims_audit}
 
 prometheusConfig:
   port: 9090
@@ -53,12 +58,6 @@ workerDynamicOptions:
   activityTaskPoller: 50
   workflowCacheSize: 600
   maxWorkflowThreadCount: 800
-
-# Optional — per-node activity defaults for external-node Temporal stubs.
-# Omitting this block is valid; JVM defaults (1 attempt, 10 s) apply.
-activityDefaults:
-  defaultMaxAttempts: 1
-  defaultTimeoutSeconds: 10
 
 # Optional Hadoop identity parameters for HBase connection
 hadoopUserName: ${HADOOP_USERNAME}

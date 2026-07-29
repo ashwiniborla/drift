@@ -21,7 +21,8 @@ redisConfiguration:
   password: ${REDIS_PASSWORD}
   master: ${REDIS_MASTER}
   sentinels: ${REDIS_SENTINELS}
-  prefix: "${REDIS_PREFIX}"
+  prefix: ${REDIS_PREFIX}
+  database: ${REDIS_DATABASE:-0}
   maxTotal: 50
   maxWaitMillis: 100
   maxIdle: 25
@@ -42,6 +43,12 @@ cacheMaxEntriesConfig:
   nodeDefinitionConfig: 1000 # 100 nodes, 10 versions each
   workflowConfig: 1000 # 100 workflows, 10 versions each
 
+hbaseNamespaceConfig:
+  hot: ${HBASE_NAMESPACE_HOT:-ims_hot}
+  cold: ${HBASE_NAMESPACE_COLD:-ims_cold}
+  archival: ${HBASE_NAMESPACE_ARCHIVAL:-ims_archive}
+  audit: ${HBASE_NAMESPACE_AUDIT:-ims_audit}
+  
 hbasePropertiesPath: ${HBASE_CONFIG_BUCKET}
 
 temporalFrontEnd: ${TEMPORAL_FRONTEND}

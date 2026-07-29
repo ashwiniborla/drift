@@ -18,4 +18,5 @@ public class RedisConfiguration {
     private int maxWaitMillis;
     private boolean testOnBorrow;
     private boolean blockWhenExhausted;
+    private int database;
 }

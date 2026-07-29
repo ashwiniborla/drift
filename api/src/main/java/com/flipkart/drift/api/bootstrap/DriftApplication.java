@@ -14,6 +14,7 @@ import com.flipkart.drift.api.resources.WorkflowResource;
 import com.flipkart.drift.api.resources.NodeDefinitionResource;
 import com.flipkart.drift.api.resources.WorkflowDefinitionResource;
 import com.flipkart.drift.api.module.WorkflowClientModule;
+import com.flipkart.drift.persistence.dao.ConnectionType;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.netflix.config.*;
@@ -57,6 +58,7 @@ public class DriftApplication extends Application<DriftConfiguration> {
 
     @Override
     public void run(DriftConfiguration configuration, Environment environment) {
+        ConnectionType.init(configuration.getHbaseNamespaceConfig());
         // Initialize DynamicPropertyFactory with configuration source
         ConcurrentCompositeConfiguration compositeConfiguration = getConcurrentCompositeConfiguration(configuration);
         DynamicPropertyFactory.initWithConfigurationSource(compositeConfiguration);

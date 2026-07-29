@@ -31,6 +31,7 @@ env:
   REDIS_MASTER: "your-redis-master"
   REDIS_SENTINELS: "your-redis-sentinel:26379"
   REDIS_PREFIX: "drift"
+  REDIS_DATABASE: "0"
   HBASE_CONFIG_BUCKET: "file:////usr/share/drift-api/config/hbase.properties"
   TEMPORAL_FRONTEND: "your-temporal-frontend:7233"
   TEMPORAL_TASK_QUEUE: "DRIFT_QUEUE"

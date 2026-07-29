@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
 import java.util.ServiceLoader;
+import java.util.ServiceConfigurationError;
 
 @Slf4j
 public class ABTestingProviderFactory {
@@ -11,16 +12,23 @@ public class ABTestingProviderFactory {
 
     static {
         // Auto-discover ABTestingProvider implementations via ServiceLoader
-        ServiceLoader<ABTestingProvider> loader = ServiceLoader.load(ABTestingProvider.class);
-        Iterator<ABTestingProvider> iterator = loader.iterator();
-        
-        if (iterator.hasNext()) {
-            provider = iterator.next();
-            log.info("ABTestingProviderFactory: Discovered {} via SPI (not yet initialized)", provider.getClass().getName());
-        } else {
-            provider = new NoOpABTestingProvider();
-            log.info("ABTestingProviderFactory: No custom ABTestingProvider found via SPI, using NoOpABTestingProvider");
+        ABTestingProvider discovered;
+        try {
+            ServiceLoader<ABTestingProvider> loader = ServiceLoader.load(ABTestingProvider.class);
+            Iterator<ABTestingProvider> iterator = loader.iterator();
+
+            if (iterator.hasNext()) {
+                discovered = iterator.next();
+                log.info("ABTestingProviderFactory: Discovered {} via SPI (not yet initialized)", discovered.getClass().getName());
+            } else {
+                discovered = new NoOpABTestingProvider();
+                log.info("ABTestingProviderFactory: No custom ABTestingProvider found via SPI, using NoOpABTestingProvider");
+            }
+        } catch (ServiceConfigurationError | Exception e) {
+            log.error("ABTestingProviderFactory : Failed to discover ABTestingProvider via SPI falling back to NoOpABTestingProvider", e);
+            discovered = new NoOpABTestingProvider();
         }
+        provider = discovered;
     }
 
     /**
