@@ -290,6 +290,9 @@ public class WorkflowDefinitionService {
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + versionKey);
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, WORKFLOW_EVENT_ID + " " + latestKey);
 
+        } catch (com.flipkart.drift.api.exception.ApiException e) {
+            // Preserve 400 from validateGraphIntegrity — do not wrap as 500.
+            throw e;
         } catch (Exception e) {
             throw new ApiException("Error while publishing workflow in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
         }
