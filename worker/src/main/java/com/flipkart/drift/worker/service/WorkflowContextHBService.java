@@ -36,7 +36,7 @@ public class WorkflowContextHBService {
                 return null;
             } catch (IOException e) {
                 log.error("Error while creating workflow context for workflowId: {}", workflowContext.getWorkflowId(), e);
-                throw new ApiException(e.getCause().getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                throw new ApiException(e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
@@ -51,7 +51,7 @@ public class WorkflowContextHBService {
                 return null;
             } catch (IOException e) {
                 log.error("Error while updating workflow context for workflowId: {}", workflowContext.getWorkflowId(), e);
-                throw new ApiException(e.getCause().getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                throw new ApiException(e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
@@ -62,7 +62,7 @@ public class WorkflowContextHBService {
                 return workflowContextHBDao.get(workflowId, ConnectionType.HOT);
             } catch (IOException e) {
                 log.error("Error while fetching workflow context for workflowId: {}", workflowId, e);
-                throw new ApiException(e.getCause().getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                throw new ApiException(e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
