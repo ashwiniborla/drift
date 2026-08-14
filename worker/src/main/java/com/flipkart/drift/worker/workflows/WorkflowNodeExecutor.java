@@ -141,17 +141,39 @@ public class WorkflowNodeExecutor {
         }
     }
 
-    public WorkflowNode handleNodeExecutionError(Exception e, Workflow workflow) {
+    public WorkflowNode handleNodeExecutionError(Exception e, Workflow workflow, WorkflowNode failedNode) {
         this.workflowState.setErrorMessage("Error message: " + e.getMessage());
-        WorkflowNode fallbackNode = workflow.getStates().get(workflow.getDefaultFailureNode());
-        // Fail the workflow if no fallback configured
-        if (fallbackNode == null) {
+        String defaultFailureNodeId = workflow.getDefaultFailureNode();
+
+        // If the defaultFailureNode itself has failed (after exhausting its Temporal retries),
+        // do not route back to it — that would cause an infinite loop.
+        if (failedNode != null && failedNode.getInstanceName().equals(defaultFailureNodeId)) {
+            this.workflowState.setStatus(WorkflowStatus.FAILED);
+            logger.error("DefaultFailureNode '{}' failed after exhausting all retries. Terminating workflow.",
+                    defaultFailureNodeId);
+            throw ApplicationFailure.newNonRetryableFailureWithCause(
+                    "DefaultFailureNode failed after exhausting retries: " + e.getMessage(),
+                    "DEFAULT_FAILURE_NODE_FAILED", e
+            );
+        }
+
+        // Fail immediately if no defaultFailureNode configured (null-safe before map lookup)
+        if (defaultFailureNodeId == null) {
             this.workflowState.setStatus(WorkflowStatus.FAILED);
             throw ApplicationFailure.newNonRetryableFailureWithCause(
                     "Failed to execute node: " + e.getMessage(),
                     "NODE_EXECUTION_FAILED", e
             );
         }
+        WorkflowNode fallbackNode = workflow.getStates().get(defaultFailureNodeId);
+        if (fallbackNode == null) {
+            throw ApplicationFailure.newNonRetryableFailureWithCause(
+                    "Failed to execute node: " + e.getMessage(),
+                    "NODE_EXECUTION_FAILED", e
+            );
+        }
+        logger.info("Routing to defaultFailureNode '{}' after failure of node '{}'",
+                defaultFailureNodeId, failedNode != null ? failedNode.getInstanceName() : "unknown");
         return fallbackNode;
     }
 

@@ -133,7 +133,7 @@ public class TemporalService {
             return workflow.getWorkflowState();
         } catch (WorkflowException e) {
             log.error(WORKFLOW_EXCEPTION, e.getMessage(), e);
-            throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause().getMessage());
+            throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
         }
     }
 
@@ -144,7 +144,7 @@ public class TemporalService {
             return workflow.executeDisconnectedNode(workflowUtilityRequest);
         } catch (WorkflowException e) {
             log.error(WORKFLOW_EXCEPTION, e.getMessage(), e);
-            throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause().getMessage());
+            throw new ApiException(Response.Status.EXPECTATION_FAILED, e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
         }
     }
 

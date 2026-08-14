@@ -64,7 +64,7 @@ public class NodeDefinitionService {
         }
     }
 
-    public void publishNode(String id) {
+    public NodeDefinition publishNode(String id) {
         try {
             String snapshotKey = generateRowKey(id, Version.SNAPSHOT);
             NodeHB snapshotNodeHB = getNodeHB(snapshotKey);
@@ -84,7 +84,7 @@ public class NodeDefinitionService {
                 publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, NODE_EVENT_ID + " " + versionKey);
                 publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, NODE_EVENT_ID + " " + latestKey);
 
-                return;
+                return nodeDefinition;
             }
             NodeDefinition latestNodeDefinition = latestNodeHB.getNodeData();
             version = StringToIntegerVersionParser(latestNodeDefinition.getVersion());
@@ -98,7 +98,7 @@ public class NodeDefinitionService {
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, NODE_EVENT_ID + " " + versionKey);
             publishRedisEvent(jedisSentinelPool, DSL_UPDATE_CHANNEL, NODE_EVENT_ID + " " + latestKey);
 
-
+            return nodeDefinition;
         } catch (Exception e) {
             throw new ApiException("Error while publishing node in HBase", Response.Status.INTERNAL_SERVER_ERROR, e);
         }
