@@ -167,7 +167,6 @@ public class WorkflowNodeExecutor {
         }
         WorkflowNode fallbackNode = workflow.getStates().get(defaultFailureNodeId);
         if (fallbackNode == null) {
-            this.workflowState.setStatus(WorkflowStatus.FAILED);
             throw ApplicationFailure.newNonRetryableFailureWithCause(
                     "Failed to execute node: " + e.getMessage(),
                     "NODE_EXECUTION_FAILED", e
