@@ -50,11 +50,16 @@ public class HttpNodeNodeActivityImpl extends BaseNodeActivityImpl<HttpNode> imp
             ObjectNode contextWrapper = MAPPER.createObjectNode();
             contextWrapper.set(GLOBAL, activityRequest.getContext());
             contextWrapper.set(ENUM_STORE, MAPPER.valueToTree(workflowConfigStoreService.getEnumMapping()));
-            TransformerDetails transformerDetails = ClientResolvedDetailBuilder
-                    .evaluateGroovy(activityRequest.getNodeDefinition().getTransformerComponents(),
-                            activityRequest.getNodeDefinition().getVersion(),
-                            contextWrapper.set(HTTP_RESPONSE, httpResponse),
-                            TransformerDetails.class);
+            TransformerDetails transformerDetails;
+            if (activityRequest.getNodeDefinition().getTransformerComponents() != null) {
+                transformerDetails = ClientResolvedDetailBuilder
+                        .evaluateGroovy(activityRequest.getNodeDefinition().getTransformerComponents(),
+                                activityRequest.getNodeDefinition().getVersion(),
+                                contextWrapper.set(HTTP_RESPONSE, httpResponse),
+                                TransformerDetails.class);
+            } else {
+                transformerDetails = TransformerDetails.builder().transformedResponse(httpResponse).build();
+            }
             return ActivityResponse.builder()
                     .workflowStatus(WorkflowStatus.RUNNING)
                     .nodeResponse(transformerDetails.getTransformedResponse()).build();

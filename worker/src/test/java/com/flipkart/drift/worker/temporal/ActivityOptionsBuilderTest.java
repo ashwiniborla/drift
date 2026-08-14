@@ -66,8 +66,8 @@ class ActivityOptionsBuilderTest {
     }
 
     @Test
-    void allDefaultsNoNodeConfigNoYaml() {
-        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(null);
+    void allDefaultsNoNodeConfig() {
+        ActivityOptionsBuilder builder = new ActivityOptionsBuilder(new ActivityDefaultsConfig());
         ActivityOptions options = builder.build(node(null, null));
         assertEquals(Duration.ofSeconds(10), options.getStartToCloseTimeout());
         assertEquals(1, options.getRetryOptions().getMaximumAttempts());
